@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farrah & Ruby — Who Do You Trust?</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a14; font-family: 'Segoe UI', sans-serif; color: #e8e0d0; overflow: hidden; height: 100vh; width: 100vw; }
+
+  /* ── SCREENS ── */
+  .screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ── TITLE SCREEN ── */
+  #titleScreen { background: radial-gradient(ellipse at 50% 30%, #1a0a2e 0%, #0a0a14 70%); }
+  .title-logo { font-size: 52px; font-weight: 900; letter-spacing: -1px; color: #fff; text-shadow: 0 0 40px #8b5cf6; margin-bottom: 8px; }
+  .title-sub { font-size: 16px; color: #9b8fc0; margin-bottom: 48px; letter-spacing: 3px; text-transform: uppercase; }
+  .btn { padding: 14px 36px; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: #7c3aed; color: #fff; }
+  .btn-primary:hover { background: #6d28d9; transform: scale(1.04); }
+  .btn-danger { background: #dc2626; color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+
+  /* ── SETUP SCREEN ── */
+  #setupScreen { background: #0d0d1a; gap: 20px; padding: 30px; }
+  .setup-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .player-inputs { display: flex; flex-direction: column; gap: 10px; width: 340px; }
+  .player-inputs input { background: #1a1a2e; border: 1px solid #3b2f6b; border-radius: 8px; padding: 10px 14px; color: #e8e0d0; font-size: 15px; width: 100%; outline: none; }
+  .player-inputs input:focus { border-color: #7c3aed; }
+  .player-label { font-size: 12px; color: #9b8fc0; margin-bottom: 2px; }
+
+  /* ── SPIN SCREEN ── */
+  #spinScreen { background: #0a0a14; gap: 24px; }
+  .spin-title { font-size: 28px; font-weight: 800; text-align: center; }
+  .spin-subtitle { color: #9b8fc0; font-size: 14px; text-align: center; }
+  .wheels-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 700px; }
+  .wheel-card { background: #131325; border: 1px solid #2a2450; border-radius: 12px; padding: 16px; width: 140px; text-align: center; }
+  .wheel-name { font-size: 13px; color: #9b8fc0; margin-bottom: 10px; font-weight: 600; }
+  .wheel-face { font-size: 40px; min-height: 50px; display: flex; align-items: center; justify-content: center; transition: transform .08s; }
+  .wheel-face.spinning { animation: spinWheel .08s linear infinite; }
+  @keyframes spinWheel { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+  .wheel-result { font-size: 14px; font-weight: 800; min-height: 22px; margin-top: 8px; }
+  .role-murderer { color: #ef4444; }
+  .role-sheriff { color: #f59e0b; }
+  .role-innocent { color: #6ee7b7; }
+  .spin-note { font-size: 13px; color: #666; font-style: italic; }
+
+  /* ── GAME SCREEN ── */
+  #gameScreen { background: #0d1117; flex-direction: column; padding: 0; }
+  #gameCanvas { display: block; }
+  #hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: rgba(0,0,0,.7); font-size: 14px; font-weight: 700; z-index: 10; }
+  #timerDisplay { font-size: 22px; color: #f59e0b; }
+  #roleHint { font-size: 13px; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,.08); }
+  #aliveCount { color: #6ee7b7; }
+
+  /* ── TRIVIA OVERLAY ── */
+  #triviaOverlay { position: absolute; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 18px; z-index: 20; }
+  #triviaOverlay.show { display: flex; }
+  .trivia-box { background: #13132b; border: 1px solid #3b2f6b; border-radius: 14px; padding: 32px; max-width: 440px; width: 90%; text-align: center; }
+  .trivia-q { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .trivia-hint { font-size: 13px; color: #9b8fc0; margin-bottom: 22px; }
+  .trivia-options { display: flex; flex-direction: column; gap: 10px; }
+  .trivia-opt { background: #1e1e3f; border: 1px solid #3b2f6b; border-radius: 8px; padding: 12px 18px; cursor: pointer; font-size: 15px; transition: background .15s; text-align: left; color: #e8e0d0; }
+  .trivia-opt:hover { background: #2d2d5e; }
+  .trivia-opt.correct { background: #064e3b; border-color: #34d399; color: #6ee7b7; }
+  .trivia-opt.wrong { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; }
+  .trivia-fb { font-size: 15px; font-weight: 700; min-height: 22px; }
+
+  /* ── DEAD LOBBY OVERLAY ── */
+  #deadOverlay { position: absolute; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 15; }
+  #deadOverlay.show { display: flex; }
+  .dead-box { background: #1a0a0a; border: 1px solid #7f1d1d; border-radius: 14px; padding: 28px 36px; text-align: center; }
+  .dead-title { font-size: 28px; font-weight: 900; color: #ef4444; margin-bottom: 8px; }
+  .dead-text { color: #fca5a5; font-size: 14px; }
+
+  /* ── END SCREEN ── */
+  #endScreen { background: #0a0a14; gap: 20px; }
+  .end-emoji { font-size: 72px; }
+  .end-title { font-size: 36px; font-weight: 900; text-align: center; }
+  .end-sub { color: #9b8fc0; font-size: 16px; }
+
+  /* ── CONFETTI ── */
+  .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; animation: confettiFall linear forwards; z-index: 100; border-radius: 2px; }
+  @keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  /* ── CONTROLS HINT ── */
+  #controlsHint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); padding: 6px 14px; border-radius: 8px; font-size: 12px; color: #666; z-index: 10; }
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="titleScreen" class="screen active">
+  <div class="title-logo">🔪 Farrah & Ruby</div>
+  <div class="title-sub">Who Do You Trust?</div>
+  <button class="btn btn-primary" onclick="showSetup()">Play Game</button>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen" class="screen">
+  <div class="setup-title">👥 Enter Player Names</div>
+  <p style="color:#9b8fc0;font-size:13px;margin-bottom:12px;">2–6 players (at least 3 recommended)</p>
+  <div class="player-inputs" id="playerInputs">
+    <div class="player-label">Player 1 (required)</div>
+    <input type="text" placeholder="Player 1 name" id="p1">
+    <div class="player-label">Player 2 (required)</div>
+    <input type="text" placeholder="Player 2 name" id="p2">
+    <div class="player-label">Player 3 (required)</div>
+    <input type="text" placeholder="Player 3 name" id="p3">
+    <div class="player-label">Player 4</div>
+    <input type="text" placeholder="Player 4 name (optional)" id="p4">
+    <div class="player-label">Player 5</div>
+    <input type="text" placeholder="Player 5 name (optional)" id="p5">
+    <div class="player-label">Player 6</div>
+    <input type="text" placeholder="Player 6 name (optional)" id="p6">
+  </div>
+  <br>
+  <button class="btn btn-primary" onclick="startSpin()" style="margin-top:6px;">Spin for Roles! 🎡</button>
+</div>
+
+<!-- SPIN SCREEN -->
+<div id="spinScreen" class="screen">
+  <div class="spin-title">🎡 Spinning for Roles…</div>
+  <div class="spin-subtitle">Everyone spins at the same time — keep your role SECRET!</div>
+  <div class="wheels-grid" id="wheelsGrid"></div>
+  <div class="spin-note" id="spinNote"></div>
+  <button class="btn btn-primary" id="spinRevealBtn" style="display:none;" onclick="revealRoles()">✅ Everyone Look Away — Reveal!</button>
+  <button class="btn btn-primary" id="startGameBtn" style="display:none;" onclick="startGame()">▶ Start Game!</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div id="hud">
+    <div id="roleHint">Your role: <span id="myRole">—</span></div>
+    <div id="timerDisplay">2:00</div>
+    <div id="aliveCount">Alive: <span id="aliveNum">—</span></div>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <div id="controlsHint">WASD / Arrow Keys to move &nbsp;|&nbsp; Click to interact</div>
+
+  <!-- TRIVIA OVERLAY -->
+  <div id="triviaOverlay">
+    <div class="trivia-box">
+      <div class="trivia-q" id="triviaQ"></div>
+      <div class="trivia-hint" id="triviaHint"></div>
+      <div class="trivia-options" id="triviaOpts"></div>
+      <div class="trivia-fb" id="triviaFb"></div>
+    </div>
+  </div>
+
+  <!-- DEAD OVERLAY -->
+  <div id="deadOverlay">
+    <div class="dead-box">
+      <div class="dead-title">💀 You've been eliminated!</div>
+      <div class="dead-text">You've been sent to the lobby.<br>Watch quietly and see who wins…</div>
+    </div>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="endScreen" class="screen">
+  <div class="end-emoji" id="endEmoji">🏆</div>
+  <div class="end-title" id="endTitle">Game Over</div>
+  <div class="end-sub" id="endSub"></div>
+  <br>
+  <button class="btn btn-primary" onclick="showTitle()">Play Again</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+let players = [];
+let roles = {};      // name → 'murderer'|'sheriff'|'innocent'
+let gameRunning = false;
+let gameTime = 120;  // seconds
+let timerInterval = null;
+let aliveSet = new Set();
+let murdererName = '';
+let sheriffName  = '';
+let gunDropped   = false;
+let gunPickedUp  = false;
+let triviaActive = false;
+let triviaTimer  = null;
+let nextTriviaAt = 30; // seconds remaining when trivia fires
+
+// Canvas state
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+// Player avatar (single avatar for demo — one person's screen)
+const avatar = { x: 300, y: 300, r: 14, speed: 3, color: '#7c3aed', dir: 0 };
+const keys = {};
+const npcs = []; // other players rendered as NPC blobs
+let droppedGun = null; // { x, y }
+
+const TRIVIA = [
+  { q: "🍝 Pasta or mac 'n' cheese?", hint: "Think about which one is the 'real' dish…", opts: ["Pasta", "Mac 'n' cheese"], answer: 0, note: "Pasta is the answer! Mac 'n' cheese is delicious, but pasta is the classic." },
+  { q: "🌡️ Cold or hot?", hint: "Sometimes staying cool is the smart choice…", opts: ["Cold", "Hot"], answer: 0, note: "Cold is the correct answer!" },
+  { q: "🤔 Can you always trust someone you've just met?", hint: "Think carefully — this is what the game is really about!", opts: ["Yes, always!", "No, not always"], answer: 1, note: "You can't always trust everyone easily. Stay alert!" },
+  { q: "🔍 If someone is acting suspicious, what should you do?", hint: "Think like a sheriff…", opts: ["Ignore it", "Watch them carefully", "Tell everyone immediately"], answer: 1, note: "Watch carefully before acting. Jumping to conclusions can be wrong!" },
+];
+let triviaIdx = 0;
+let triviaAnswered = false;
+
+// ─────────────────────────────────────────
+//  SCREEN HELPERS
+// ─────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showTitle()  { show('titleScreen'); }
+function showSetup()  { show('setupScreen'); }
+
+// ─────────────────────────────────────────
+//  SETUP → SPIN
+// ─────────────────────────────────────────
+function startSpin() {
+  const names = [];
+  for (let i = 1; i <= 6; i++) {
+    const v = document.getElementById('p' + i).value.trim();
+    if (v) names.push(v);
+  }
+  if (names.length < 3) { alert('Please enter at least 3 player names!'); return; }
+  players = names;
+  buildWheels();
+  show('spinScreen');
+}
+
+function buildWheels() {
+  const grid = document.getElementById('wheelsGrid');
+  grid.innerHTML = '';
+  players.forEach(name => {
+    const card = document.createElement('div');
+    card.className = 'wheel-card';
+    card.innerHTML = `<div class="wheel-name">${name}</div>
+      <div class="wheel-face" id="wf_${name}">❓</div>
+      <div class="wheel-result" id="wr_${name}"></div>`;
+    grid.appendChild(card);
+  });
+
+  // Assign roles
+  roles = {};
+  const shuffled = [...players].sort(() => Math.random() - .5);
+  roles[shuffled[0]] = 'murderer';
+  roles[shuffled[1]] = 'sheriff';
+  for (let i = 2; i < shuffled.length; i++) roles[shuffled[i]] = 'innocent';
+  murdererName = shuffled[0];
+  sheriffName  = shuffled[1];
+
+  document.getElementById('spinNote').textContent = '';
+  document.getElementById('spinRevealBtn').style.display = 'none';
+  document.getElementById('startGameBtn').style.display = 'none';
+
+  // Spin animation
+  const ICONS = ['🗡️','⭐','🔫','👤','❓','💫','🎭','🃏'];
+  let ticks = 0;
+  const totalTicks = 40 + Math.floor(Math.random() * 30);
+  const spinInterval = setInterval(() => {
+    ticks++;
+    players.forEach(name => {
+      const face = document.getElementById('wf_' + name);
+      face.textContent = ICONS[Math.floor(Math.random() * ICONS.length)];
+    });
+    if (ticks >= totalTicks) {
+      clearInterval(spinInterval);
+      players.forEach(name => document.getElementById('wf_' + name).textContent = '🎭');
+      document.getElementById('spinNote').textContent = 'Everyone: look at the screen one at a time to see your secret role!';
+      document.getElementById('spinRevealBtn').style.display = 'inline-block';
+    }
+  }, 80);
+}
+
+let revealIndex = 0;
+function revealRoles() {
+  if (revealIndex >= players.length) {
+    document.getElementById('spinRevealBtn').style.display = 'none';
+    document.getElementById('startGameBtn').style.display = 'inline-block';
+    document.getElementById('spinNote').textContent = 'All roles revealed! Press Start when everyone is ready. 🤫';
+    return;
+  }
+  const name = players[revealIndex];
+  const role = roles[name];
+  const emojis = { murderer: '🗡️', sheriff: '🔫', innocent: '👤' };
+  const colors = { murderer: '#ef4444', sheriff: '#f59e0b', innocent: '#6ee7b7' };
+  const labels = { murderer: 'MURDERER — eliminate everyone!', sheriff: 'SHERIFF — find and stop the murderer!', innocent: 'INNOCENT — survive 2 minutes!' };
+  
+  const el = document.getElementById('wr_' + name);
+  const face = document.getElementById('wf_' + name);
+  face.textContent = emojis[role];
+  el.textContent = labels[role];
+  el.style.color = colors[role];
+
+  setTimeout(() => {
+    // Hide after player has seen
+    el.textContent = '🤫 Role seen';
+    el.style.color = '#444';
+    face.textContent = '❓';
+    revealIndex++;
+    document.getElementById('spinNote').textContent = revealIndex < players.length
+      ? `Next: ${players[revealIndex]} — look now!`
+      : 'All roles revealed!';
+  }, 3000);
+}
+
+// ─────────────────────────────────────────
+//  GAME START
+// ─────────────────────────────────────────
+function startGame() {
+  resizeCanvas();
+  initNPCs();
+  gameTime = 120;
+  aliveSet = new Set(players);
+  droppedGun = null;
+  gunDropped = false;
+  gunPickedUp = false;
+  triviaIdx = 0;
+  triviaAnswered = false;
+  nextTriviaAt = 60;
+  show('gameScreen');
+  document.getElementById('myRole').textContent = '(only you know)';
+  document.getElementById('aliveNum').textContent = aliveSet.size;
+  document.getElementById('deadOverlay').classList.remove('show');
+  document.getElementById('triviaOverlay').classList.remove('show');
+  gameRunning = true;
+  timerInterval = setInterval(gameTick, 1000);
+  requestAnimationFrame(drawGame);
+}
+
+function resizeCanvas() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight - 40;
+  avatar.x = W / 2;
+  avatar.y = H / 2;
+}
+
+function initNPCs() {
+  npcs.length = 0;
+  const colors = ['#ef4444','#f59e0b','#6ee7b7','#60a5fa','#f472b6'];
+  players.forEach((name, i) => {
+    if (i === 0) return; // player 0 is the avatar
+    npcs.push({
+      x: 100 + Math.random() * (W - 200),
+      y: 100 + Math.random() * (H - 200),
+      r: 12,
+      name,
+      color: colors[i % colors.length],
+      alive: true,
+      vx: (Math.random() - .5) * 1.5,
+      vy: (Math.random() - .5) * 1.5,
+    });
+  });
+}
+
+// ─────────────────────────────────────────
+//  GAME LOOP
+// ─────────────────────────────────────────
+function gameTick() {
+  if (!gameRunning) return;
+  gameTime--;
+  updateTimerDisplay();
+
+  if (gameTime === nextTriviaAt && triviaIdx < TRIVIA.length) {
+    fireTrivia();
+    nextTriviaAt -= 30;
+  }
+
+  // Move NPCs randomly
+  npcs.forEach(npc => {
+    if (!npc.alive) return;
+    npc.x = Math.max(20, Math.min(W - 20, npc.x + npc.vx * 1.5));
+    npc.y = Math.max(60, Math.min(H - 20, npc.y + npc.vy * 1.5));
+    if (Math.random() < .03) { npc.vx = (Math.random() - .5) * 3; npc.vy = (Math.random() - .5) * 3; }
+  });
+
+  if (gameTime <= 0) {
+    endGame('innocents');
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(gameTime / 60);
+  const s = gameTime % 60;
+  document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ─────────────────────────────────────────
+//  DRAW
+// ─────────────────────────────────────────
+function drawGame() {
+  if (!gameRunning) return;
+  requestAnimationFrame(drawGame);
+
+  // Move avatar
+  if (!triviaActive) {
+    if (keys['ArrowLeft']  || keys['a']) { avatar.x -= avatar.speed; avatar.dir = Math.PI; }
+    if (keys['ArrowRight'] || keys['d']) { avatar.x += avatar.speed; avatar.dir = 0; }
+    if (keys['ArrowUp']    || keys['w']) { avatar.y -= avatar.speed; avatar.dir = -Math.PI/2; }
+    if (keys['ArrowDown']  || keys['s']) { avatar.y += avatar.speed; avatar.dir = Math.PI/2; }
+    avatar.x = Math.max(14, Math.min(W - 14, avatar.x));
+    avatar.y = Math.max(54, Math.min(H - 14, avatar.y));
+  }
+
+  // BG
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,40); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 40; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Hide spots (crates)
+  ctx.fillStyle = '#1e1e3f';
+  [[100,150],[W-180,120],[160,H-100],[W-200,H-140],[W/2-30,200]].forEach(([cx,cy]) => {
+    ctx.beginPath(); ctx.roundRect(cx, cy, 50, 50, 6); ctx.fill();
+    ctx.strokeStyle='#2d2d6e'; ctx.lineWidth=1; ctx.stroke();
+  });
+
+  // Dropped gun
+  if (droppedGun) {
+    ctx.font = '24px serif';
+    ctx.fillText('🔫', droppedGun.x - 12, droppedGun.y + 10);
+
+    // Check avatar near gun
+    const dx = avatar.x - droppedGun.x, dy = avatar.y - droppedGun.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 30 && !gunPickedUp) {
+      ctx.fillStyle = '#f59e0b'; ctx.font = '12px Segoe UI';
+      ctx.fillText('Click to pick up gun!', droppedGun.x - 40, droppedGun.y - 20);
+    }
+  }
+
+  // NPCs
+  npcs.forEach(npc => {
+    if (!npc.alive) return;
+    // Glow
+    const grd = ctx.createRadialGradient(npc.x, npc.y, 2, npc.x, npc.y, npc.r + 6);
+    grd.addColorStop(0, npc.color + '80');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(npc.x, npc.y, npc.r + 6, 0, Math.PI*2); ctx.fill();
+    // Body
+    ctx.fillStyle = npc.color;
+    ctx.beginPath(); ctx.arc(npc.x, npc.y, npc.r, 0, Math.PI*2); ctx.fill();
+    // Name
+    ctx.fillStyle = '#ccc'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText(npc.name, npc.x, npc.y - npc.r - 5);
+  });
+
+  // Avatar
+  const aGrd = ctx.createRadialGradient(avatar.x, avatar.y, 2, avatar.x, avatar.y, avatar.r + 8);
+  aGrd.addColorStop(0, '#7c3aed80'); aGrd.addColorStop(1, 'transparent');
+  ctx.fillStyle = aGrd;
+  ctx.beginPath(); ctx.arc(avatar.x, avatar.y, avatar.r + 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#a78bfa';
+  ctx.beginPath(); ctx.arc(avatar.x, avatar.y, avatar.r, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'center';
+  ctx.fillText('YOU', avatar.x, avatar.y - avatar.r - 5);
+  // Direction dot
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(avatar.x + Math.cos(avatar.dir)*avatar.r*.7, avatar.y + Math.sin(avatar.dir)*avatar.r*.7, 3, 0, Math.PI*2); ctx.fill();
+
+  ctx.textAlign = 'left';
+}
+
+// ─────────────────────────────────────────
+//  CLICK TO INTERACT
+// ─────────────────────────────────────────
+canvas.addEventListener('click', e => {
+  if (!gameRunning || triviaActive) return;
+  const rect = canvas.getBoundingClientRect();
+  const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+
+  // Pick up gun
+  if (droppedGun && !gunPickedUp) {
+    const dx = cx - droppedGun.x, dy = cy - droppedGun.y;
+    if (Math.sqrt(dx*dx+dy*dy) < 40) {
+      gunPickedUp = true;
+      droppedGun = null;
+      document.getElementById('roleHint').innerHTML = 'You picked up the <b style="color:#f59e0b">SHERIFF\'S GUN</b>! Click the murderer to shoot!';
+      return;
+    }
+  }
+
+  // Attack NPC (within range)
+  npcs.forEach(npc => {
+    if (!npc.alive) return;
+    const dx = cx - npc.x, dy = cy - npc.y;
+    if (Math.sqrt(dx*dx+dy*dy) > 50) return;
+
+    // Avatar NPC proximity check
+    const adx = avatar.x - npc.x, ady = avatar.y - npc.y;
+    if (Math.sqrt(adx*adx+ady*ady) > 80) return;
+
+    eliminateNPC(npc);
+  });
+});
+
+function eliminateNPC(npc) {
+  npc.alive = false;
+  aliveSet.delete(npc.name);
+  document.getElementById('aliveNum').textContent = aliveSet.size;
+
+  // If sheriff killed, drop gun
+  if (npc.name === sheriffName && !gunDropped) {
+    gunDropped = true;
+    droppedGun = { x: npc.x, y: npc.y };
+  }
+
+  // Win check: murderer killed if avatar attacks them using gun
+  if (npc.name === murdererName && gunPickedUp) {
+    endGame('sheriff');
+    return;
+  }
+
+  // If all innocents + sheriff dead
+  const aliveArr = [...aliveSet];
+  const innocentsAlive = aliveArr.filter(n => roles[n] === 'innocent' || roles[n] === 'sheriff').length;
+  if (innocentsAlive === 0) { endGame('murderer'); }
+}
+
+// ─────────────────────────────────────────
+//  TRIVIA
+// ─────────────────────────────────────────
+function fireTrivia() {
+  if (triviaIdx >= TRIVIA.length) return;
+  triviaActive = true;
+  triviaAnswered = false;
+  const t = TRIVIA[triviaIdx++];
+  document.getElementById('triviaQ').textContent = t.q;
+  document.getElementById('triviaHint').textContent = t.hint;
+  document.getElementById('triviaFb').textContent = '';
+  const optsEl = document.getElementById('triviaOpts');
+  optsEl.innerHTML = '';
+  t.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'trivia-opt';
+    btn.textContent = opt;
+    btn.onclick = () => answerTrivia(i, t, btn);
+    optsEl.appendChild(btn);
+  });
+  document.getElementById('triviaOverlay').classList.add('show');
+}
+
+function answerTrivia(idx, trivia, btn) {
+  if (triviaAnswered) return;
+  triviaAnswered = true;
+  const allBtns = document.querySelectorAll('.trivia-opt');
+  btn.classList.add(idx === trivia.answer ? 'correct' : 'wrong');
+  allBtns[trivia.answer].classList.add('correct');
+  document.getElementById('triviaFb').textContent = trivia.note;
+  setTimeout(() => {
+    document.getElementById('triviaOverlay').classList.remove('show');
+    triviaActive = false;
+  }, 2800);
+}
+
+// ─────────────────────────────────────────
+//  END GAME
+// ─────────────────────────────────────────
+function endGame(winner) {
+  gameRunning = false;
+  clearInterval(timerInterval);
+  const data = {
+    murderer: { emoji: '🗡️', title: `${murdererName} wins!`, sub: 'The murderer eliminated everyone. Nobody could be trusted…', confetti: true },
+    sheriff:  { emoji: '🔫', title: 'The Sheriff wins!', sub: `${murdererName} was the murderer all along. Justice is served!`, confetti: true },
+    innocents:{ emoji: '🕊️', title: 'Innocents survive!', sub: `The innocents stayed alive for 2 minutes. They didn't trust too easily!`, confetti: true },
+  };
+  const d = data[winner];
+  document.getElementById('endEmoji').textContent = d.emoji;
+  document.getElementById('endTitle').textContent  = d.title;
+  document.getElementById('endSub').textContent    = d.sub;
+  show('endScreen');
+  if (d.confetti) launchConfetti();
+}
+
+// ─────────────────────────────────────────
+//  CONFETTI
+// ─────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#7c3aed','#f59e0b','#6ee7b7','#ef4444','#60a5fa','#f472b6','#fff'];
+  for (let i = 0; i < 90; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.width  = (6 + Math.random() * 10) + 'px';
+      el.style.height = (6 + Math.random() * 10) + 'px';
+      el.style.animationDuration = (1.5 + Math.random() * 2.5) + 's';
+      el.style.animationDelay = '0s';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+// ─────────────────────────────────────────
+//  INPUT
+// ─────────────────────────────────────────
+window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keyup',   e => { keys[e.key] = false; });
+window.addEventListener('resize',  () => { if (gameRunning) resizeCanvas(); });
+</script>
+</body>
+</html>
