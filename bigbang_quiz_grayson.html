@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIGBANG Ultimate Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131f;
+    --card: #1c1c2e;
+    --border: #2a2a45;
+    --yellow: #FFD700;
+    --pink: #FF2D78;
+    --blue: #00C8FF;
+    --green: #00FF88;
+    --white: #F0F0FF;
+    --muted: #888aaa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; max-width: 700px; padding: 24px 16px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── HEADER ── */
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 12vw, 96px);
+    letter-spacing: 8px;
+    background: linear-gradient(135deg, var(--yellow), var(--pink), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+
+  /* MEMBERS ROW */
+  .members {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .member-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .member-chip.gd { border-color: var(--yellow); color: var(--yellow); }
+  .member-chip.top { border-color: var(--blue); color: var(--blue); }
+  .member-chip.taeyang { border-color: var(--pink); color: var(--pink); }
+  .member-chip.daesung { border-color: var(--green); color: var(--green); }
+  .member-chip.seungri { border-color: #c77dff; color: #c77dff; }
+
+  /* BUTTONS */
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .btn:hover { transform: scale(1.04); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--yellow), var(--pink));
+    color: #0a0a0f;
+    font-size: 18px;
+    padding: 16px 48px;
+  }
+  .btn-secondary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--white);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--yellow);
+    color: var(--yellow);
+  }
+
+  /* SCORE HUD */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 24px;
+  }
+  .hud-item { text-align: center; }
+  .hud-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+  .hud-value { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--yellow); }
+  .hud-value.pink { color: var(--pink); }
+  .hud-value.blue { color: var(--blue); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--yellow), var(--pink));
+    transition: width 0.4s ease;
+  }
+
+  /* QUESTION CARD */
+  .question-badge {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    align-self: flex-start;
+  }
+  .question-badge span {
+    color: var(--yellow);
+    font-weight: 700;
+  }
+  .question-text {
+    font-size: clamp(17px, 4vw, 22px);
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 0 8px;
+  }
+  .question-text.hard { color: var(--pink); }
+
+  /* ANSWER AREA */
+  .answer-input-wrap {
+    width: 100%;
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .answer-input {
+    width: 100%;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 16px;
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .answer-input:focus { border-color: var(--yellow); }
+  .answer-input.correct { border-color: var(--green); background: #001a0f; }
+  .answer-input.wrong { border-color: var(--pink); background: #1a000a; }
+
+  .mc-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .mc-btn {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    font-size: 15px;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-align: center;
+  }
+  .mc-btn:hover:not(:disabled) { border-color: var(--yellow); color: var(--yellow); }
+  .mc-btn.correct { border-color: var(--green); background: #001a0f; color: var(--green); }
+  .mc-btn.wrong { border-color: var(--pink); background: #1a000a; color: var(--pink); }
+  .mc-btn:disabled { cursor: default; }
+
+  /* FEEDBACK */
+  .feedback {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    display: none;
+  }
+  .feedback.correct { background: #001a0f; color: var(--green); border: 1px solid var(--green); display: block; }
+  .feedback.wrong { background: #1a000a; color: var(--pink); border: 1px solid var(--pink); display: block; }
+
+  .points-flash {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    animation: pointsPop 0.6s ease-out forwards;
+    opacity: 0;
+    display: none;
+  }
+  @keyframes pointsPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .points-flash.show { display: block; }
+  .points-flash.pos { color: var(--green); }
+  .points-flash.neg { color: var(--pink); }
+
+  /* DOUBLE OR NOTHING */
+  .don-banner {
+    width: 100%;
+    background: linear-gradient(135deg, #1a0a00, #2a1500);
+    border: 2px solid var(--yellow);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .don-banner h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--yellow);
+    letter-spacing: 4px;
+  }
+  .don-banner p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .don-btns { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+
+  /* LIGHTNING ROUND */
+  .lightning-banner {
+    width: 100%;
+    background: linear-gradient(135deg, #0a0020, #1a0040);
+    border: 2px solid var(--blue);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .lightning-banner h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--blue);
+    letter-spacing: 4px;
+  }
+  .lightning-timer {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    color: var(--blue);
+    display: block;
+    margin: 8px 0;
+    transition: color 0.3s;
+  }
+  .lightning-timer.urgent { color: var(--pink); }
+
+  /* RESULTS SCREEN */
+  .result-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 100px;
+    background: linear-gradient(135deg, var(--yellow), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .result-label { color: var(--muted); font-size: 14px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 32px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .stat-card .val { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--yellow); }
+  .stat-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .result-rank {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .result-msg { color: var(--muted); font-size: 14px; text-align: center; margin-bottom: 32px; }
+
+  /* CONFETTI */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ── INTRO SCREEN ── -->
+<div class="screen active" id="screen-intro">
+  <div class="logo">BIGBANG</div>
+  <div class="subtitle">Ultimate K-Pop Quiz</div>
+
+  <div class="members">
+    <span class="member-chip gd">G-Dragon</span>
+    <span class="member-chip top">T.O.P</span>
+    <span class="member-chip taeyang">Taeyang</span>
+    <span class="member-chip daesung">Daesung</span>
+    <span class="member-chip seungri">Seungri</span>
+  </div>
+
+  <div style="text-align:center; margin-bottom: 32px; color: var(--muted); font-size: 14px; line-height: 1.7;">
+    50 questions · Mixed difficulty · Get to <strong style="color:var(--yellow)">1500 points</strong> to win<br>
+    Hard questions = <strong style="color:var(--pink)">3 pts</strong> · Wrong = <strong style="color:var(--pink)">−1 pt</strong>
+  </div>
+
+  <button class="btn btn-primary" onclick="startGame()">START QUIZ</button>
+</div>
+
+<!-- ── GAME SCREEN ── -->
+<div class="screen" id="screen-game">
+  <div class="hud">
+    <div class="hud-item">
+      <div class="hud-label">Score</div>
+      <div class="hud-value" id="hud-score">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Question</div>
+      <div class="hud-value blue" id="hud-qnum">1/50</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Correct</div>
+      <div class="hud-value pink" id="hud-correct">0</div>
+    </div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <div class="question-badge">Question <span id="q-badge-num">1</span> of 50 · <span id="q-badge-diff">Normal</span></div>
+  <div class="question-text" id="question-text">Loading...</div>
+
+  <div id="mc-area" class="mc-options" style="display:none"></div>
+  <div id="typed-area" class="answer-input-wrap" style="display:none">
+    <input class="answer-input" id="typed-input" type="text" placeholder="Type your answer..." autocomplete="off" />
+  </div>
+
+  <div class="feedback" id="feedback-msg"></div>
+  <div class="points-flash" id="points-flash"></div>
+
+  <button class="btn btn-primary" id="next-btn" style="display:none; margin-top:8px;" onclick="nextQuestion()">NEXT →</button>
+  <button class="btn btn-secondary" id="submit-btn" style="margin-top:8px;" onclick="submitAnswer()">SUBMIT</button>
+</div>
+
+<!-- ── DOUBLE OR NOTHING ── -->
+<div class="screen" id="screen-don">
+  <div class="don-banner">
+    <h3>⚡ DOUBLE OR NOTHING</h3>
+    <p>Answer this bonus question correctly to <strong>DOUBLE your score!</strong><br>Get it wrong and your score drops to zero.</p>
+  </div>
+  <div class="question-badge">Bonus Round · Hard</div>
+  <div class="question-text" id="don-question">Loading...</div>
+  <div id="don-mc" class="mc-options"></div>
+  <div class="feedback" id="don-feedback"></div>
+  <button class="btn btn-primary" id="don-skip" onclick="skipDON()" style="margin-top: 12px;">Skip (keep my score)</button>
+</div>
+
+<!-- ── LIGHTNING ROUND ── -->
+<div class="screen" id="screen-lightning">
+  <div class="lightning-banner">
+    <h3>⚡ LIGHTNING ROUND</h3>
+    <p style="color:var(--muted);font-size:13px;margin-top:6px;">Answer as many as you can in 60 seconds!</p>
+    <span class="lightning-timer" id="lightning-timer">60</span>
+  </div>
+  <div class="hud" style="margin-bottom:16px;">
+    <div class="hud-item"><div class="hud-label">Score</div><div class="hud-value" id="lt-score">0</div></div>
+    <div class="hud-item"><div class="hud-label">Streak</div><div class="hud-value pink" id="lt-streak">0</div></div>
+  </div>
+  <div class="question-text" id="lt-question">Loading...</div>
+  <div class="answer-input-wrap">
+    <input class="answer-input" id="lt-input" type="text" placeholder="Type fast!" autocomplete="off" />
+  </div>
+  <div class="feedback" id="lt-feedback"></div>
+  <button class="btn btn-primary" onclick="submitLightning()" style="margin-top:8px;">SUBMIT</button>
+</div>
+
+<!-- ── RESULTS SCREEN ── -->
+<div class="screen" id="screen-results">
+  <div class="subtitle" style="margin-bottom:16px;">FINAL SCORE</div>
+  <div class="result-score" id="result-score">0</div>
+  <div class="result-label">points</div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="val" id="res-correct">0</div><div class="lbl">Correct</div></div>
+    <div class="stat-card"><div class="val" id="res-wrong">0</div><div class="lbl">Wrong</div></div>
+    <div class="stat-card"><div class="val" id="res-pct">0%</div><div class="lbl">Accuracy</div></div>
+  </div>
+  <div class="result-rank" id="res-rank"></div>
+  <div class="result-msg" id="res-msg"></div>
+  <button class="btn btn-primary" onclick="restartGame()">PLAY AGAIN</button>
+</div>
+
+<script>
+// ─── QUESTION BANK ───────────────────────────────────────────────────────────
+const allQuestions = [
+  // NORMAL (1 pt each) — typed answers
+  { q:"What year did BIGBANG debut?", a:"2006", type:"typed" },
+  { q:"BIGBANG debuted under which entertainment company?", a:"YG Entertainment", type:"typed" },
+  { q:"How many members are in BIGBANG?", a:"5", type:"typed" },
+  { q:"Which member goes by the stage name G-Dragon?", a:"Kwon Jiyong", type:"typed" },
+  { q:"What is T.O.P's real name?", a:"Choi Seunghyun", type:"typed" },
+  { q:"What is Taeyang's real name?", a:"Dong Youngbae", type:"typed" },
+  { q:"What is Daesung's real name?", a:"Kang Daesung", type:"typed" },
+  { q:"What country are BIGBANG from?", a:"South Korea", type:"typed" },
+  { q:"Which BIGBANG hit starts with the lyric themes of a toxic relationship and features an iconic red suit?", a:"Fantastic Baby", type:"typed" },
+  { q:"Name ONE of BIGBANG's most famous songs.", a:"any", type:"typed", acceptAny:true },
+  { q:"G-Dragon's 2013 solo track featured the word 'Coup' — what was the album called?", a:"Coup d'Etat", type:"typed" },
+  { q:"Which member is known for his powerful high-note singing?", a:"Taeyang", type:"typed" },
+  { q:"BIGBANG's 2012 Japanese hit 'Monster' was from which album?", a:"Still Alive", type:"typed" },
+  { q:"What is the name of BIGBANG's lightstick?", a:"Baton", type:"typed" },
+  { q:"Which member released a solo track called 'Ringa Linga'?", a:"Taeyang", type:"typed" },
+  { q:"G-Dragon released 'Crayon' in which year?", a:"2012", type:"typed" },
+  { q:"What colour is most associated with BIGBANG's fandom (VIPs)?", a:"Yellow", type:"typed" },
+  { q:"What does 'VIP' stand for in the BIGBANG fandom?", a:"Very Important Person", type:"typed" },
+  { q:"Which member is also known as D-Lite in Japan?", a:"Daesung", type:"typed" },
+  { q:"BIGBANG released 'Bang Bang Bang' in which year?", a:"2015", type:"typed" },
+  { q:"Which BIGBANG member released the solo EP 'SOLAR'?", a:"Taeyang", type:"typed" },
+  { q:"Name the sub-unit formed by G-Dragon and T.O.P.", a:"GD&TOP", type:"typed" },
+  { q:"GD&TOP released their single 'High High' in which year?", a:"2010", type:"typed" },
+  { q:"What is the name of BIGBANG's debut mini-album?", a:"BIGBANG", type:"typed" },
+  { q:"Which solo BIGBANG album is considered iconic in K-pop history: G-Dragon's 'Heartbreaker' or 'Kwon Ji Yong'?", a:"Heartbreaker", type:"typed" },
+  { q:"BIGBANG won multiple awards at the 2012 Mnet Asian Music Awards. True or false?", a:"True", type:"typed" },
+  { q:"Which member appeared in the Korean drama 'IRIS'?", a:"TOP", type:"typed" },
+  { q:"What language did BIGBANG sing in for their Japanese promotions?", a:"Japanese", type:"typed" },
+  { q:"BIGBANG's 'MADE' series was released across which year?", a:"2016", type:"typed" },
+  { q:"Which BIGBANG song features the famous 'FANTASTIC BABY' chant?", a:"Fantastic Baby", type:"typed" },
+  { q:"In their song 'Blue', what emotion is the main theme?", a:"Sadness", type:"typed" },
+  { q:"Which member is known for rapping AND producing in BIGBANG?", a:"G-Dragon", type:"typed" },
+  { q:"What city hosted the BIGBANG concert 'Alive Tour' world leg final?", a:"Newark", type:"typed" },
+  { q:"G-Dragon appeared as a solo artist at Coachella in which year?", a:"2014", type:"typed" },
+  { q:"BIGBANG's 'Lies' won Song of the Year at the 2007 Mnet KM Music Festival — True or False?", a:"True", type:"typed" },
+  { q:"Which member was born first (is the oldest)?", a:"TOP", type:"typed" },
+  { q:"T.O.P made his acting debut in which 2009 KBS2 drama?", a:"I Am Sam", type:"typed" },
+  { q:"What is the title of BIGBANG's first full-length Korean studio album (2012)?", a:"Still Alive", type:"typed" },
+  { q:"Which BIGBANG track opens with a dramatic orchestral intro before a hip-hop drop?", a:"Fantastic Baby", type:"typed" },
+  { q:"Taeyang's wedding in 2018 was with which singer/actress?", a:"Min Hyo-rin", type:"typed" },
+  // HARD (3 pts) — scattered every 8 questions
+  { q:"What was BIGBANG's first ever music video to surpass 100 million views on YouTube?", a:"Fantastic Baby", type:"mc", options:["Blue","Fantastic Baby","Bad Boy","Monster"], hard:true },
+  { q:"G-Dragon's birth name starts with which Korean surname?", a:"Kwon", type:"mc", options:["Kim","Park","Kwon","Lee"], hard:true },
+  { q:"In which city was T.O.P born?", a:"Seoul", type:"mc", options:["Busan","Seoul","Daegu","Incheon"], hard:true },
+  { q:"How many tracks appeared on BIGBANG's 2016 'MADE' full album?", a:"12", type:"mc", options:["8","10","12","14"], hard:true },
+  { q:"BIGBANG's lightstick version 3 (Baton) was released officially in which year?", a:"2016", type:"mc", options:["2014","2015","2016","2017"], hard:true },
+  // UNIQUE MULTIPLE CHOICE (only 1 in game as per Grayson's plan)
+  { q:"Which BIGBANG member is NOT a rapper?", a:"Daesung", type:"mc", options:["G-Dragon","T.O.P","Daesung","Both G-Dragon and T.O.P"], mc_unique:true },
+  // Lightning round questions (separate pool)
+];
+
+const lightningPool = [
+  { q:"BIGBANG's fandom is called?", a:"VIP" },
+  { q:"GD stands for?", a:"G-Dragon" },
+  { q:"BIGBANG debuted in?", a:"2006" },
+  { q:"Which member is known as D-Lite in Japan?", a:"Daesung" },
+  { q:"Taeyang's real name?", a:"Dong Youngbae" },
+  { q:"Song: 'FANTAST—' (complete it)", a:"Fantastic Baby" },
+  { q:"How many BIGBANG members?", a:"5" },
+  { q:"T.O.P's real surname?", a:"Choi" },
+  { q:"BIGBANG's entertainment company?", a:"YG" },
+  { q:"G-Dragon's 2013 album?", a:"Coup d'Etat" },
+  { q:"The colour of VIP lightsticks?", a:"Yellow" },
+  { q:"Sub-unit of G-Dragon + T.O.P?", a:"GD&TOP" },
+  { q:"BIGBANG song with 'crazy' chant: 'B—B—B'?", a:"Bang Bang Bang" },
+  { q:"Oldest BIGBANG member?", a:"TOP" },
+  { q:"Youngest BIGBANG member?", a:"Seungri" },
+];
+
+// ─── GAME STATE ──────────────────────────────────────────────────────────────
+let state = {
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  qIndex: 0,
+  questions: [],
+  answered: false,
+  donActive: false,
+  ltInterval: null,
+  ltTime: 60,
+  ltScore: 0,
+  ltStreak: 0,
+  ltIndex: 0,
+  ltQuestions: [],
+  usedMCUnique: false,
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = state.score;
+  document.getElementById('hud-qnum').textContent = (state.qIndex + 1) + '/50';
+  document.getElementById('hud-correct').textContent = state.correct;
+  const pct = ((state.qIndex) / 50) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function checkAnswer(given, correct, acceptAny) {
+  if (acceptAny) return true;
+  return given.trim().toLowerCase() === correct.toLowerCase();
+}
+
+// ─── BUILD QUESTION LIST ──────────────────────────────────────────────────────
+function buildQuestionList() {
+  // Separate unique MC from normal questions
+  const mcUnique = allQuestions.find(q => q.mc_unique);
+  const hardQ = allQuestions.filter(q => q.hard);
+  const normalQ = shuffle(allQuestions.filter(q => !q.hard && !q.mc_unique));
+
+  // We need 50 questions total
+  // Hard questions every ~8 questions = positions 7,15,23,31,39 (0-indexed) = 5 hard
+  // MC unique at position 4 (question 5) 
+  let pool = [];
+  let normalIdx = 0;
+  let hardIdx = 0;
+  let mcPlaced = false;
+
+  for (let i = 0; i < 50; i++) {
+    if (!mcPlaced && i === 4) {
+      pool.push(mcUnique);
+      mcPlaced = true;
+    } else if ([7, 15, 23, 31, 39].includes(i) && hardIdx < hardQ.length) {
+      pool.push(hardQ[hardIdx++]);
+    } else if (normalIdx < normalQ.length) {
+      pool.push(normalQ[normalIdx++]);
+    } else if (hardIdx < hardQ.length) {
+      pool.push(hardQ[hardIdx++]);
+    }
+  }
+  return pool;
+}
+
+// ─── START GAME ──────────────────────────────────────────────────────────────
+function startGame() {
+  state = {
+    score: 0, correct: 0, wrong: 0, qIndex: 0,
+    questions: buildQuestionList(),
+    answered: false, donActive: false,
+    ltInterval: null, ltTime: 60, ltScore: 0, ltStreak: 0, ltIndex: 0,
+    ltQuestions: shuffle(lightningPool),
+  };
+  showScreen('game');
+  renderQuestion();
+}
+
+function restartGame() {
+  startGame();
+}
+
+// ─── RENDER QUESTION ──────────────────────────────────────────────────────────
+function renderQuestion() {
+  state.answered = false;
+  const q = state.questions[state.qIndex];
+
+  document.getElementById('q-badge-num').textContent = state.qIndex + 1;
+  document.getElementById('q-badge-diff').textContent = q.hard ? '⭐ HARD — 3pts' : 'Normal — 1pt';
+  const qtEl = document.getElementById('question-text');
+  qtEl.textContent = q.q;
+  qtEl.className = 'question-text' + (q.hard ? ' hard' : '');
+
+  document.getElementById('feedback-msg').className = 'feedback';
+  document.getElementById('feedback-msg').textContent = '';
+  document.getElementById('points-flash').className = 'points-flash';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('submit-btn').style.display = 'block';
+
+  const mcArea = document.getElementById('mc-area');
+  const typedArea = document.getElementById('typed-area');
+
+  if (q.type === 'mc' || q.mc_unique) {
+    typedArea.style.display = 'none';
+    mcArea.style.display = 'grid';
+    mcArea.innerHTML = '';
+    const opts = shuffle(q.options);
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'mc-btn';
+      btn.textContent = opt;
+      btn.onclick = () => handleMC(opt, q.a, btn);
+      mcArea.appendChild(btn);
+    });
+  } else {
+    mcArea.style.display = 'none';
+    typedArea.style.display = 'block';
+    const inp = document.getElementById('typed-input');
+    inp.value = '';
+    inp.className = 'answer-input';
+    inp.disabled = false;
+    inp.focus();
+    inp.onkeydown = (e) => { if (e.key === 'Enter') submitAnswer(); };
+  }
+  updateHUD();
+}
+
+// ─── HANDLE MC CLICK ──────────────────────────────────────────────────────────
+function handleMC(chosen, correct, btn) {
+  if (state.answered) return;
+  state.answered = true;
+  const correct_answer = checkAnswer(chosen, correct, false);
+  const q = state.questions[state.qIndex];
+  const pts = q.hard ? 3 : 1;
+
+  document.querySelectorAll('.mc-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+  });
+
+  if (correct_answer) {
+    btn.classList.add('correct');
+    state.score += pts;
+    state.correct++;
+    showFeedback(true, pts);
+  } else {
+    btn.classList.add('wrong');
+    state.score = Math.max(0, state.score - 1);
+    state.wrong++;
+    showFeedback(false, -1);
+  }
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'block';
+  updateHUD();
+}
+
+// ─── SUBMIT TYPED ──────────────────────────────────────────────────────────────
+function submitAnswer() {
+  const q = state.questions[state.qIndex];
+  if (q.type === 'mc' || q.mc_unique) return;
+  if (state.answered) return;
+  state.answered = true;
+
+  const inp = document.getElementById('typed-input');
+  const given = inp.value;
+  const correct = checkAnswer(given, q.a, q.acceptAny);
+  const pts = q.hard ? 3 : 1;
+  inp.disabled = true;
+
+  if (correct) {
+    inp.classList.add('correct');
+    state.score += pts;
+    state.correct++;
+    showFeedback(true, pts);
+  } else {
+    inp.classList.add('wrong');
+    state.score = Math.max(0, state.score - 1);
+    state.wrong++;
+    showFeedback(false, -1, q.a);
+  }
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'block';
+  updateHUD();
+}
+
+function showFeedback(correct, pts, correctAnswer) {
+  const fb = document.getElementById('feedback-msg');
+  const pf = document.getElementById('points-flash');
+  if (correct) {
+    fb.className = 'feedback correct';
+    fb.textContent = ['Correct! 🔥', 'YES! ⭐', 'Amazing! 💫', 'BOOM! 🎉'][Math.floor(Math.random()*4)];
+    pf.textContent = '+' + pts + ' pts';
+    pf.className = 'points-flash pos show';
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = correctAnswer ? `Wrong! The answer was: ${correctAnswer}` : 'Wrong! −1 pt';
+    pf.textContent = '−1 pt';
+    pf.className = 'points-flash neg show';
+  }
+}
+
+// ─── NEXT QUESTION ──────────────────────────────────────────────────────────────
+function nextQuestion() {
+  state.qIndex++;
+
+  // After Q44 (index 44), trigger Double or Nothing before last 5
+  if (state.qIndex === 44) {
+    showDON();
+    return;
+  }
+
+  // After all 50 questions
+  if (state.qIndex >= 50) {
+    startLightningRound();
+    return;
+  }
+  renderQuestion();
+}
+
+// ─── DOUBLE OR NOTHING ──────────────────────────────────────────────────────────
+const donQuestions = [
+  { q:"G-Dragon's 'ONE OF A KIND' was released in which year?", a:"2012", options:["2010","2011","2012","2013"] },
+  { q:"BIGBANG's 'LOSER' and 'BAE BAE' were released as a double single on the same day. What date?", a:"1 May 2015", options:["1 May 2015","15 April 2015","7 June 2015","20 March 2015"] },
+];
+
+function showDON() {
+  const dq = donQuestions[Math.floor(Math.random() * donQuestions.length)];
+  document.getElementById('don-question').textContent = dq.q;
+  const mcEl = document.getElementById('don-mc');
+  mcEl.innerHTML = '';
+  shuffle(dq.options).forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'mc-btn';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      document.querySelectorAll('#don-mc .mc-btn').forEach(b => {
+        b.disabled = true;
+        if (b.textContent === dq.a) b.classList.add('correct');
+      });
+      const fb = document.getElementById('don-feedback');
+      if (opt === dq.a) {
+        btn.classList.add('correct');
+        state.score *= 2;
+        fb.className = 'feedback correct';
+        fb.textContent = '🎉 DOUBLED! Score is now ' + state.score + ' pts!';
+      } else {
+        btn.classList.add('wrong');
+        state.score = 0;
+        fb.className = 'feedback wrong';
+        fb.textContent = 'Wrong! Score reset to 0. The answer was: ' + dq.a;
+      }
+      document.getElementById('don-skip').textContent = 'Continue →';
+      document.getElementById('don-skip').onclick = () => {
+        state.qIndex = 44;
+        state.qIndex++;
+        showScreen('game');
+        if (state.qIndex >= 50) {
+          startLightningRound();
+        } else {
+          renderQuestion();
+        }
+      };
+    };
+    mcEl.appendChild(btn);
+  });
+  document.getElementById('don-feedback').className = 'feedback';
+  document.getElementById('don-skip').textContent = 'Skip (keep my score)';
+  document.getElementById('don-skip').onclick = skipDON;
+  showScreen('don');
+}
+
+function skipDON() {
+  state.qIndex = 45;
+  showScreen('game');
+  if (state.qIndex >= 50) {
+    startLightningRound();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ─── LIGHTNING ROUND ──────────────────────────────────────────────────────────
+function startLightningRound() {
+  state.ltTime = 60;
+  state.ltScore = state.score;
+  state.ltStreak = 0;
+  state.ltIndex = 0;
+  state.ltQuestions = shuffle(lightningPool);
+  showScreen('lightning');
+  renderLightningQ();
+  state.ltInterval = setInterval(ltTick, 1000);
+  document.getElementById('lt-input').focus();
+  document.getElementById('lt-input').onkeydown = (e) => { if (e.key === 'Enter') submitLightning(); };
+}
+
+function ltTick() {
+  state.ltTime--;
+  const el = document.getElementById('lightning-timer');
+  el.textContent = state.ltTime;
+  el.className = 'lightning-timer' + (state.ltTime <= 10 ? ' urgent' : '');
+  if (state.ltTime <= 0) {
+    clearInterval(state.ltInterval);
+    state.score = state.ltScore;
+    showResults();
+  }
+}
+
+function renderLightningQ() {
+  if (state.ltIndex >= state.ltQuestions.length) state.ltIndex = 0;
+  const lq = state.ltQuestions[state.ltIndex];
+  document.getElementById('lt-question').textContent = lq.q;
+  document.getElementById('lt-input').value = '';
+  document.getElementById('lt-input').className = 'answer-input';
+  document.getElementById('lt-feedback').className = 'feedback';
+  document.getElementById('lt-score').textContent = state.ltScore;
+  document.getElementById('lt-streak').textContent = state.ltStreak;
+}
+
+function submitLightning() {
+  const inp = document.getElementById('lt-input');
+  const lq = state.ltQuestions[state.ltIndex];
+  const correct = inp.value.trim().toLowerCase().includes(lq.a.toLowerCase()) || lq.a.toLowerCase().includes(inp.value.trim().toLowerCase());
+  const fb = document.getElementById('lt-feedback');
+  if (correct && inp.value.trim() !== '') {
+    state.ltScore += 1;
+    state.ltStreak++;
+    fb.className = 'feedback correct';
+    fb.textContent = '✓ +1';
+  } else if (inp.value.trim() !== '') {
+    state.ltStreak = 0;
+    fb.className = 'feedback wrong';
+    fb.textContent = '✗ ' + lq.a;
+  }
+  state.ltIndex++;
+  setTimeout(renderLightningQ, 400);
+}
+
+// ─── RESULTS ──────────────────────────────────────────────────────────────────
+function showResults() {
+  clearInterval(state.ltInterval);
+  const total = state.correct + state.wrong;
+  const pct = total > 0 ? Math.round((state.correct / total) * 100) : 0;
+  document.getElementById('result-score').textContent = state.score;
+  document.getElementById('res-correct').textContent = state.correct;
+  document.getElementById('res-wrong').textContent = state.wrong;
+  document.getElementById('res-pct').textContent = pct + '%';
+
+  let rank, msg;
+  if (state.score >= 1500) {
+    rank = '🏆 ULTIMATE VIP!'; msg = "You're a true BIGBANG expert. G-Dragon himself would be impressed!";
+    launchConfetti();
+  } else if (state.score >= 1000) {
+    rank = '⭐ BIGBANG STAN'; msg = "Incredible! You clearly know your BIGBANG.";
+  } else if (state.score >= 600) {
+    rank = '🎵 K-POP FAN'; msg = "Solid effort! Keep listening and learning.";
+  } else {
+    rank = '🎤 New VIP'; msg = "Welcome to the fandom! Study up and try again.";
+  }
+  document.getElementById('res-rank').textContent = rank;
+  document.getElementById('res-msg').textContent = msg;
+  showScreen('results');
+}
+
+// ─── CONFETTI ──────────────────────────────────────────────────────────────────
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colours = ['#FFD700','#FF2D78','#00C8FF','#00FF88','#c77dff','#ffffff'];
+  const pieces = Array.from({length:160}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    size: Math.random() * 10 + 4,
+    speed: Math.random() * 4 + 2,
+    angle: Math.random() * 360,
+    spin: (Math.random() - 0.5) * 6,
+    colour: colours[Math.floor(Math.random() * colours.length)],
+    wobble: Math.random() * 3,
+  }));
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.colour;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
+      ctx.restore();
+      p.y += p.speed;
+      p.x += Math.sin(frame * 0.05 + p.wobble) * 1.5;
+      p.angle += p.spin;
+    });
+    frame++;
+    if (frame < 220) requestAnimationFrame(draw);
+    else canvas.style.display = 'none';
+  }
+  draw();
+}
+</script>
+</body>
+</html>
