@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottle Flip Battle Base — Hayden's Game</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(160deg, #1a3a0a 0%, #2d5a1b 40%, #4a7c2f 100%);
+    min-height: 100vh;
+    color: #fff;
+    user-select: none;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    color: #FFD700;
+    text-shadow: 0 2px 8px #000a;
+    padding: 18px 0 4px;
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #c8e6a0;
+    margin-bottom: 10px;
+  }
+
+  /* ── TEAMS ── */
+  #teams-wrap {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 10px 10px;
+  }
+
+  .team-card {
+    background: rgba(0,0,0,0.45);
+    border: 2px solid #FFD700;
+    border-radius: 14px;
+    padding: 12px 16px;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+  .team-card.active-team {
+    border-color: #fff;
+    box-shadow: 0 0 16px #FFD700cc;
+  }
+  .team-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #FFD700;
+    text-align: center;
+  }
+  .team-flips {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+  }
+  .team-label {
+    font-size: 0.7rem;
+    text-align: center;
+    color: #b0d090;
+  }
+  .base-hp-bar-bg {
+    background: #1a3a0a;
+    border-radius: 8px;
+    height: 12px;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .base-hp-bar {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #ff4444, #ff8800, #FFD700);
+    transition: width 0.4s;
+  }
+  .base-label {
+    font-size: 0.68rem;
+    color: #c8e6a0;
+    text-align: right;
+  }
+  .upgrades-list {
+    font-size: 0.68rem;
+    color: #FFD700;
+    min-height: 18px;
+  }
+  .streak-badge {
+    font-size: 0.7rem;
+    color: #fff;
+    background: #ff6600;
+    border-radius: 20px;
+    padding: 1px 7px;
+    display: inline-block;
+    font-weight: 700;
+  }
+
+  /* ── MAIN GAME AREA ── */
+  #game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 18px;
+  }
+
+  #turn-banner {
+    font-size: 1rem;
+    color: #FFD700;
+    font-weight: 700;
+    background: rgba(0,0,0,0.4);
+    border-radius: 30px;
+    padding: 5px 22px;
+  }
+
+  /* ── BOTTLE ── */
+  #bottle-zone {
+    position: relative;
+    width: 160px;
+    height: 200px;
+    cursor: pointer;
+  }
+  #bottle-zone:hover #bottle-svg { filter: drop-shadow(0 0 16px #FFD700); }
+
+  #bottle-svg {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.05s;
+  }
+
+  .flip-prompt {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #c8e6a0;
+  }
+
+  /* ── FLIP METER ── */
+  #flip-meter-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 260px;
+  }
+  #meter-label { font-size: 0.78rem; color: #c8e6a0; }
+  #flip-meter-bg {
+    width: 100%;
+    height: 18px;
+    background: #1a3a0a;
+    border-radius: 10px;
+    border: 1.5px solid #FFD700;
+    overflow: hidden;
+  }
+  #flip-meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2ecc40, #FFD700, #ff6600);
+    border-radius: 10px;
+    transition: width 0.12s;
+  }
+  #meter-tip { font-size: 0.7rem; color: #aaa; }
+
+  /* ── BATTLE BUTTON ── */
+  #battle-btn {
+    background: linear-gradient(135deg, #8B0000, #cc2200);
+    border: 2px solid #FFD700;
+    color: #FFD700;
+    font-size: 1rem;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 10px 28px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  #battle-btn:hover { transform: scale(1.04); box-shadow: 0 0 14px #FFD700; }
+  #battle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── UPGRADE PANEL ── */
+  #upgrade-panel {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  .upgrade-btn {
+    background: rgba(0,0,0,0.5);
+    border: 1.5px solid #FFD700;
+    color: #FFD700;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .upgrade-btn:hover { background: rgba(255,215,0,0.15); }
+  .upgrade-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── LOG ── */
+  #log-box {
+    background: rgba(0,0,0,0.5);
+    border: 1.5px solid #555;
+    border-radius: 12px;
+    padding: 10px 14px;
+    width: 90%;
+    max-width: 560px;
+    height: 90px;
+    overflow-y: auto;
+    font-size: 0.78rem;
+    color: #c8e6a0;
+    line-height: 1.5;
+  }
+  #log-box p { margin-bottom: 2px; }
+  #log-box p.gold { color: #FFD700; }
+  #log-box p.red  { color: #ff8888; }
+  #log-box p.pup  { color: #ff6600; font-weight: 700; }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal-overlay.show { display: flex; }
+  #modal-box {
+    background: linear-gradient(160deg, #1a3a0a, #2d5a1b);
+    border: 3px solid #FFD700;
+    border-radius: 20px;
+    padding: 30px 40px;
+    text-align: center;
+    max-width: 380px;
+  }
+  #modal-box h2 { font-size: 1.8rem; color: #FFD700; margin-bottom: 10px; }
+  #modal-box p  { color: #c8e6a0; font-size: 0.95rem; margin-bottom: 16px; }
+  #modal-btn {
+    background: #FFD700;
+    color: #1a3a0a;
+    font-weight: 900;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 30px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  #level-banner {
+    font-size: 0.85rem;
+    color: #fff;
+    background: rgba(0,0,0,0.35);
+    border-radius: 20px;
+    padding: 3px 14px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🍶 Bottle Flip Battle Base</h1>
+<p class="subtitle">Hayden's Game — Flip, Battle, Upgrade, Dominate!</p>
+
+<div id="teams-wrap"></div>
+
+<div id="game-area">
+  <div id="turn-banner">Team 1's Turn</div>
+  <div id="level-banner">Level 1</div>
+
+  <div id="bottle-zone" onclick="flipBottle()">
+    <svg id="bottle-svg" viewBox="0 0 80 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="bodyClip">
+          <rect x="18" y="32" width="44" height="100" rx="12"/>
+        </clipPath>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Body bg -->
+      <rect x="18" y="32" width="44" height="100" rx="12" fill="#c8eaff" stroke="#a8d8f0" stroke-width="2"/>
+      <!-- Charge water fill — clipped to body, y and height driven by JS -->
+      <rect id="charge-fill" x="20" y="130" width="40" height="0" rx="8" fill="#4ab8e8" opacity="0.85" clip-path="url(#bodyClip)"/>
+      <!-- Sweet-spot shimmer — shown only in sweet zone -->
+      <rect id="sweet-shimmer" x="18" y="32" width="44" height="100" rx="12" fill="#FFD700" opacity="0" clip-path="url(#bodyClip)"/>
+      <!-- Label -->
+      <rect x="22" y="66" width="36" height="30" rx="6" fill="#FFD700" opacity="0.85"/>
+      <text x="40" y="85" text-anchor="middle" font-size="8" font-weight="bold" fill="#1a3a0a">FLIP!</text>
+      <!-- Cap -->
+      <rect x="28" y="4" width="24" height="14" rx="4" fill="#2980b9"/>
+      <!-- Neck -->
+      <rect x="32" y="16" width="16" height="18" rx="3" fill="#a8d8f0"/>
+      <!-- Base -->
+      <rect x="20" y="130" width="40" height="8" rx="4" fill="#a8d8f0"/>
+      <!-- Shine -->
+      <rect x="24" y="36" width="8" height="60" rx="4" fill="#fff" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <p class="flip-prompt">👆 Tap the bottle to flip!</p>
+
+  <div id="flip-meter-wrap">
+    <div id="meter-label">Flip Power: <span id="meter-val">0</span>%</div>
+    <div id="flip-meter-bg"><div id="flip-meter-fill"></div></div>
+    <div id="meter-tip">Hold and release for best flip timing!</div>
+  </div>
+
+  <button id="battle-btn" onclick="doAttack()" disabled>⚔️ BATTLE! Use 50 Flips</button>
+
+  <div id="upgrade-panel">
+    <button class="upgrade-btn" onclick="buyUpgrade('shield')" id="btn-shield">🛡️ Shield (100 flips)</button>
+    <button class="upgrade-btn" onclick="buyUpgrade('cannon')" id="btn-cannon">💣 Cannon (150 flips)</button>
+    <button class="upgrade-btn" onclick="buyUpgrade('medkit')" id="btn-medkit">❤️ Medkit (80 flips)</button>
+    <button class="upgrade-btn" onclick="endTurn()" id="btn-endturn">➡️ End Turn</button>
+  </div>
+
+  <div id="log-box"></div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2 id="modal-title">🎉 Winner!</h2>
+    <p id="modal-msg">Team 1 wins the battle!</p>
+    <button id="modal-btn" onclick="restartGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ── GAME STATE ──
+const NUM_TEAMS = 4;
+const BASE_HP = 500;
+const LEVEL_TARGET = 1000;
+const STREAK_BONUS_THRESHOLD = 100; // consecutive flips for power-up
+
+const UPGRADES = {
+  shield: { name: '🛡️ Shield', cost: 100, effect: 'Reduces next attack damage by 50%' },
+  cannon: { name: '💣 Cannon', cost: 150, effect: 'Next attack deals double damage' },
+  medkit: { name: '❤️ Medkit', cost: 80,  effect: 'Restore 80 base HP' }
+};
+
+let teams, currentTeam, level, gameOver;
+let flipHolding = false, flipStartTime = 0, flipAnimFrame = null;
+let consecutiveFlips = 0; // per-turn streak
+
+function initGame() {
+  teams = Array.from({length: NUM_TEAMS}, (_, i) => ({
+    name: `Team ${i+1}`,
+    flips: 0,
+    totalFlips: 0,
+    baseHP: BASE_HP,
+    maxHP: BASE_HP,
+    shield: false,
+    cannon: false,
+    upgrades: [],
+    streak: 0,
+    eliminated: false
+  }));
+  currentTeam = 0;
+  level = 1;
+  gameOver = false;
+  consecutiveFlips = 0;
+  render();
+  log(`🍶 Game started! <b>Team 1</b> goes first. Flip the bottle!`);
+}
+
+// ── RENDER ──
+function render() {
+  // Teams
+  const wrap = document.getElementById('teams-wrap');
+  wrap.innerHTML = '';
+  teams.forEach((t, i) => {
+    const hpPct = Math.max(0, (t.baseHP / t.maxHP) * 100).toFixed(0);
+    const card = document.createElement('div');
+    card.className = 'team-card' + (i === currentTeam && !gameOver ? ' active-team' : '');
+    card.innerHTML = `
+      <div class="team-name">${t.eliminated ? '💀 ' : ''}${t.name}</div>
+      <div class="team-flips">${t.flips} <span style="font-size:0.8rem;color:#FFD700">flips</span></div>
+      <div class="team-label">Total earned: ${t.totalFlips}</div>
+      <div class="base-hp-bar-bg"><div class="base-hp-bar" style="width:${hpPct}%"></div></div>
+      <div class="base-label">Base HP: ${t.baseHP}/${t.maxHP}</div>
+      <div class="upgrades-list">${t.upgrades.slice(-2).join(' ') || '—'}</div>
+      ${t.streak >= 10 ? `<div class="streak-badge">🔥 ${t.streak} streak!</div>` : ''}
+    `;
+    wrap.appendChild(card);
+  });
+
+  // Turn banner
+  document.getElementById('turn-banner').textContent = gameOver
+    ? '🏆 Game Over!'
+    : `${teams[currentTeam].name}'s Turn`;
+
+  // Level
+  document.getElementById('level-banner').textContent =
+    `Level ${level} — Reach ${level * LEVEL_TARGET} total flips to advance!`;
+
+  // Battle button
+  const bt = document.getElementById('battle-btn');
+  bt.disabled = teams[currentTeam].flips < 50 || gameOver;
+}
+
+// ── FLIP LOGIC ──
+const bottleZone = document.getElementById('bottle-zone');
+const bottleSvg  = document.getElementById('bottle-svg');
+
+// Click-based timing: click starts hold, release triggers flip
+bottleZone.addEventListener('mousedown', startHold);
+bottleZone.addEventListener('touchstart', e => { e.preventDefault(); startHold(); }, {passive: false});
+bottleZone.addEventListener('mouseup', releaseFlip);
+bottleZone.addEventListener('touchend', e => { e.preventDefault(); releaseFlip(); }, {passive: false});
+
+function startHold() {
+  if (gameOver) return;
+  flipHolding = true;
+  flipStartTime = Date.now();
+  animMeter();
+}
+
+function animMeter() {
+  if (!flipHolding) return;
+  const elapsed = Date.now() - flipStartTime;
+  const pct = Math.min(100, Math.round((elapsed / 600) * 120));
+  const safePct = Math.min(pct, 100);
+
+  // Bar meter
+  document.getElementById('flip-meter-fill').style.width = safePct + '%';
+  document.getElementById('meter-val').textContent = safePct;
+
+  // In-bottle water fill: rises from bottom (y=130) up by up to 98px
+  const waterH = Math.round((safePct / 100) * 98);
+  const waterY = 130 - waterH;
+  const fill = document.getElementById('charge-fill');
+  fill.setAttribute('y', waterY);
+  fill.setAttribute('height', waterH);
+
+  // Water colour: green → gold → orange → red as charge rises
+  let colour;
+  if (safePct < 40)       colour = '#2ecc40';
+  else if (safePct < 65)  colour = '#FFD700';
+  else if (safePct < 85)  colour = '#ff8800';
+  else                    colour = '#ff3300';
+  fill.setAttribute('fill', colour);
+
+  // Sweet-spot shimmer pulse (65–85%)
+  const shimmer = document.getElementById('sweet-shimmer');
+  const inSweet = safePct >= 65 && safePct <= 85;
+  shimmer.setAttribute('opacity', inSweet ? (0.12 + 0.08 * Math.sin(Date.now() / 80)) : 0);
+
+  // Bottle glow when in sweet spot
+  document.getElementById('bottle-svg').style.filter =
+    inSweet ? 'drop-shadow(0 0 12px #FFD700)' : 'none';
+
+  flipAnimFrame = requestAnimationFrame(animMeter);
+}
+
+function releaseFlip() {
+  if (!flipHolding) return;
+  flipHolding = false;
+  cancelAnimationFrame(flipAnimFrame);
+
+  const elapsed = Date.now() - flipStartTime;
+  flipBottleWithTiming(elapsed);
+
+  // Reset meter and bottle visuals after short delay
+  setTimeout(() => {
+    document.getElementById('flip-meter-fill').style.width = '0%';
+    document.getElementById('meter-val').textContent = '0';
+    const fill = document.getElementById('charge-fill');
+    fill.setAttribute('y', 130); fill.setAttribute('height', 0);
+    document.getElementById('sweet-shimmer').setAttribute('opacity', 0);
+    document.getElementById('bottle-svg').style.filter = 'none';
+  }, 600);
+}
+
+// Remove the onclick from bottle-zone (handled by mouse/touch events above)
+document.getElementById('bottle-zone').onclick = null;
+
+function flipBottle() {} // no-op placeholder, real logic via events
+
+function flipBottleWithTiming(elapsed) {
+  if (gameOver || teams[currentTeam].eliminated) return;
+  const t = teams[currentTeam];
+
+  // Sweet spot: 250–700ms = 1 flip, 700–900ms = 2, <100ms or >1200ms = miss
+  let landed = false, gained = 0;
+  if (elapsed < 100) {
+    landed = false; gained = 0;
+    consecutiveFlips = 0; t.streak = 0;
+    animBottle(false);
+    log(`❌ <b>${t.name}</b> flipped too fast — missed!`);
+  } else if (elapsed > 1200) {
+    landed = false; gained = 0;
+    consecutiveFlips = 0; t.streak = 0;
+    animBottle(false);
+    log(`❌ <b>${t.name}</b> held too long — bottle tipped over!`);
+  } else {
+    // Probability: sweet zone 250-700 → 80%, outer → 50%
+    const inSweet = elapsed >= 250 && elapsed <= 700;
+    const chance = inSweet ? 0.80 : 0.50;
+    landed = Math.random() < chance;
+    if (landed) {
+      gained = elapsed >= 700 && elapsed <= 900 ? 2 : 1;
+      t.flips += gained;
+      t.totalFlips += gained;
+      consecutiveFlips += gained;
+      t.streak++;
+      animBottle(true);
+
+      // Streak power-up: every 100 consecutive flips
+      if (consecutiveFlips >= STREAK_BONUS_THRESHOLD) {
+        t.flips += 1000;
+        t.totalFlips += 1000;
+        consecutiveFlips = 0;
+        log(`<span class="pup">💥 POWER-UP! ${t.name} landed 100 in a row — +1,000 bonus flips!</span>`);
+      } else if (gained === 2) {
+        log(`🍶 <b class="gold">${t.name}</b> landed a <b>DOUBLE FLIP</b>! +2 flips (streak: ${t.streak})`);
+      } else {
+        log(`🍶 <b>${t.name}</b> landed it! +1 flip (streak: ${t.streak})`);
+      }
+
+      // Level check
+      if (t.totalFlips >= level * LEVEL_TARGET) {
+        level++;
+        log(`<span class="gold">🏆 LEVEL UP! Now Level ${level}! Next target: ${level * LEVEL_TARGET} total flips!</span>`);
+      }
+    } else {
+      animBottle(false);
+      consecutiveFlips = 0; t.streak = 0;
+      log(`❌ <b>${t.name}</b> missed the flip!`);
+    }
+  }
+
+  render();
+  document.getElementById('battle-btn').disabled = t.flips < 50 || gameOver;
+}
+
+function animBottle(success) {
+  bottleSvg.style.transform = success ? 'rotate(360deg)' : 'rotate(30deg)';
+  setTimeout(() => bottleSvg.style.transform = 'rotate(0deg)', success ? 500 : 300);
+}
+
+// ── ATTACK ──
+function doAttack() {
+  if (gameOver) return;
+  const attacker = teams[currentTeam];
+  if (attacker.flips < 50) return;
+
+  // Pick target: lowest HP non-self, non-eliminated
+  const targets = teams.filter((t, i) => i !== currentTeam && !t.eliminated);
+  if (targets.length === 0) return;
+  const target = targets.reduce((a, b) => a.baseHP < b.baseHP ? a : b);
+
+  attacker.flips -= 50;
+  let dmg = 50;
+  if (attacker.cannon) { dmg *= 2; attacker.cannon = false; attacker.upgrades = attacker.upgrades.filter(u => u !== '💣 Cannon'); }
+  if (target.shield)   { dmg = Math.floor(dmg * 0.5); target.shield = false; target.upgrades = target.upgrades.filter(u => u !== '🛡️ Shield'); }
+
+  target.baseHP = Math.max(0, target.baseHP - dmg);
+
+  const shieldMsg = target.shield ? ' (shield halved damage!)' : '';
+  const cannonMsg = attacker.cannon ? ' CANNON BLAST!' : '';
+  log(`⚔️ <b>${attacker.name}</b>${cannonMsg} attacked <b>${target.name}</b> for ${dmg} damage!${shieldMsg}`);
+
+  if (target.baseHP <= 0) {
+    target.eliminated = true;
+    log(`💀 <b>${target.name}</b>'s base is destroyed — ELIMINATED!`, 'red');
+    checkWin();
+  }
+
+  render();
+}
+
+// ── UPGRADES ──
+function buyUpgrade(type) {
+  const t = teams[currentTeam];
+  const u = UPGRADES[type];
+  if (t.flips < u.cost) {
+    log(`❌ Not enough flips! Need ${u.cost}, have ${t.flips}.`);
+    return;
+  }
+  t.flips -= u.cost;
+  t.upgrades.push(u.name);
+  if (type === 'shield') t.shield = true;
+  if (type === 'cannon') t.cannon = true;
+  if (type === 'medkit') { t.baseHP = Math.min(t.maxHP, t.baseHP + 80); }
+  log(`<span class="gold">🛠️ ${t.name} bought ${u.name}! ${u.effect}</span>`);
+  render();
+}
+
+// ── TURN MANAGEMENT ──
+function endTurn() {
+  if (gameOver) return;
+  consecutiveFlips = 0;
+  // Next non-eliminated team
+  let next = (currentTeam + 1) % NUM_TEAMS;
+  let tries = 0;
+  while (teams[next].eliminated && tries < NUM_TEAMS) {
+    next = (next + 1) % NUM_TEAMS;
+    tries++;
+  }
+  currentTeam = next;
+  render();
+  log(`➡️ <b>${teams[currentTeam].name}</b>'s turn begins!`);
+}
+
+// ── WIN CHECK ──
+function checkWin() {
+  const alive = teams.filter(t => !t.eliminated);
+  if (alive.length === 1) {
+    gameOver = true;
+    showModal(`🏆 ${alive[0].name} Wins!`,
+      `${alive[0].name} destroyed all enemy bases!\nTotal flips earned: ${alive[0].totalFlips}`);
+  }
+}
+
+function showModal(title, msg) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent = msg;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function restartGame() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('log-box').innerHTML = '';
+  initGame();
+}
+
+function log(msg, cls) {
+  const box = document.getElementById('log-box');
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.innerHTML = msg;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── START ──
+initGame();
+</script>
+</body>
+</html>
