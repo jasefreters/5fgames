@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the NRL Player</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Inter:wght@400;600;700&display=swap');
+
+  :root {
+    --green: #00843D;
+    --gold: #FFD100;
+    --dark: #0a0a0a;
+    --panel: #111827;
+    --surface: #1f2937;
+    --border: #374151;
+    --text: #f9fafb;
+    --muted: #9ca3af;
+    --red: #ef4444;
+    --correct: #22c55e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Header */
+  header {
+    width: 100%;
+    background: var(--green);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,132,61,0.4);
+  }
+  header h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.4);
+  }
+  header .badge {
+    background: var(--gold);
+    color: var(--dark);
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Scoreboard */
+  #scoreboard {
+    display: flex;
+    gap: 12px;
+    padding: 12px 24px;
+    width: 100%;
+    max-width: 700px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .score-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 100px;
+  }
+  .score-box .label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .score-box .value { font-size: 1.8rem; font-weight: 700; color: var(--gold); line-height: 1.2; }
+
+  /* Main game area */
+  #game-area {
+    width: 100%;
+    max-width: 700px;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Clue card */
+  #clue-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+  }
+  #clue-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--green);
+    font-weight: 700;
+  }
+  #clue-number {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  #clues-revealed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+  }
+  .clue-item {
+    background: var(--surface);
+    border-left: 3px solid var(--green);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    color: var(--text);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  #next-clue-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  #next-clue-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+  #next-clue-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* Answer input */
+  #answer-area {
+    display: flex;
+    gap: 10px;
+  }
+  #answer-input {
+    flex: 1;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #answer-input:focus { border-color: var(--green); }
+  #answer-input.correct-flash { border-color: var(--correct); background: rgba(34,197,94,0.08); }
+  #answer-input.wrong-flash { border-color: var(--red); background: rgba(239,68,68,0.08); }
+
+  #submit-btn {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: 'Inter', sans-serif;
+  }
+  #submit-btn:hover { background: #006b30; }
+  #submit-btn:active { transform: scale(0.97); }
+
+  /* Feedback message */
+  #feedback {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    min-height: 28px;
+    padding: 4px;
+  }
+  .feedback-correct { color: var(--correct); }
+  .feedback-wrong { color: var(--red); }
+  .feedback-reveal { color: var(--gold); }
+
+  /* Lifeline */
+  #lifeline-area {
+    display: flex;
+    justify-content: center;
+  }
+  #lifeline-btn {
+    background: var(--gold);
+    color: var(--dark);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    font-family: 'Inter', sans-serif;
+  }
+  #lifeline-btn:hover:not(:disabled) { opacity: 0.9; }
+  #lifeline-btn:active { transform: scale(0.97); }
+  #lifeline-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* 50/50 options */
+  #fifty-fifty-area {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ff-option {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+  }
+  .ff-option:hover { border-color: var(--green); color: var(--green); }
+
+  /* Skip / Next */
+  #skip-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  #skip-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Progress bar */
+  #progress-bar-wrap {
+    width: 100%;
+    background: var(--panel);
+    border-radius: 999px;
+    height: 6px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: var(--green);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  /* End screen */
+  #end-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 40px 24px;
+  }
+  #end-screen h2 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+  }
+  #final-score {
+    font-size: 1.2rem;
+    color: var(--muted);
+  }
+  #play-again-btn {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 36px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s;
+  }
+  #play-again-btn:hover { background: #006b30; }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Start screen */
+  #start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 24px;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  #start-screen h2 { font-family: 'Black Han Sans', sans-serif; font-size: 2rem; color: var(--gold); }
+  #start-screen p { color: var(--muted); line-height: 1.6; }
+  #start-btn {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.2s;
+  }
+  #start-btn:hover { background: #006b30; }
+  .rules-list {
+    text-align: left;
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 16px 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .rules-list li { font-size: 0.9rem; color: var(--text); list-style: none; display: flex; gap: 8px; }
+  .rules-list li::before { content: "🏉"; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+  <h1>🏉 Guess the NRL Player</h1>
+  <span class="badge">by Kaiden</span>
+</header>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <h2>Guess the NRL Player</h2>
+  <p>Can you identify 20 NRL legends from the clues? Score points for correct answers, but wrong guesses cost you!</p>
+  <ul class="rules-list">
+    <li>Reveal one clue at a time — the fewer clues you need, the cooler you are</li>
+    <li>✅ Correct = +1 point</li>
+    <li>❌ Wrong = −1 point</li>
+    <li>💡 One 50/50 lifeline per game</li>
+    <li>Most points at the end wins!</li>
+  </ul>
+  <button id="start-btn" onclick="startGame()">Let's Play!</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" style="display:none; width:100%; max-width:700px;">
+  <div id="scoreboard">
+    <div class="score-box"><div class="label">Score</div><div class="value" id="score-display">0</div></div>
+    <div class="score-box"><div class="label">Player</div><div class="value" id="player-num">1/20</div></div>
+    <div class="score-box"><div class="label">Correct</div><div class="value" id="correct-count">0</div></div>
+  </div>
+
+  <div id="game-area">
+    <!-- Progress -->
+    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+
+    <!-- Clue card -->
+    <div id="clue-card">
+      <div id="clue-number"></div>
+      <div id="clue-label">🏉 Who am I?</div>
+      <div id="clues-revealed"></div>
+      <button id="next-clue-btn" onclick="revealNextClue()">Reveal next clue ▼</button>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback"></div>
+
+    <!-- 50/50 area -->
+    <div id="fifty-fifty-area"></div>
+
+    <!-- Answer -->
+    <div id="answer-area">
+      <input type="text" id="answer-input" placeholder="Type the player's name..." autocomplete="off" onkeydown="if(event.key==='Enter') submitAnswer()">
+      <button id="submit-btn" onclick="submitAnswer()">Guess</button>
+    </div>
+
+    <!-- Lifeline -->
+    <div id="lifeline-area">
+      <button id="lifeline-btn" onclick="useFiftyFifty()">💡 50/50 Lifeline</button>
+    </div>
+
+    <!-- Skip -->
+    <button id="skip-btn" onclick="skipPlayer()">Skip this player →</button>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen">
+  <div style="font-size:4rem">🏆</div>
+  <h2>Game Over!</h2>
+  <div id="final-score"></div>
+  <button id="play-again-btn" onclick="restartGame()">Play Again</button>
+</div>
+
+<script>
+// ─── Player Database ──────────────────────────────────────────────────────────
+const players = [
+  {
+    name: "Cameron Smith",
+    aliases: ["cam smith"],
+    clues: [
+      "I played my entire NRL career for the Melbourne Storm.",
+      "I am a hooker and was known for my incredible field goal accuracy.",
+      "I hold the record for most NRL appearances ever — over 400 games.",
+      "I captained Queensland and Australia for many years."
+    ],
+    options: ["Cameron Smith", "Cooper Cronk", "Billy Slater", "Johnathan Thurston"]
+  },
+  {
+    name: "Johnathan Thurston",
+    aliases: ["jt", "jonathan thurston"],
+    clues: [
+      "I played all my NRL career in North Queensland.",
+      "I am a halfback famous for my incredibly accurate kicking game.",
+      "I won four Dally M Medals — more than any other player.",
+      "I helped the Cowboys win their first premiership in 2015."
+    ],
+    options: ["Johnathan Thurston", "Cooper Cronk", "Benji Marshall", "Andrew Johns"]
+  },
+  {
+    name: "Andrew Johns",
+    aliases: ["joey", "joey johns"],
+    clues: [
+      "I played for the Newcastle Knights my entire NRL career.",
+      "I am widely considered the greatest halfback of all time.",
+      "I won two Dally M Medals and two premierships.",
+      "My nickname is 'Joey'."
+    ],
+    options: ["Andrew Johns", "Johnathan Thurston", "Laurie Daley", "Brad Fittler"]
+  },
+  {
+    name: "Billy Slater",
+    aliases: [],
+    clues: [
+      "I played fullback for the Melbourne Storm for my entire career.",
+      "I was known as one of the fastest and most elusive players in the game.",
+      "I was named in the NRL's Team of the Century as fullback.",
+      "I won three NRL premierships with Melbourne."
+    ],
+    options: ["Billy Slater", "Darius Boyd", "Greg Inglis", "Latrell Mitchell"]
+  },
+  {
+    name: "Greg Inglis",
+    aliases: ["gi", "goanna"],
+    clues: [
+      "I played for Melbourne Storm and South Sydney Rabbitohs.",
+      "I could play centre, fullback, and wing — I was incredibly versatile.",
+      "My stepping ability earned me the nickname 'The Goanna'.",
+      "I captained Australia and Queensland and retired in 2019."
+    ],
+    options: ["Greg Inglis", "Jarryd Hayne", "Israel Folau", "Justin Hodges"]
+  },
+  {
+    name: "Jarryd Hayne",
+    aliases: [],
+    clues: [
+      "I played for the Parramatta Eels and Gold Coast Titans.",
+      "I briefly left the NRL to trial for the San Francisco 49ers in the NFL.",
+      "I won two Dally M Medals.",
+      "I am a fullback known for my powerful running and offloads."
+    ],
+    options: ["Jarryd Hayne", "Greg Inglis", "Darius Boyd", "Anthony Minichiello"]
+  },
+  {
+    name: "Latrell Mitchell",
+    aliases: [],
+    clues: [
+      "I play for the South Sydney Rabbitohs.",
+      "I started my career at the Sydney Roosters and won a premiership there.",
+      "I am known for my long-range kicking game as a fullback.",
+      "I represent New South Wales and Australia."
+    ],
+    options: ["Latrell Mitchell", "James Tedesco", "Ryan Papenhuyzen", "Tom Trbojevic"]
+  },
+  {
+    name: "James Tedesco",
+    aliases: ["teddy"],
+    clues: [
+      "I play fullback for the Sydney Roosters.",
+      "I won a Clive Churchill Medal in the 2018 NRL Grand Final.",
+      "I am known for my incredible footwork and ability to break tackles.",
+      "I have been named Dally M Fullback of the Year multiple times."
+    ],
+    options: ["James Tedesco", "Latrell Mitchell", "Tom Trbojevic", "Kalyn Ponga"]
+  },
+  {
+    name: "Tom Trbojevic",
+    aliases: ["tommy turbo", "turbo"],
+    clues: [
+      "I play for the Manly Sea Eagles.",
+      "My nickname is 'Tommy Turbo'.",
+      "I won the Dally M Medal in 2021 with a record-breaking season.",
+      "I can play fullback, centre, or wing."
+    ],
+    options: ["Tom Trbojevic", "James Tedesco", "Kalyn Ponga", "Ryan Papenhuyzen"]
+  },
+  {
+    name: "Kalyn Ponga",
+    aliases: ["kp"],
+    clues: [
+      "I play for the Newcastle Knights.",
+      "I grew up in Queensland and represent the Maroons.",
+      "I am a fullback known for my flair and skill — some call me the next great.",
+      "I have Indigenous and Māori heritage and wear the number 1 jersey."
+    ],
+    options: ["Kalyn Ponga", "Tom Trbojevic", "Valentine Holmes", "David Fifita"]
+  },
+  {
+    name: "Nathan Cleary",
+    aliases: [],
+    clues: [
+      "I play halfback for the Penrith Panthers.",
+      "My father is Ivan Cleary, the Panthers head coach.",
+      "I have won multiple NRL premierships with Penrith.",
+      "I won the Dally M Medal and am known for my clutch field goals."
+    ],
+    options: ["Nathan Cleary", "Jarome Luai", "Nicho Hynes", "Mitchell Moses"]
+  },
+  {
+    name: "Penrith Panthers",
+    aliases: [],
+    clues: [
+      "This team won four NRL premierships in a row from 2021 to 2024.",
+      "They are based in Western Sydney.",
+      "Their captain during their dynasty was Nathan Cleary.",
+      "Their home ground is BlueBet Stadium."
+    ],
+    options: ["Penrith Panthers", "Melbourne Storm", "Brisbane Broncos", "Sydney Roosters"]
+  },
+  {
+    name: "David Fifita",
+    aliases: [],
+    clues: [
+      "I am a powerful back-rower who plays for the Gold Coast Titans.",
+      "I previously played for the Brisbane Broncos.",
+      "I am known for my enormous size and ability to break tackles.",
+      "I represent Queensland and have Tongan heritage."
+    ],
+    options: ["David Fifita", "Payne Haas", "Patrick Carrigan", "Tino Fa'asuamaleaui"]
+  },
+  {
+    name: "Cooper Cronk",
+    aliases: [],
+    clues: [
+      "I played halfback for Melbourne Storm and then the Sydney Roosters.",
+      "I won premierships with two different clubs.",
+      "I played in the 2018 Grand Final with a torn shoulder — the match became famous.",
+      "I won three Dally M Halfback of the Year awards."
+    ],
+    options: ["Cooper Cronk", "Cameron Smith", "Andrew Johns", "Nathan Cleary"]
+  },
+  {
+    name: "Benji Marshall",
+    aliases: [],
+    clues: [
+      "I am a five-eighth famous for a magical flick pass in the 2005 Grand Final.",
+      "I played most of my career for the Wests Tigers.",
+      "I retired in 2021 after one final season with the Brisbane Broncos.",
+      "I am now a well-known NRL commentator."
+    ],
+    options: ["Benji Marshall", "Todd Carney", "Michael Ennis", "Braith Anasta"]
+  },
+  {
+    name: "Israel Folau",
+    aliases: [],
+    clues: [
+      "I played centre and wing for the Brisbane Broncos and then Melbourne Storm.",
+      "I left rugby league and became a star in AFL and then rugby union.",
+      "I represented Australia in three different football codes.",
+      "I returned to NRL late in my career with the Catalan Dragons."
+    ],
+    options: ["Israel Folau", "Jarryd Hayne", "Greg Inglis", "Will Chambers"]
+  },
+  {
+    name: "Ryan Papenhuyzen",
+    aliases: [],
+    clues: [
+      "I play fullback for the Melbourne Storm.",
+      "I am known as one of the fastest players in the NRL.",
+      "I scored a hat-trick in the 2020 Grand Final.",
+      "My name is very hard to spell — most fans just call me 'Paps'."
+    ],
+    options: ["Ryan Papenhuyzen", "James Tedesco", "Harry Grant", "Brandon Smith"]
+  },
+  {
+    name: "Payne Haas",
+    aliases: [],
+    clues: [
+      "I am a prop for the Brisbane Broncos.",
+      "I am considered one of the most powerful front-rowers in the game.",
+      "I represent New South Wales in State of Origin.",
+      "I have been named Dally M Prop of the Year multiple times."
+    ],
+    options: ["Payne Haas", "David Fifita", "Tevita Pangai Jr", "Matt Lodge"]
+  },
+  {
+    name: "Nicho Hynes",
+    aliases: [],
+    clues: [
+      "I play halfback for the Cronulla Sharks.",
+      "I previously played for the Melbourne Storm.",
+      "I won the Dally M Medal in 2022.",
+      "I also play as a utility — I have filled in at fullback and five-eighth."
+    ],
+    options: ["Nicho Hynes", "Nathan Cleary", "Shaun Johnson", "Adam Reynolds"]
+  },
+  {
+    name: "Mitchell Moses",
+    aliases: [],
+    clues: [
+      "I play halfback for the Parramatta Eels.",
+      "I am known for my deadly kicking game, especially in the final minutes.",
+      "I have Lebanese heritage and represent Lebanon in internationals.",
+      "I have been one of the Eels' most important players for several seasons."
+    ],
+    options: ["Mitchell Moses", "Nathan Cleary", "Kieran Foran", "Reed Mahoney"]
+  }
+];
+
+// ─── Game State ───────────────────────────────────────────────────────────────
+let score = 0;
+let correctCount = 0;
+let currentIndex = 0;
+let currentPlayer = null;
+let clueIndex = 0;
+let lifelineUsed = false;
+let answeredCurrent = false;
+let shuffledPlayers = [];
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+let confettiPieces = [];
+let confettiActive = false;
+
+function launchConfetti() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  confettiPieces = [];
+  for (let i = 0; i < 140; i++) {
+    confettiPieces.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 200,
+      w: 8 + Math.random() * 6,
+      h: 10 + Math.random() * 8,
+      color: ['#FFD100','#00843D','#ffffff','#ef4444','#3b82f6'][Math.floor(Math.random()*5)],
+      rot: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.15,
+      vx: (Math.random() - 0.5) * 4,
+      vy: 3 + Math.random() * 4
+    });
+  }
+  confettiActive = true;
+  animateConfetti();
+}
+
+function animateConfetti() {
+  if (!confettiActive) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let allDone = true;
+  for (const p of confettiPieces) {
+    p.x += p.vx; p.y += p.vy; p.rot += p.spin;
+    if (p.y < canvas.height + 20) allDone = false;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+  }
+  if (!allDone) requestAnimationFrame(animateConfetti);
+  else { confettiActive = false; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+}
+
+// ─── Game Logic ───────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  score = 0; correctCount = 0; currentIndex = 0; lifelineUsed = false;
+  shuffledPlayers = shuffle(players);
+  loadPlayer();
+}
+
+function loadPlayer() {
+  if (currentIndex >= 20) { endGame(); return; }
+  currentPlayer = shuffledPlayers[currentIndex % shuffledPlayers.length];
+  clueIndex = 0;
+  answeredCurrent = false;
+
+  document.getElementById('clues-revealed').innerHTML = '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = '';
+  document.getElementById('answer-input').value = '';
+  document.getElementById('answer-input').className = '';
+  document.getElementById('fifty-fifty-area').innerHTML = '';
+  document.getElementById('answer-area').style.display = 'flex';
+  document.getElementById('skip-btn').textContent = 'Skip this player →';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('answer-input').disabled = false;
+
+  if (!lifelineUsed) {
+    document.getElementById('lifeline-btn').disabled = false;
+    document.getElementById('lifeline-btn').textContent = '💡 50/50 Lifeline';
+  } else {
+    document.getElementById('lifeline-btn').disabled = true;
+    document.getElementById('lifeline-btn').textContent = '💡 Lifeline Used';
+  }
+
+  updateScoreboard();
+  revealNextClue();
+}
+
+function revealNextClue() {
+  if (answeredCurrent) return;
+  if (clueIndex >= currentPlayer.clues.length) {
+    document.getElementById('next-clue-btn').disabled = true;
+    return;
+  }
+  const cluesDiv = document.getElementById('clues-revealed');
+  const div = document.createElement('div');
+  div.className = 'clue-item';
+  div.textContent = `Clue ${clueIndex + 1}: ${currentPlayer.clues[clueIndex]}`;
+  cluesDiv.appendChild(div);
+  clueIndex++;
+  document.getElementById('clue-number').textContent = `Clue ${clueIndex} of ${currentPlayer.clues.length}`;
+  if (clueIndex >= currentPlayer.clues.length) {
+    document.getElementById('next-clue-btn').disabled = true;
+  }
+}
+
+function normalise(str) {
+  return str.toLowerCase().trim().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ');
+}
+
+function checkAnswer(guess) {
+  const g = normalise(guess);
+  const name = normalise(currentPlayer.name);
+  if (g === name) return true;
+  for (const alias of currentPlayer.aliases) {
+    if (g === normalise(alias)) return true;
+  }
+  // Partial: last name match
+  const lastName = name.split(' ').pop();
+  if (g === lastName && lastName.length > 3) return true;
+  return false;
+}
+
+function submitAnswer() {
+  if (answeredCurrent) return;
+  const guess = document.getElementById('answer-input').value.trim();
+  if (!guess) return;
+
+  if (checkAnswer(guess)) {
+    score++;
+    correctCount++;
+    answeredCurrent = true;
+    setFeedback(`✅ Correct! That's ${currentPlayer.name}!`, 'feedback-correct');
+    flashInput('correct-flash');
+    launchConfetti();
+    updateScoreboard();
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('answer-input').disabled = true;
+    document.getElementById('next-clue-btn').disabled = true;
+    document.getElementById('skip-btn').textContent = 'Next Player →';
+  } else {
+    score--;
+    setFeedback(`❌ Wrong! −1 point. Try again or skip.`, 'feedback-wrong');
+    flashInput('wrong-flash');
+    document.getElementById('answer-input').value = '';
+    updateScoreboard();
+  }
+}
+
+function skipPlayer() {
+  if (!answeredCurrent) {
+    setFeedback(`The answer was: ${currentPlayer.name}`, 'feedback-reveal');
+  }
+  currentIndex++;
+  setTimeout(loadPlayer, answeredCurrent ? 200 : 600);
+}
+
+function useFiftyFifty() {
+  if (lifelineUsed || answeredCurrent) return;
+  lifelineUsed = true;
+  document.getElementById('lifeline-btn').disabled = true;
+  document.getElementById('lifeline-btn').textContent = '💡 Lifeline Used';
+
+  // Show 4 options (correct + 3 wrong from the player's options list)
+  const opts = shuffle(currentPlayer.options).slice(0, 4);
+  if (!opts.includes(currentPlayer.name)) { opts[0] = currentPlayer.name; }
+  const shuffledOpts = shuffle(opts);
+
+  const area = document.getElementById('fifty-fifty-area');
+  area.innerHTML = '';
+  for (const opt of shuffledOpts) {
+    const btn = document.createElement('button');
+    btn.className = 'ff-option';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      document.getElementById('answer-input').value = opt;
+      submitAnswer();
+      area.innerHTML = '';
+    };
+    area.appendChild(btn);
+  }
+  document.getElementById('answer-area').style.display = 'none';
+}
+
+function setFeedback(msg, cls) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function flashInput(cls) {
+  const input = document.getElementById('answer-input');
+  input.classList.add(cls);
+  setTimeout(() => input.classList.remove(cls), 600);
+}
+
+function updateScoreboard() {
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('player-num').textContent = `${Math.min(currentIndex+1,20)}/20`;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('progress-bar').style.width = `${(currentIndex/20)*100}%`;
+}
+
+function endGame() {
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('end-screen').style.display = 'flex';
+  document.getElementById('progress-bar').style.width = '100%';
+
+  let msg = '';
+  if (score >= 18) msg = '🔥 NRL Legend! You know your footy!';
+  else if (score >= 14) msg = '💪 Great effort — you really know your NRL!';
+  else if (score >= 10) msg = '👍 Solid footy knowledge!';
+  else if (score >= 5) msg = '🙂 Not bad — keep watching the footy!';
+  else msg = '😅 Time to study the NRL a bit more!';
+
+  document.getElementById('final-score').innerHTML = `
+    <div style="font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:8px">Final Score: <span style="color:var(--gold)">${score}</span></div>
+    <div style="color:var(--muted)">Correct: ${correctCount} / 20</div>
+    <div style="margin-top:12px; font-size:1rem; color:var(--text)">${msg}</div>
+  `;
+  launchConfetti();
+}
+
+function restartGame() {
+  document.getElementById('end-screen').style.display = 'none';
+  startGame();
+}
+</script>
+</body>
+</html>
