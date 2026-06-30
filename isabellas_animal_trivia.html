@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isabella's Animal Trivia</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #e0f7e9 0%, #b3e5fc 50%, #f8bbd0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Floating background leaves */
+  .bg-leaf {
+    position: fixed;
+    font-size: 2rem;
+    opacity: 0.12;
+    animation: floatLeaf linear infinite;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  @keyframes floatLeaf {
+    0% { transform: translateY(110vh) rotate(0deg); }
+    100% { transform: translateY(-10vh) rotate(360deg); }
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 680px;
+    padding: 20px;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* CARD */
+  .card {
+    background: white;
+    border-radius: 28px;
+    padding: 36px 40px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    text-align: center;
+  }
+
+  /* TITLE SCREEN */
+  .title-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+    color: #2e7d32;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .title-logo span { color: #e65100; }
+  .title-sub {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 28px;
+  }
+  .paw-row { font-size: 2rem; margin-bottom: 28px; letter-spacing: 6px; }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 36px;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .btn:hover { transform: scale(1.06); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-green {
+    background: linear-gradient(135deg, #43a047, #1b5e20);
+    color: white;
+    box-shadow: 0 5px 18px rgba(43,122,48,0.4);
+  }
+  .btn-orange {
+    background: linear-gradient(135deg, #fb8c00, #e65100);
+    color: white;
+    box-shadow: 0 5px 18px rgba(230,81,0,0.4);
+  }
+  .btn-blue {
+    background: linear-gradient(135deg, #0288d1, #01579b);
+    color: white;
+    box-shadow: 0 5px 18px rgba(2,136,209,0.4);
+  }
+
+  /* GAME SCREEN */
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .stat-badge {
+    background: white;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .timer-badge { color: #c62828; }
+  .timer-badge.warning { animation: pulse 0.5s ease-in-out infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+  .score-badge { color: #2e7d32; }
+  .streak-badge { color: #e65100; }
+
+  /* Animal image */
+  .animal-frame {
+    width: 100%;
+    height: 260px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #f5f5f5;
+    margin-bottom: 22px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .animal-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s;
+  }
+  .loading-animal {
+    font-size: 3rem;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Question */
+  .question-label {
+    font-size: 1.15rem;
+    color: #555;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  /* Input */
+  .answer-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .answer-input {
+    flex: 1;
+    padding: 14px 20px;
+    border: 3px solid #a5d6a7;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+    color: #333;
+  }
+  .answer-input:focus { border-color: #43a047; }
+  .answer-input.wrong { border-color: #e53935; animation: shake 0.3s; }
+  .answer-input.correct { border-color: #43a047; background: #e8f5e9; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* Feedback */
+  .feedback-box {
+    min-height: 44px;
+    border-radius: 14px;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .feedback-box.hidden { opacity: 0; }
+  .feedback-box.correct { background: #e8f5e9; color: #2e7d32; }
+  .feedback-box.wrong { background: #ffebee; color: #c62828; }
+
+  /* Skip button */
+  .skip-btn {
+    background: none;
+    border: 2px solid #ccc;
+    color: #888;
+    padding: 8px 22px;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .skip-btn:hover { border-color: #999; color: #555; }
+
+  /* END SCREEN */
+  .end-emoji { font-size: 5rem; margin-bottom: 12px; }
+  .end-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    color: #2e7d32;
+    margin-bottom: 8px;
+  }
+  .end-score-big {
+    font-family: 'Fredoka One', cursive;
+    font-size: 4rem;
+    color: #e65100;
+    margin: 10px 0 4px;
+  }
+  .end-label { font-size: 1rem; color: #777; margin-bottom: 22px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+  .stat-box {
+    background: #f9fbe7;
+    border-radius: 16px;
+    padding: 14px;
+  }
+  .stat-box .num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: #558b2f;
+  }
+  .stat-box .lbl { font-size: 0.85rem; color: #666; font-weight: 700; }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    z-index: 999;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* Animal hint badge */
+  .hint-badge {
+    display: inline-block;
+    background: #fff9c4;
+    border: 2px solid #f9a825;
+    color: #f57f17;
+    border-radius: 50px;
+    padding: 5px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .hint-badge:hover { background: #fff176; }
+
+  /* Progress dots */
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating background animals -->
+<div class="bg-leaf" style="left:5%;animation-duration:18s;animation-delay:0s">🌿</div>
+<div class="bg-leaf" style="left:20%;animation-duration:22s;animation-delay:3s">🦋</div>
+<div class="bg-leaf" style="left:40%;animation-duration:16s;animation-delay:7s">🌺</div>
+<div class="bg-leaf" style="left:60%;animation-duration:25s;animation-delay:1s">🍃</div>
+<div class="bg-leaf" style="left:75%;animation-duration:20s;animation-delay:5s">🌸</div>
+<div class="bg-leaf" style="left:90%;animation-duration:14s;animation-delay:9s">🦜</div>
+
+<!-- TITLE SCREEN -->
+<div class="screen active" id="screen-title">
+  <div class="card">
+    <div class="paw-row">🐾</div>
+    <div class="title-logo">Isabella's<br><span>Animal Trivia</span></div>
+    <p class="title-sub">How many animals can you name in 5 minutes? 🕐</p>
+    <div style="background:#f1f8e9;border-radius:16px;padding:18px;margin-bottom:26px;text-align:left;font-size:0.95rem;color:#555;line-height:1.7;">
+      <strong style="color:#2e7d32">How to play:</strong><br>
+      🖼️ An animal picture appears on screen<br>
+      ✍️ Type the animal's name in the box<br>
+      ✅ Score points for every correct answer<br>
+      ⏱️ You have <strong>5 minutes</strong> — go as long as you can!
+    </div>
+    <button class="btn btn-green" onclick="startGame()">🐾 Start Playing!</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="screen-game">
+  <div class="game-header">
+    <div class="stat-badge timer-badge" id="timer-display">⏱️ 5:00</div>
+    <div class="stat-badge score-badge" id="score-display">⭐ 0 pts</div>
+    <div class="stat-badge streak-badge" id="streak-display">🔥 0 streak</div>
+  </div>
+
+  <div class="card">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+
+    <div class="animal-frame" id="animal-frame">
+      <span class="loading-animal">🐾</span>
+    </div>
+
+    <p class="question-label">What animal is this? 🤔</p>
+
+    <div id="hint-container"></div>
+
+    <div class="answer-row">
+      <input type="text" class="answer-input" id="answer-input"
+             placeholder="Type your answer..." 
+             autocomplete="off" autocorrect="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter') checkAnswer()">
+      <button class="btn btn-green" onclick="checkAnswer()">GO!</button>
+    </div>
+
+    <div class="feedback-box hidden" id="feedback-box"></div>
+
+    <button class="skip-btn" onclick="skipAnimal()">Skip this one →</button>
+  </div>
+</div>
+
+<!-- END SCREEN -->
+<div class="screen" id="screen-end">
+  <div class="card">
+    <div class="end-emoji" id="end-emoji">🏆</div>
+    <div class="end-title" id="end-title">Time's Up!</div>
+    <div class="end-score-big" id="end-score">0</div>
+    <p class="end-label">points scored</p>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-box"><div class="num" id="stat-correct">0</div><div class="lbl">Correct</div></div>
+      <div class="stat-box"><div class="num" id="stat-wrong">0</div><div class="lbl">Skipped/Wrong</div></div>
+      <div class="stat-box"><div class="num" id="stat-streak">0</div><div class="lbl">Best Streak</div></div>
+      <div class="stat-box"><div class="num" id="stat-accuracy">0%</div><div class="lbl">Accuracy</div></div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-green" onclick="startGame()">🔄 Play Again</button>
+      <button class="btn btn-blue" onclick="showTitle()">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── ANIMAL DATABASE ───────────────────────────────────────────────
+// Uses Unsplash Source API for real animal photos
+const animals = [
+  { name: "elephant", alt: ["elephants"], emoji: "🐘", img: "https://images.unsplash.com/photo-1549366021-9f761d450615?w=600&q=80", hint: "Largest land animal" },
+  { name: "giraffe", alt: ["giraffes"], emoji: "🦒", img: "https://images.unsplash.com/photo-1547721064-da6cfb341d50?w=600&q=80", hint: "Tallest animal on Earth" },
+  { name: "lion", alt: ["lions"], emoji: "🦁", img: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&q=80", hint: "King of the jungle" },
+  { name: "penguin", alt: ["penguins"], emoji: "🐧", img: "https://images.unsplash.com/photo-1551986782-d0169b3f8fa7?w=600&q=80", hint: "A bird that can't fly but loves to swim" },
+  { name: "tiger", alt: ["tigers"], emoji: "🐯", img: "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=600&q=80", hint: "Big striped cat" },
+  { name: "koala", alt: ["koalas"], emoji: "🐨", img: "https://images.unsplash.com/photo-1459262838948-3e2de6c1ec80?w=600&q=80", hint: "Sleepy Australian marsupial" },
+  { name: "dolphin", alt: ["dolphins"], emoji: "🐬", img: "https://images.unsplash.com/photo-1607153333879-c174d265f1d2?w=600&q=80", hint: "Very clever ocean mammal" },
+  { name: "panda", alt: ["pandas", "giant panda"], emoji: "🐼", img: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=600&q=80", hint: "Black and white bear from China" },
+  { name: "kangaroo", alt: ["kangaroos"], emoji: "🦘", img: "https://images.unsplash.com/photo-1512273222628-4daea6a2b6e7?w=600&q=80", hint: "Hops around Australia with a pouch" },
+  { name: "flamingo", alt: ["flamingos", "flamingoes"], emoji: "🦩", img: "https://images.unsplash.com/photo-1517783999520-f068d7431a60?w=600&q=80", hint: "Pink bird that stands on one leg" },
+  { name: "zebra", alt: ["zebras"], emoji: "🦓", img: "https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=600&q=80", hint: "Black and white striped horse-like animal" },
+  { name: "cheetah", alt: ["cheetahs"], emoji: "🐆", img: "https://images.unsplash.com/photo-1442294026547-b21b31fb3c97?w=600&q=80", hint: "Fastest land animal" },
+  { name: "gorilla", alt: ["gorillas"], emoji: "🦍", img: "https://images.unsplash.com/photo-1534567110243-8875d64f65be?w=600&q=80", hint: "Large great ape" },
+  { name: "polar bear", alt: ["polar bears"], emoji: "🐻‍❄️", img: "https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?w=600&q=80", hint: "White bear of the Arctic" },
+  { name: "crocodile", alt: ["crocodiles", "croc", "crocs"], emoji: "🐊", img: "https://images.unsplash.com/photo-1509060004-8c77b5a2a0c3?w=600&q=80", hint: "Scaly reptile with massive jaws" },
+  { name: "owl", alt: ["owls"], emoji: "🦉", img: "https://images.unsplash.com/photo-1543549049-9fbcc3cd9003?w=600&q=80", hint: "Wise bird that comes out at night" },
+  { name: "peacock", alt: ["peacocks"], emoji: "🦚", img: "https://images.unsplash.com/photo-1551085254-e96b210db58a?w=600&q=80", hint: "Bird with a beautiful fan-shaped tail" },
+  { name: "fox", alt: ["foxes", "red fox"], emoji: "🦊", img: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=600&q=80", hint: "Clever orange wild dog" },
+  { name: "shark", alt: ["sharks", "great white"], emoji: "🦈", img: "https://images.unsplash.com/photo-1560275619-4cc5fa59d3ae?w=600&q=80", hint: "Feared predator of the ocean" },
+  { name: "parrot", alt: ["parrots"], emoji: "🦜", img: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", hint: "Colourful talking bird" },
+  { name: "hippo", alt: ["hippos", "hippopotamus", "hippopotami"], emoji: "🦛", img: "https://images.unsplash.com/photo-1571752726703-5e7d1f6a986d?w=600&q=80", hint: "Huge heavy animal that loves water" },
+  { name: "butterfly", alt: ["butterflies"], emoji: "🦋", img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80", hint: "Colourful winged insect" },
+  { name: "wolf", alt: ["wolves"], emoji: "🐺", img: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=600&q=80", hint: "Wild ancestor of the dog, hunts in packs" },
+  { name: "frog", alt: ["frogs"], emoji: "🐸", img: "https://images.unsplash.com/photo-1590000619759-95da78efac3c?w=600&q=80", hint: "Small green animal that jumps and croaks" },
+  { name: "turtle", alt: ["turtles", "sea turtle"], emoji: "🐢", img: "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=600&q=80", hint: "Reptile that carries its home on its back" },
+  { name: "eagle", alt: ["eagles", "bald eagle"], emoji: "🦅", img: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", hint: "Powerful bird of prey with sharp eyes" },
+  { name: "octopus", alt: ["octopi", "octopuses"], emoji: "🐙", img: "https://images.unsplash.com/photo-1545671913-b89ac1b4ac10?w=600&q=80", hint: "Has 8 arms and lives in the ocean" },
+  { name: "bear", alt: ["bears", "brown bear", "grizzly", "grizzly bear"], emoji: "🐻", img: "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=600&q=80", hint: "Large furry mammal that loves honey" },
+  { name: "camel", alt: ["camels"], emoji: "🐪", img: "https://images.unsplash.com/photo-1550355291-bbee04a92027?w=600&q=80", hint: "Desert animal with humps" },
+  { name: "monkey", alt: ["monkeys"], emoji: "🐒", img: "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=600&q=80", hint: "Cheeky primate that loves bananas" },
+];
+
+// ─── GAME STATE ────────────────────────────────────────────────────
+let state = {
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  streak: 0,
+  bestStreak: 0,
+  timeLeft: 300,
+  timerInterval: null,
+  queue: [],
+  currentAnimal: null,
+  hintUsed: false,
+  feedbackTimeout: null,
+};
+
+// ─── HELPERS ───────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTitle() { showScreen('screen-title'); }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── GAME LOGIC ────────────────────────────────────────────────────
+function startGame() {
+  clearInterval(state.timerInterval);
+  state = { ...state, score: 0, correct: 0, wrong: 0, streak: 0, bestStreak: 0, timeLeft: 300, queue: shuffle(animals), currentAnimal: null, hintUsed: false };
+  
+  showScreen('screen-game');
+  updateHUD();
+  nextAnimal();
+
+  state.timerInterval = setInterval(() => {
+    state.timeLeft--;
+    updateHUD();
+    if (state.timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function nextAnimal() {
+  if (state.queue.length === 0) state.queue = shuffle(animals);
+  state.currentAnimal = state.queue.pop();
+  state.hintUsed = false;
+
+  // Reset input
+  const input = document.getElementById('answer-input');
+  input.value = '';
+  input.className = 'answer-input';
+  input.disabled = false;
+
+  // Hide feedback
+  hideFeedback();
+
+  // Hide hint
+  document.getElementById('hint-container').innerHTML =
+    `<span class="hint-badge" onclick="showHint()">💡 Hint (-1 pt)</span>`;
+
+  // Load image
+  const frame = document.getElementById('animal-frame');
+  frame.innerHTML = '<span class="loading-animal">🐾</span>';
+  const img = new Image();
+  img.onload = () => {
+    frame.innerHTML = '';
+    frame.appendChild(img);
+  };
+  img.onerror = () => {
+    // Fallback: giant emoji
+    frame.innerHTML = `<div style="font-size:8rem;line-height:260px">${state.currentAnimal.emoji}</div>`;
+  };
+  img.src = state.currentAnimal.img;
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:20px;';
+  img.alt = 'What animal is this?';
+
+  // Update progress bar (time-based)
+  updateProgressBar();
+
+  setTimeout(() => input.focus(), 100);
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answer-input');
+  const raw = input.value.trim().toLowerCase();
+  if (!raw) return;
+
+  const animal = state.currentAnimal;
+  const accepted = [animal.name, ...(animal.alt || [])].map(s => s.toLowerCase());
+  const isCorrect = accepted.includes(raw);
+
+  if (isCorrect) {
+    const pts = state.hintUsed ? 1 : 2;
+    state.score += pts;
+    state.correct++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+    input.className = 'answer-input correct';
+    showFeedback('correct', `✅ Correct! It's a ${animal.emoji} ${animal.name}! +${pts} pts`);
+    updateHUD();
+
+    setTimeout(() => nextAnimal(), 1200);
+  } else {
+    state.wrong++;
+    state.streak = 0;
+    input.className = 'answer-input wrong';
+    showFeedback('wrong', `❌ Not quite! The answer was: ${animal.emoji} ${animal.name}`);
+    updateHUD();
+
+    setTimeout(() => nextAnimal(), 1800);
+  }
+}
+
+function skipAnimal() {
+  state.wrong++;
+  state.streak = 0;
+  updateHUD();
+  showFeedback('wrong', `⏭️ Skipped! It was: ${state.currentAnimal.emoji} ${state.currentAnimal.name}`);
+  setTimeout(() => nextAnimal(), 1400);
+}
+
+function showHint() {
+  if (state.hintUsed) return;
+  state.hintUsed = true;
+  const hint = state.currentAnimal.hint;
+  document.getElementById('hint-container').innerHTML =
+    `<div style="background:#fff9c4;border-radius:12px;padding:8px 16px;font-size:0.92rem;color:#795548;font-weight:700;margin-bottom:12px;">💡 ${hint}</div>`;
+}
+
+function showFeedback(type, msg) {
+  clearTimeout(state.feedbackTimeout);
+  const box = document.getElementById('feedback-box');
+  box.className = `feedback-box ${type}`;
+  box.textContent = msg;
+  document.getElementById('answer-input').disabled = true;
+}
+
+function hideFeedback() {
+  const box = document.getElementById('feedback-box');
+  box.className = 'feedback-box hidden';
+  box.textContent = '';
+}
+
+// ─── HUD ───────────────────────────────────────────────────────────
+function updateHUD() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = String(state.timeLeft % 60).padStart(2, '0');
+  const td = document.getElementById('timer-display');
+  td.textContent = `⏱️ ${m}:${s}`;
+  td.className = 'stat-badge timer-badge' + (state.timeLeft <= 30 ? ' warning' : '');
+
+  document.getElementById('score-display').textContent = `⭐ ${state.score} pts`;
+  document.getElementById('streak-display').textContent = `🔥 ${state.streak} streak`;
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  const pct = (state.timeLeft / 300) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ─── END GAME ──────────────────────────────────────────────────────
+function endGame() {
+  clearInterval(state.timerInterval);
+
+  const total = state.correct + state.wrong;
+  const accuracy = total > 0 ? Math.round((state.correct / total) * 100) : 0;
+
+  let emoji = '🐾', title = 'Well Done!';
+  if (state.score >= 30) { emoji = '🏆'; title = 'Animal Expert!'; }
+  else if (state.score >= 20) { emoji = '🥇'; title = 'Amazing Job!'; }
+  else if (state.score >= 10) { emoji = '🌟'; title = 'Great Try!'; }
+
+  document.getElementById('end-emoji').textContent = emoji;
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-score').textContent = state.score;
+  document.getElementById('stat-correct').textContent = state.correct;
+  document.getElementById('stat-wrong').textContent = state.wrong;
+  document.getElementById('stat-streak').textContent = state.bestStreak;
+  document.getElementById('stat-accuracy').textContent = accuracy + '%';
+
+  showScreen('screen-end');
+  if (state.score >= 10) launchConfetti();
+}
+
+// ─── CONFETTI ──────────────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#f44336','#e91e63','#9c27b0','#3f51b5','#2196f3','#4caf50','#ffeb3b','#ff9800'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: -20px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        width: ${6 + Math.random() * 8}px;
+        height: ${6 + Math.random() * 8}px;
+        opacity: 1;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        animation: confettiFall ${1.5 + Math.random() * 2}s ease-in forwards;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 40);
+  }
+}
+
+const styleEl = document.createElement('style');
+styleEl.textContent = `
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity:1; }
+    100% { transform: translateY(100vh) rotate(${360 + Math.random()*360}deg); opacity:0; }
+  }
+`;
+document.head.appendChild(styleEl);
+</script>
+</body>
+</html>
