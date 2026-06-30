@@ -239,27 +239,29 @@ function loop(now){
   if(phase!=='falling' && phase!=='inzone') return;
 
   const elapsed = now - fallStart;
-  const t       = Math.min(elapsed/fallDur, 1);  // 0→1
+  // No clamping — let t exceed 1 so meteorite keeps falling past the zone
+  const t = elapsed / fallDur;
   metCY = -metSize/2 + (ZONE_CY - (-metSize/2)) * t;
   met.style.top = (metCY - metSize/2)+'px';
 
   const dist = Math.abs(metCY - ZONE_CY);
 
   if(dist < 36){
-    // In zone
     if(phase==='falling'){
       phase='inzone';
       bz.className='open';
     }
   } else if(phase==='inzone'){
-    // Passed through zone without being hit
+    // Exited zone without being hit
+    bz.className='';
     phase='dead';
     triggerMiss();
     return;
   }
 
-  // Fell off screen without entering zone (shouldn't happen but safety)
-  if(metCY > GC_H+60){
+  // Passed bottom of game box = miss
+  if(metCY > GC_H){
+    bz.className='';
     phase='dead';
     triggerMiss();
     return;
