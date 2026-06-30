@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Forest</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0f06;
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  #gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+  #gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #2a4a1a;
+    border-radius: 8px;
+    padding: 8px 20px;
+    color: #c8e87a;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #hud .fire-count { color: #ff9933; font-size: 22px; font-weight: bold; }
+  #hud .danger { color: #ff4444; }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    z-index: 20;
+    color: #c8e87a;
+  }
+  #overlay h1 {
+    font-size: 52px;
+    color: #ff9933;
+    text-shadow: 0 0 30px #ff6600, 0 0 60px #ff3300;
+    margin-bottom: 10px;
+    letter-spacing: 3px;
+  }
+  #overlay .subtitle {
+    font-size: 18px;
+    color: #7aaa4a;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+  }
+  #overlay .instructions {
+    font-size: 15px;
+    color: #aaa;
+    text-align: center;
+    line-height: 2;
+    margin-bottom: 30px;
+    max-width: 420px;
+  }
+  #overlay .instructions span { color: #c8e87a; }
+  #startBtn {
+    background: #1a3a0a;
+    color: #c8e87a;
+    border: 2px solid #4a8a2a;
+    padding: 14px 40px;
+    font-size: 20px;
+    font-family: Georgia, serif;
+    cursor: pointer;
+    border-radius: 6px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  #startBtn:hover {
+    background: #2a5a1a;
+    border-color: #8aca4a;
+    box-shadow: 0 0 20px rgba(100,200,50,0.3);
+  }
+  #deathScreen, #winScreen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  #deathScreen h2 { font-size: 48px; color: #ff2222; text-shadow: 0 0 20px #ff0000; }
+  #winScreen h2 { font-size: 48px; color: #ffcc00; text-shadow: 0 0 20px #ff9900; }
+  .sub-msg { font-size: 20px; color: #aaa; }
+  .bigfoot-emoji { font-size: 60px; margin: 10px 0; }
+  #mobileControls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+    pointer-events: all;
+  }
+  .ctrl-row { display: flex; gap: 6px; }
+  .ctrl-btn {
+    width: 56px;
+    height: 56px;
+    background: rgba(30,60,10,0.8);
+    border: 2px solid #4a8a2a;
+    border-radius: 8px;
+    color: #c8e87a;
+    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ctrl-btn:active { background: rgba(60,120,20,0.9); }
+  @media (max-width: 768px) {
+    #mobileControls { display: flex; }
+    #hud { font-size: 14px; }
+    #hud .fire-count { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud">
+    <span>🔥 <span class="fire-count" id="fireCount">0</span> / 20</span>
+    <span id="dangerMeter" class="danger"></span>
+  </div>
+
+  <div id="overlay">
+    <div id="startScreen">
+      <h1>🌲 MONSTER FOREST 🌲</h1>
+      <p class="subtitle">Collect the fires... if you dare.</p>
+      <div class="instructions">
+        Use <span>WASD</span> or <span>Arrow Keys</span> to move<br>
+        Collect all <span>20 🔥 fires</span> hidden in the forest<br>
+        Avoid <span>Bigfoot</span> — one touch and you're done<br>
+        The closer he gets, the louder it breathes...
+      </div>
+      <button id="startBtn" onclick="startGame()">ENTER THE FOREST</button>
+    </div>
+    <div id="deathScreen">
+      <div class="bigfoot-emoji">🦶</div>
+      <h2>YOU WERE CAUGHT</h2>
+      <p class="sub-msg">Bigfoot claims another soul...</p>
+      <p style="color:#666; font-size:14px" id="deathScore"></p>
+      <button id="startBtn" style="margin-top:15px" onclick="startGame()">TRY AGAIN</button>
+    </div>
+    <div id="winScreen">
+      <div class="bigfoot-emoji">🔥</div>
+      <h2>YOU ESCAPED!</h2>
+      <p class="sub-msg">All 20 fires collected. The forest releases you.</p>
+      <button id="startBtn" style="margin-top:15px" onclick="startGame()">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div id="mobileControls">
+    <div class="ctrl-row"><div class="ctrl-btn" id="btnUp">▲</div></div>
+    <div class="ctrl-row">
+      <div class="ctrl-btn" id="btnLeft">◄</div>
+      <div class="ctrl-btn" id="btnDown">▼</div>
+      <div class="ctrl-btn" id="btnRight">►</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// ── World ──────────────────────────────────────────────────────────────
+const WORLD = 2400;
+const TILE  = 40;
+let cam = {x:0, y:0};
+
+// ── State ──────────────────────────────────────────────────────────────
+let player, monster, fires, trees, rocks, running, keys, animFrame;
+let collected = 0;
+
+// ── Tree data (generated once per game) ───────────────────────────────
+function randInt(a,b){ return Math.floor(Math.random()*(b-a))+a; }
+function randF(a,b){ return Math.random()*(b-a)+a; }
+
+function generateWorld(){
+  // Trees
+  trees = [];
+  for(let i=0;i<320;i++){
+    trees.push({
+      x: randInt(20, WORLD-20),
+      y: randInt(20, WORLD-20),
+      r: randInt(18,36),
+      dark: `hsl(${randInt(100,140)},${randInt(30,55)}%,${randInt(8,18)}%)`,
+      mid:  `hsl(${randInt(105,135)},${randInt(35,60)}%,${randInt(14,24)}%)`,
+    });
+  }
+  // Rocks
+  rocks = [];
+  for(let i=0;i<60;i++){
+    rocks.push({
+      x: randInt(30, WORLD-30),
+      y: randInt(30, WORLD-30),
+      w: randInt(16,34), h: randInt(12,22),
+    });
+  }
+  // Fires – spread around world, avoid player start
+  fires = [];
+  while(fires.length < 20){
+    let fx = randInt(100, WORLD-100);
+    let fy = randInt(100, WORLD-100);
+    let dist = Math.hypot(fx - WORLD/2, fy - WORLD/2);
+    if(dist > 200) fires.push({x:fx, y:fy, collected:false, phase: Math.random()*Math.PI*2});
+  }
+}
+
+function initEntities(){
+  player = {
+    x: WORLD/2, y: WORLD/2,
+    speed: 3.2,
+    r: 14,
+    facing: 0,
+    walkPhase: 0,
+  };
+  monster = {
+    x: randInt(100,400), y: randInt(100,400),
+    speed: 1.4,
+    r: 24,
+    phase: 0,
+    alertPhase: 0,
+  };
+  collected = 0;
+  document.getElementById('fireCount').textContent = '0';
+  document.getElementById('dangerMeter').textContent = '';
+}
+
+// ── Input ──────────────────────────────────────────────────────────────
+keys = {};
+document.addEventListener('keydown', e => { keys[e.key] = true; });
+document.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+// Mobile touch
+function mobileHold(id, keyName){
+  const el = document.getElementById(id);
+  el.addEventListener('pointerdown', e => { keys[keyName]=true; e.preventDefault(); });
+  el.addEventListener('pointerup',   () => { keys[keyName]=false; });
+  el.addEventListener('pointerleave',() => { keys[keyName]=false; });
+}
+mobileHold('btnUp','ArrowUp');
+mobileHold('btnDown','ArrowDown');
+mobileHold('btnLeft','ArrowLeft');
+mobileHold('btnRight','ArrowRight');
+
+// ── Resize canvas ─────────────────────────────────────────────────────
+function resize(){
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ── Collision helpers ──────────────────────────────────────────────────
+function circleRect(cx,cy,cr, rx,ry,rw,rh){
+  let nearX = Math.max(rx, Math.min(cx, rx+rw));
+  let nearY = Math.max(ry, Math.min(cy, ry+rh));
+  return Math.hypot(cx-nearX, cy-nearY) < cr;
+}
+function collidesTree(nx,ny,pr){
+  for(let t of trees){
+    if(Math.hypot(nx-t.x, ny-t.y) < pr + t.r*0.6) return true;
+  }
+  return false;
+}
+function collidesRock(nx,ny,pr){
+  for(let r of rocks){
+    if(circleRect(nx,ny,pr, r.x-r.w/2, r.y-r.h/2, r.w, r.h)) return true;
+  }
+  return false;
+}
+
+// ── Game loop ──────────────────────────────────────────────────────────
+function startGame(){
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('deathScreen').style.display = 'none';
+  document.getElementById('winScreen').style.display = 'none';
+  keys = {};
+  if(animFrame) cancelAnimationFrame(animFrame);
+  generateWorld();
+  initEntities();
+  running = true;
+  loop();
+}
+
+function endGame(won){
+  running = false;
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('startScreen').style.display = 'none';
+  if(won){
+    document.getElementById('winScreen').style.display = 'flex';
+  } else {
+    document.getElementById('deathScreen').style.display = 'flex';
+    document.getElementById('deathScore').textContent = `You collected ${collected} / 20 fires`;
+  }
+}
+
+let lastTime = 0;
+function loop(ts=0){
+  if(!running){ return; }
+  let dt = Math.min((ts - lastTime)/16.67, 3);
+  lastTime = ts;
+  update(dt);
+  draw();
+  animFrame = requestAnimationFrame(loop);
+}
+
+function update(dt){
+  // Player movement
+  let dx=0, dy=0;
+  if(keys['ArrowUp']    || keys['w'] || keys['W']) dy -= 1;
+  if(keys['ArrowDown']  || keys['s'] || keys['S']) dy += 1;
+  if(keys['ArrowLeft']  || keys['a'] || keys['A']) dx -= 1;
+  if(keys['ArrowRight'] || keys['d'] || keys['D']) dx += 1;
+
+  if(dx||dy){
+    let len = Math.hypot(dx,dy);
+    dx /= len; dy /= len;
+    let nx = player.x + dx * player.speed * dt;
+    let ny = player.y + dy * player.speed * dt;
+    nx = Math.max(player.r, Math.min(WORLD-player.r, nx));
+    ny = Math.max(player.r, Math.min(WORLD-player.r, ny));
+    if(!collidesTree(nx, ny, player.r) && !collidesRock(nx, ny, player.r)){
+      player.x = nx; player.y = ny;
+    } else {
+      // try sliding
+      let nx2 = player.x + dx * player.speed * dt;
+      if(!collidesTree(nx2, player.y, player.r) && !collidesRock(nx2, player.y, player.r)){
+        player.x = Math.max(player.r, Math.min(WORLD-player.r, nx2));
+      }
+      let ny2 = player.y + dy * player.speed * dt;
+      if(!collidesTree(player.x, ny2, player.r) && !collidesRock(player.x, ny2, player.r)){
+        player.y = Math.max(player.r, Math.min(WORLD-player.r, ny2));
+      }
+    }
+    player.facing = Math.atan2(dy,dx);
+    player.walkPhase += 0.18 * dt;
+  }
+
+  // Monster AI – chase player, avoid (ignore) trees
+  monster.phase += 0.04 * dt;
+  let mdx = player.x - monster.x;
+  let mdy = player.y - monster.y;
+  let mdist = Math.hypot(mdx, mdy);
+  // Speed increases slightly as more fires collected
+  let mSpeed = (1.2 + collected * 0.04) * dt;
+  if(mdist > 1){
+    monster.x += (mdx/mdist) * mSpeed;
+    monster.y += (mdy/mdist) * mSpeed;
+  }
+  monster.x = Math.max(monster.r, Math.min(WORLD-monster.r, monster.x));
+  monster.y = Math.max(monster.r, Math.min(WORLD-monster.r, monster.y));
+
+  // Danger meter
+  let danger = 1 - Math.min(mdist, 500) / 500;
+  let dangerEl = document.getElementById('dangerMeter');
+  if(danger > 0.7) dangerEl.textContent = '⚠️ IT\'S CLOSE!';
+  else if(danger > 0.4) dangerEl.textContent = '👣 You hear footsteps...';
+  else dangerEl.textContent = '';
+
+  // Collect fires
+  for(let f of fires){
+    if(!f.collected && Math.hypot(player.x-f.x, player.y-f.y) < player.r + 14){
+      f.collected = true;
+      collected++;
+      document.getElementById('fireCount').textContent = collected;
+    }
+    f.phase += 0.07 * dt;
+  }
+
+  // Win/lose
+  if(mdist < monster.r + player.r - 6) endGame(false);
+  if(collected >= 20) endGame(true);
+
+  // Camera
+  cam.x = player.x - canvas.width/2;
+  cam.y = player.y - canvas.height/2;
+  cam.x = Math.max(0, Math.min(WORLD - canvas.width, cam.x));
+  cam.y = Math.max(0, Math.min(WORLD - canvas.height, cam.y));
+}
+
+// ── Drawing ────────────────────────────────────────────────────────────
+function draw(){
+  ctx.save();
+  // Ground
+  drawGround();
+  ctx.translate(-cam.x, -cam.y);
+
+  // Rocks
+  for(let r of rocks) drawRock(r);
+
+  // Fires
+  for(let f of fires) if(!f.collected) drawFire(f);
+
+  // Player
+  drawPlayer();
+
+  // Monster
+  drawMonster();
+
+  // Trees (drawn on top for depth)
+  for(let t of trees) drawTree(t);
+
+  // Vignette
+  ctx.restore();
+  drawVignette();
+}
+
+function drawGround(){
+  // Dark forest floor
+  let grd = ctx.createLinearGradient(0,0,canvas.width, canvas.height);
+  grd.addColorStop(0,'#0d140a');
+  grd.addColorStop(0.5,'#0f1a0b');
+  grd.addColorStop(1,'#0a1008');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+
+  // Ground texture dots
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
+  // Draw grid of moss patches
+  let startX = Math.floor(cam.x/80)*80;
+  let startY = Math.floor(cam.y/80)*80;
+  for(let gx = startX; gx < cam.x+canvas.width+80; gx+=80){
+    for(let gy = startY; gy < cam.y+canvas.height+80; gy+=80){
+      // use position as seed
+      let s = (gx*7+gy*13)%100;
+      if(s < 40){
+        ctx.fillStyle = `rgba(${20+s},${35+s},${10+s/2},0.25)`;
+        ctx.beginPath();
+        ctx.ellipse(gx + s*0.3, gy + s*0.2, 18+s*0.3, 10+s*0.2, s*0.1, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function drawTree(t){
+  // Trunk
+  ctx.fillStyle = '#1a0f08';
+  ctx.fillRect(t.x-5, t.y, 10, t.r*0.8);
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(t.x+8, t.y+t.r*0.5, t.r*0.6, t.r*0.2, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Canopy layers
+  for(let i=2; i>=0; i--){
+    let scale = 1 - i*0.15;
+    let yOff  = -i*t.r*0.4;
+    ctx.fillStyle = i===0 ? t.mid : t.dark;
+    ctx.beginPath();
+    ctx.ellipse(t.x, t.y + yOff, t.r*scale*1.1, t.r*scale, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Highlight
+  ctx.fillStyle = 'rgba(100,180,50,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(t.x-t.r*0.2, t.y-t.r*0.3, t.r*0.4, t.r*0.35, -0.5, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawRock(r){
+  ctx.fillStyle = '#2a2820';
+  ctx.beginPath();
+  ctx.ellipse(r.x, r.y, r.w/2, r.h/2, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#3a3830';
+  ctx.beginPath();
+  ctx.ellipse(r.x-2, r.y-2, r.w/2*0.7, r.h/2*0.6, 0.1, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawFire(f){
+  let flicker = Math.sin(f.phase * 3.7) * 3;
+  let x = f.x, y = f.y;
+  // Glow
+  let grd = ctx.createRadialGradient(x, y, 0, x, y, 32+flicker);
+  grd.addColorStop(0,'rgba(255,160,0,0.35)');
+  grd.addColorStop(0.5,'rgba(255,80,0,0.12)');
+  grd.addColorStop(1,'rgba(255,40,0,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(x,y,32+flicker,0,Math.PI*2);
+  ctx.fill();
+  // Fire body
+  let fh = 18 + flicker;
+  ctx.fillStyle = '#ff2200';
+  ctx.beginPath();
+  ctx.moveTo(x, y-fh);
+  ctx.bezierCurveTo(x+10, y-fh*0.5, x+8, y+4, x, y+4);
+  ctx.bezierCurveTo(x-8, y+4, x-10, y-fh*0.5, x, y-fh);
+  ctx.fill();
+  ctx.fillStyle = '#ff8800';
+  let mh = fh*0.65;
+  ctx.beginPath();
+  ctx.moveTo(x, y-mh);
+  ctx.bezierCurveTo(x+6, y-mh*0.4, x+5, y+2, x, y+2);
+  ctx.bezierCurveTo(x-5, y+2, x-6, y-mh*0.4, x, y-mh);
+  ctx.fill();
+  ctx.fillStyle = '#ffdd44';
+  let sh = fh*0.3;
+  ctx.beginPath();
+  ctx.moveTo(x, y-sh);
+  ctx.bezierCurveTo(x+3, y-sh*0.3, x+2, y, x, y);
+  ctx.bezierCurveTo(x-2, y, x-3, y-sh*0.3, x, y-sh);
+  ctx.fill();
+}
+
+function drawPlayer(){
+  let x = player.x, y = player.y;
+  let bob = Math.sin(player.walkPhase)*3;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(x+3, y+player.r, player.r*0.8, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Body
+  ctx.fillStyle = '#5a8a2a';
+  ctx.beginPath();
+  ctx.ellipse(x, y+bob, player.r*0.75, player.r, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head
+  ctx.fillStyle = '#e8c88a';
+  ctx.beginPath();
+  ctx.arc(x, y - player.r*0.7 + bob, player.r*0.55, 0, Math.PI*2);
+  ctx.fill();
+  // Eyes
+  ctx.fillStyle = '#222';
+  let ex = Math.cos(player.facing)*4;
+  let ey = Math.sin(player.facing)*3;
+  ctx.beginPath();
+  ctx.arc(x + ex + Math.cos(player.facing+1.4)*4, y - player.r*0.7 + bob + ey + Math.sin(player.facing+1.4)*3, 2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + ex + Math.cos(player.facing-1.4)*4, y - player.r*0.7 + bob + ey + Math.sin(player.facing-1.4)*3, 2, 0, Math.PI*2);
+  ctx.fill();
+  // Torch glow
+  let tgrd = ctx.createRadialGradient(x,y,0,x,y,70);
+  tgrd.addColorStop(0,'rgba(255,200,50,0.12)');
+  tgrd.addColorStop(1,'rgba(255,150,0,0)');
+  ctx.fillStyle = tgrd;
+  ctx.beginPath();
+  ctx.arc(x,y,70,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawMonster(){
+  let x = monster.x, y = monster.y;
+  let phase = monster.phase;
+  // Proximity glow
+  let dist = Math.hypot(player.x-x, player.y-y);
+  if(dist < 400){
+    let alpha = (1-dist/400)*0.15;
+    let mgrd = ctx.createRadialGradient(x,y,0,x,y,120);
+    mgrd.addColorStop(0,`rgba(180,0,0,${alpha})`);
+    mgrd.addColorStop(1,'rgba(180,0,0,0)');
+    ctx.fillStyle = mgrd;
+    ctx.beginPath();
+    ctx.arc(x,y,120,0,Math.PI*2);
+    ctx.fill();
+  }
+  // Bigfoot body
+  let bob = Math.sin(phase*2)*4;
+  // Legs
+  ctx.fillStyle = '#2a1a0a';
+  ctx.fillRect(x-10, y+16+bob, 9, 20);
+  ctx.fillRect(x+1, y+16+bob, 9, 20);
+  // Body
+  ctx.fillStyle = '#3a2010';
+  ctx.beginPath();
+  ctx.ellipse(x, y+bob, 18, 24, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Arms
+  let armSwing = Math.sin(phase*2)*10;
+  ctx.strokeStyle = '#3a2010';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x-14, y-4+bob);
+  ctx.lineTo(x-26, y+14+bob+armSwing);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x+14, y-4+bob);
+  ctx.lineTo(x+26, y+14+bob-armSwing);
+  ctx.stroke();
+  // Head
+  ctx.fillStyle = '#2a1808';
+  ctx.beginPath();
+  ctx.arc(x, y-22+bob, 17, 0, Math.PI*2);
+  ctx.fill();
+  // Face
+  ctx.fillStyle = '#4a2e18';
+  ctx.beginPath();
+  ctx.arc(x, y-20+bob, 11, 0, Math.PI*2);
+  ctx.fill();
+  // Eyes glow red
+  ctx.fillStyle = '#ff1111';
+  ctx.shadowColor = '#ff0000';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(x-5, y-23+bob, 3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x+5, y-23+bob, 3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // Fur texture lines
+  ctx.strokeStyle = 'rgba(80,40,10,0.4)';
+  ctx.lineWidth = 1;
+  for(let i=-2;i<3;i++){
+    ctx.beginPath();
+    ctx.moveTo(x+i*5-2, y-10+bob);
+    ctx.lineTo(x+i*5+2, y+10+bob);
+    ctx.stroke();
+  }
+}
+
+function drawVignette(){
+  let w = canvas.width, h = canvas.height;
+  let vgrd = ctx.createRadialGradient(w/2,h/2,h*0.3,w/2,h/2,h*0.9);
+  vgrd.addColorStop(0,'rgba(0,0,0,0)');
+  vgrd.addColorStop(1,'rgba(0,5,0,0.88)');
+  ctx.fillStyle = vgrd;
+  ctx.fillRect(0,0,w,h);
+}
+</script>
+</body>
+</html>
