@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SURVIVE — Night Shift</title>
+<style>
+  :root{
+    --bg: #07080a;
+    --panel: #111418;
+    --line: #2a2f36;
+    --amber: #e8a33d;
+    --red: #c4291e;
+    --sick: #f4d35e;
+    --cold: #5b7d8c;
+    --text: #d9d4c7;
+    --dim: #6c7178;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%; background:var(--bg);
+    font-family: 'Courier New', Courier, monospace;
+    color:var(--text);
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+    touch-action:manipulation;
+  }
+  #wrap{
+    position:relative; width:100vw; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at center, #0d0f12 0%, #020203 100%);
+  }
+  #stage{
+    position:relative;
+    width:min(100vw, 177.7vh);
+    height:min(100vh, 56.25vw);
+    background:#000;
+    box-shadow: 0 0 80px rgba(0,0,0,0.8) inset;
+    overflow:hidden;
+  }
+  canvas{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:block;
+  }
+  .vignette{
+    position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%);
+    z-index:5;
+  }
+  .scanlines{
+    position:absolute; inset:0; pointer-events:none; z-index:6;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px, transparent 2px, transparent 3px);
+    opacity:0.5;
+    mix-blend-mode: multiply;
+  }
+
+  /* ---- HUD ---- */
+  #hud{
+    position:absolute; top:0; left:0; right:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding: 14px 18px; pointer-events:none;
+    font-size: clamp(11px, 1.6vw, 15px);
+    letter-spacing:1px;
+  }
+  .hud-block{
+    background:rgba(8,9,11,0.55);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    color:var(--amber);
+    text-shadow:0 0 6px rgba(232,163,61,0.4);
+  }
+  #lives{ color:var(--red); text-shadow:0 0 6px rgba(196,41,30,0.5); margin-top:6px;}
+  #clock{ font-size: clamp(16px, 2.4vw, 26px); text-align:right;}
+  #clock .ampm{ font-size:0.6em; color:var(--dim);}
+
+  /* ---- overlays / screens ---- */
+  .overlay{
+    position:absolute; inset:0; z-index:30;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:5vh 6vw;
+    background:rgba(2,2,3,0.92);
+  }
+  .hidden{ display:none !important; }
+  h1.title{
+    font-size:clamp(28px,6vw,64px); color:var(--red);
+    text-shadow: 0 0 18px rgba(196,41,30,0.6), 0 0 40px rgba(196,41,30,0.3);
+    letter-spacing:6px; margin:0 0 6px 0;
+  }
+  .sub{ color:var(--dim); letter-spacing:3px; font-size:clamp(10px,1.6vw,14px); margin-bottom:28px;}
+  p.flavor{ max-width:560px; line-height:1.6; color:var(--text); font-size:clamp(12px,1.6vw,15px); }
+  .btn{
+    font-family:inherit; background:var(--panel); color:var(--amber);
+    border:1px solid var(--amber); padding:12px 28px; margin-top:18px;
+    font-size:clamp(13px,1.8vw,17px); letter-spacing:2px; cursor:pointer;
+    pointer-events:all;
+  }
+  .btn:hover{ background:var(--amber); color:#000; }
+  .btn.danger{ border-color:var(--red); color:var(--red);}
+  .btn.danger:hover{ background:var(--red); color:#fff;}
+  .btn.ghost{ border-color:var(--line); color:var(--dim); font-size:0.8em; padding:8px 18px;}
+  .night-num{
+    font-size:clamp(48px,10vw,110px); color:var(--text); margin:6px 0;
+    letter-spacing:2px;
+  }
+  ul.howto{ text-align:left; max-width:520px; line-height:1.8; font-size:clamp(11px,1.5vw,14px); color:var(--text); }
+  ul.howto li span{ color:var(--sick); }
+
+  /* ---- controls ---- */
+  #controls{
+    position:absolute; bottom:0; left:0; right:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    padding: 0 16px 16px 16px; pointer-events:none;
+  }
+  .ctl-group{ display:flex; gap:10px; pointer-events:all; }
+  .ctl-btn{
+    font-family:inherit; background:rgba(17,20,24,0.75); color:var(--text);
+    border:1px solid var(--line); padding:10px 16px; font-size:clamp(11px,1.6vw,15px);
+    letter-spacing:1px; cursor:pointer; backdrop-filter:blur(2px);
+  }
+  .ctl-btn.active{ border-color:var(--sick); color:var(--sick); box-shadow:0 0 10px rgba(244,211,94,0.4);}
+  .ctl-btn.light{ border-color:var(--sick); }
+  .ctl-btn.cam{ border-color:var(--cold); }
+  .ctl-btn:active{ transform:scale(0.95); }
+  .key{ color:var(--dim); font-size:0.75em; }
+
+  #toast{
+    position:absolute; top:46%; left:50%; transform:translate(-50%,-50%);
+    z-index:25; color:var(--amber); font-size:clamp(16px,2.6vw,28px);
+    letter-spacing:3px; text-shadow:0 0 14px rgba(232,163,61,0.6);
+    pointer-events:none; opacity:0; transition:opacity 0.25s;
+    text-align:center;
+  }
+  #toast.show{ opacity:1; }
+
+  #flash{
+    position:absolute; inset:0; z-index:40; background:#fff; opacity:0;
+    pointer-events:none;
+  }
+
+  #jumpscare{
+    position:absolute; inset:0; z-index:50; background:#000;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+  }
+
+  #qte{
+    position:absolute; inset:0; z-index:35; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:rgba(2,2,3,0.85);
+  }
+  .qte-keys{ display:flex; gap:18px; margin:30px 0; }
+  .qte-key{
+    width:64px; height:64px; border:2px solid var(--line); display:flex;
+    align-items:center; justify-content:center; font-size:24px; color:var(--dim);
+  }
+  .qte-key.next{ border-color:var(--sick); color:var(--sick); box-shadow:0 0 14px rgba(244,211,94,0.5); }
+  .qte-key.done{ border-color:var(--cold); color:var(--cold); opacity:0.5; }
+  .qte-bar-track{ width:60vw; max-width:480px; height:10px; background:var(--panel); border:1px solid var(--line); }
+  .qte-bar{ height:100%; background:var(--red); width:100%; }
+
+  .credit{ position:absolute; bottom:6px; right:10px; z-index:60; font-size:10px; color:#3a3d42; letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c" width="960" height="540"></canvas>
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+
+    <div id="hud">
+      <div>
+        <div class="hud-block">NIGHT <span id="hudNight">1</span></div>
+        <div class="hud-block" id="lives">♥ ♥ ♥</div>
+      </div>
+      <div>
+        <div class="hud-block" id="clock">12:00<span class="ampm"> AM</span></div>
+        <div class="hud-block" style="margin-top:6px;">SCORE <span id="hudScore">0</span></div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+    <div id="flash"></div>
+    <div id="jumpscare"><canvas id="jc" width="960" height="540"></canvas></div>
+
+    <div id="controls">
+      <div class="ctl-group">
+        <button class="ctl-btn" id="btnLeft">◀ LEFT HALL <span class="key">[A]</span></button>
+        <button class="ctl-btn" id="btnCenter">DESK <span class="key">[S]</span></button>
+        <button class="ctl-btn" id="btnRight">RIGHT HALL ▶ <span class="key">[D]</span></button>
+      </div>
+      <div class="ctl-group">
+        <button class="ctl-btn cam" id="btnCam">CAMERAS <span class="key">[C]</span></button>
+        <button class="ctl-btn light" id="btnLight">FLASHLIGHT <span class="key">[F]</span></button>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="overlay" id="screenTitle">
+      <h1 class="title">SURVIVE</h1>
+      <div class="sub">NIGHT SHIFT — ABANDONED PIZZERIA</div>
+      <p class="flavor">You took the job because it paid more than minimum wage for doing
+        nothing... or so they said. Three animatronics still walk the halls after dark.
+        Keep them out of your office until 6 AM. Five nights. Three lives. Don't look away
+        too long.</p>
+      <button class="btn" id="btnPlay">CLOCK IN</button>
+      <button class="btn ghost" id="btnHow">HOW TO SURVIVE</button>
+    </div>
+
+    <!-- HOW TO -->
+    <div class="overlay hidden" id="screenHow">
+      <h1 class="title" style="font-size:clamp(20px,4vw,34px);">HOW TO SURVIVE</h1>
+      <ul class="howto">
+        <li><span>Cameras [C]</span> — check the Stage, Parts &amp; Service, and both halls. The animatronics only move while you're watching the cameras, so don't leave them up too long.</li>
+        <li><span>Look Left / Right [A] / [D]</span> — peek down a hallway. If something has reached your door, you'll see it.</li>
+        <li><span>Flashlight [F]</span> — while looking down a hallway with something at your door, shine the light. Their eyes burn and they retreat.</li>
+        <li><span>Miss it</span> and you lose a life. Lose all three and you restart the week from Night 1.</li>
+        <li><span>The big one</span> from Parts &amp; Service is faster than the rest. Listen for the heavy footsteps.</li>
+        <li><span>Survive Night 5</span> to win. An optional <span>Night 6</span> is unlocked after — beat it for a bonus point.</li>
+      </ul>
+      <button class="btn" id="btnHowBack">GOT IT</button>
+    </div>
+
+    <!-- NIGHT INTRO -->
+    <div class="overlay hidden" id="screenNightIntro">
+      <div class="sub">NIGHT</div>
+      <div class="night-num" id="introNightNum">1</div>
+      <p class="flavor" id="introFlavor">12:00 AM. Lock in. Watch the halls.</p>
+      <button class="btn" id="btnStartNight">BEGIN SHIFT</button>
+    </div>
+
+    <!-- JUMPSCARE TO LIFE LOST MESSAGE -->
+    <div class="overlay hidden" id="screenCaught">
+      <h1 class="title">YOU WERE CAUGHT</h1>
+      <p class="flavor" id="caughtText">All three lives lost. The week starts over.</p>
+      <button class="btn danger" id="btnRestartWeek">RESTART THE WEEK</button>
+    </div>
+
+    <!-- NIGHT COMPLETE -->
+    <div class="overlay hidden" id="screenNightComplete">
+      <div class="sub">6:00 AM</div>
+      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">SHIFT OVER</h1>
+      <p class="flavor" id="completeText">You survived Night 1. +1 point.</p>
+      <button class="btn" id="btnNextNight">CONTINUE</button>
+    </div>
+
+    <!-- WIN / BONUS NIGHT OFFER -->
+    <div class="overlay hidden" id="screenBonusOffer">
+      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">YOU SURVIVED THE WEEK</h1>
+      <p class="flavor">Five nights down — that's the job done. There's one more shift on the
+        board if you want it: <strong>Night 6</strong>. It's really hard. Beat it for one
+        extra point.</p>
+      <button class="btn danger" id="btnTakeNight6">WORK NIGHT 6</button>
+      <button class="btn ghost" id="btnSkipToEscape">CLOCK OUT FOR GOOD</button>
+    </div>
+
+    <!-- BONUS ROUND -->
+    <div class="overlay hidden" id="qte">
+      <div class="sub">BONUS — FIX THE POWER &amp; ESCAPE</div>
+      <p class="flavor">The breaker's fried. Match the sequence before the door seals.</p>
+      <div class="qte-keys" id="qteKeys"></div>
+      <div class="qte-bar-track"><div class="qte-bar" id="qteBar"></div></div>
+    </div>
+
+    <!-- FINAL VICTORY -->
+    <div class="overlay hidden" id="screenVictory">
+      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">CLOCKED OUT</h1>
+      <p class="flavor" id="victoryText"></p>
+      <button class="btn" id="btnPlayAgain">PLAY AGAIN</button>
+    </div>
+
+    <div class="credit">SURVIVE — built from Edric's game design planner</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- Audio ----------------
+  let actx = null;
+  function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+
+  function thump(freq, dur, vol){
+    if(!actx) return;
+    const t = actx.currentTime;
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20,freq*0.6), t+dur);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+dur+0.05);
+  }
+  function staticHiss(dur, vol){
+    if(!actx) return;
+    const bufferSize = actx.sampleRate * dur;
+    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1)*0.6; }
+    const src = actx.createBufferSource(); src.buffer = buffer;
+    const gain = actx.createGain();
+    gain.gain.setValueAtTime(vol, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+    const filt = actx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=1800;
+    src.connect(filt); filt.connect(gain); gain.connect(actx.destination);
+    src.start();
+  }
+  function clickSound(){
+    if(!actx) return;
+    const t = actx.currentTime;
+    const osc = actx.createOscillator(); const gain = actx.createGain();
+    osc.type='square'; osc.frequency.setValueAtTime(900,t);
+    gain.gain.setValueAtTime(0.15,t); gain.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+    osc.connect(gain); gain.connect(actx.destination); osc.start(t); osc.stop(t+0.07);
+  }
+  function chime(success){
+    if(!actx) return;
+    const notes = success ? [523,659,784] : [300,260,220];
+    notes.forEach((f,i)=>{
+      const t = actx.currentTime + i*0.12;
+      const osc=actx.createOscillator(); const gain=actx.createGain();
+      osc.type='triangle'; osc.frequency.setValueAtTime(f,t);
+      gain.gain.setValueAtTime(0.2,t); gain.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+      osc.connect(gain); gain.connect(actx.destination); osc.start(t); osc.stop(t+0.32);
+    });
+  }
+  function jumpscareNoise(){
+    if(!actx) return;
+    const t = actx.currentTime;
+    const bufferSize = actx.sampleRate * 0.5;
+    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1); }
+    const src = actx.createBufferSource(); src.buffer = buffer;
+    const gain = actx.createGain();
+    gain.gain.setValueAtTime(0.9, t); gain.gain.exponentialRampToValueAtTime(0.001, t+0.5);
+    src.connect(gain); gain.connect(actx.destination); src.start();
+    const osc = actx.createOscillator(); const g2 = actx.createGain();
+    osc.type='sawtooth'; osc.frequency.setValueAtTime(90,t); osc.frequency.exponentialRampToValueAtTime(40,t+0.5);
+    g2.gain.setValueAtTime(0.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+    osc.connect(g2); g2.connect(actx.destination); osc.start(t); osc.stop(t+0.55);
+  }
+
+  // ---------------- State ----------------
+  const TOTAL_NIGHTS = 5;
+  const S = {
+    night: 1,
+    lives: 3,
+    score: 0,
+    bonusEarned: false,
+    viewing: 'center', // center | left | right | camera
+    paused: true,
+    inGameMinutes: 0,  // 0..360 (12am..6am)
+    nightLenSec: 62,    // real seconds per night, tuned per night
+    elapsedSec: 0,
+    flashlightCooldown: 0,
+    flashlightActive: 0,
+    camTickTimer: 0,
+    robots: [], // {id,name,kind,stage,doorSide,doorTimer,doorGrace,stunTimer,speedTier}
+    night6: false,
+  };
+
+  function nightDifficulty(n){
+    // returns tuning per night
+    return {
+      camTickInterval: Math.max(1.6, 3.0 - n*0.22),
+      advanceChance: Math.min(0.85, 0.30 + n*0.10),
+      doorGrace: Math.max(3.2, 6.2 - n*0.4),
+      fredUnlocked: n >= 3,
+      fredSpeedMult: 1.6 + n*0.06,
+    };
+  }
+
+  function resetRobots(){
+    const cfg = nightDifficulty(S.night);
+    S.robots = [
+      { id:'bear', name:'Bear-bot', kind:'bear', stage:'home', home:'stage', doorSide:null, doorTimerLeft:0, stunTimer:0 },
+      { id:'rabbit', name:'Rabbit-bot', kind:'rabbit', stage:'home', home:'stage', doorSide:null, doorTimerLeft:0, stunTimer:0 },
+    ];
+    if(cfg.fredUnlocked){
+      S.robots.push({ id:'fred', name:'Fred Bear', kind:'fred', stage:'home', home:'parts', doorSide:null, doorTimerLeft:0, stunTimer:0 });
+    }
+  }
+
+  function startNight(n){
+    S.night = n;
+    S.lives = 3;
+    S.elapsedSec = 0;
+    S.inGameMinutes = 0;
+    const cfg = nightDifficulty(n);
+    S.nightLenSec = 62 + n*3;
+    resetRobots();
+    S.viewing = 'center';
+    S.camTickTimer = 0;
+    S.flashlightCooldown = 0;
+    show('screenNightIntro');
+    document.getElementById('introNightNum').textContent = n===6 ? '6 (BONUS)' : n;
+    document.getElementById('introFlavor').textContent = n===6
+      ? "Everyone said you'd never make it this far. Night 6 isn't on the schedule \u2014 you don't have to be here."
+      : "12:00 AM. Lock in. Watch the halls, check the cameras, don't get caught looking the wrong way.";
+  }
+
+  function loseLife(causedBy){
+    S.lives -= 1;
+    flashScreen();
+    updateHud();
+    if(S.lives <= 0){
+      jumpscare(causedBy, true);
+    } else {
+      jumpscare(causedBy, false);
+    }
+  }
+
+  function jumpscare(robot, fatal){
+    ensureAudio();
+    S.paused = true;
+    jumpscareNoise();
+    const jc = document.getElementById('jumpscare');
+    const jcv = document.getElementById('jc');
+    drawJumpscareFace(jcv, robot ? robot.kind : 'bear');
+    jc.style.opacity = 1; jc.style.pointerEvents='all';
+    shake(420);
+    setTimeout(()=>{
+      jc.style.opacity = 0; jc.style.pointerEvents='none';
+      if(fatal){
+        document.getElementById('caughtText').textContent =
+          `All three lives lost on Night ${S.night}. The week starts over from Night 1. Score resets to 0.`;
+        S.score = 0;
+        show('screenCaught');
+      } else {
+        if(robot){
+          robot.stage = 'home';
+          robot.doorSide = null;
+          robot.stunTimer = 4;
+        }
+        S.viewing = 'center';
+        S.paused = false;
+      }
+    }, 650);
+  }
+
+  function nightSuccess(){
+    S.paused = true;
+    let pts = 1;
+    S.score += pts;
+    updateHud();
+    chime(true);
+    if(S.night < TOTAL_NIGHTS){
+      document.getElementById('completeText').textContent = `You survived Night ${S.night}. +1 point.`;
+      show('screenNightComplete');
+    } else if(S.night === TOTAL_NIGHTS){
+      show('screenBonusOffer');
+    } else if(S.night === 6){
+      document.getElementById('completeText').textContent = `Night 6 survived. +1 bonus point!`;
+      S.bonusEarned = true;
+      updateHud();
+      show('screenNightComplete');
+      document.getElementById('btnNextNight').dataset.toEscape = '1';
+    }
+  }
+
+  // ---------------- Canvas drawing ----------------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  function robotColor(kind){
+    if(kind==='bear') return '#caa24a';
+    if(kind==='rabbit') return '#d8d2c2';
+    if(kind==='fred') return '#b5552a';
+    return '#999';
+  }
+
+  function drawRobotIcon(c, cx, cy, scale, kind, eyesLit, alpha){
+    c.save();
+    c.globalAlpha = alpha===undefined?1:alpha;
+    c.translate(cx, cy);
+    c.scale(scale, scale);
+    const col = robotColor(kind);
+    c.fillStyle = col;
+    // body
+    c.beginPath(); c.ellipse(0, 40, 46, 50, 0, 0, Math.PI*2); c.fill();
+    // head
+    c.beginPath(); c.ellipse(0, -30, 38, 34, 0, 0, Math.PI*2); c.fill();
+    // ears
+    if(kind==='rabbit'){
+      c.beginPath(); c.ellipse(-16, -78, 9, 36, -0.15, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.ellipse(16, -78, 9, 36, 0.15, 0, Math.PI*2); c.fill();
+    } else {
+      c.beginPath(); c.arc(-30, -56, 16, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(30, -56, 16, 0, Math.PI*2); c.fill();
+      if(kind==='fred'){
+        // jagged shoulder spikes for the bigger faster one
+        c.beginPath();
+        c.moveTo(-44,10); c.lineTo(-60,-6); c.lineTo(-42,-2); c.lineTo(-54,-22); c.lineTo(-30,-10);
+        c.closePath(); c.fill();
+        c.beginPath();
+        c.moveTo(44,10); c.lineTo(60,-6); c.lineTo(42,-2); c.lineTo(54,-22); c.lineTo(30,-10);
+        c.closePath(); c.fill();
+      }
+    }
+    // seams / panel lines
+    c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(-20,-30); c.lineTo(20,-30); c.stroke();
+    c.beginPath(); c.moveTo(-30,40); c.lineTo(30,40); c.stroke();
+    // eyes
+    c.fillStyle = eyesLit ? '#ffffff' : (kind==='fred' ? '#ff2a1a' : '#e0c84a');
+    if(eyesLit){
+      c.shadowColor = '#fff'; c.shadowBlur = 18;
+    } else {
+      c.shadowColor = kind==='fred' ? '#ff2a1a' : '#e0c84a'; c.shadowBlur = 10;
+    }
+    c.beginPath(); c.arc(-13,-32,6,0,Math.PI*2); c.fill();
+    c.beginPath(); c.arc(13,-32,6,0,Math.PI*2); c.fill();
+    c.shadowBlur = 0;
+    // teeth
+    c.fillStyle = '#1c1c1c';
+    c.fillRect(-14,-12,28,8);
+    c.fillStyle = '#eee';
+    for(let i=-12;i<14;i+=6){ c.fillRect(i,-12,4,7); }
+    c.restore();
+  }
+
+  function drawJumpscareFace(cv, kind){
+    const jctx = cv.getContext('2d');
+    jctx.clearRect(0,0,cv.width,cv.height);
+    jctx.fillStyle = '#000'; jctx.fillRect(0,0,cv.width,cv.height);
+    drawRobotIcon(jctx, cv.width/2, cv.height/2+60, 4.2, kind, true, 1);
+  }
+
+  let shakeT = 0;
+  function shake(ms){ shakeT = ms; }
+
+  function flashScreen(){
+    const f = document.getElementById('flash');
+    f.style.transition = 'none';
+    f.style.opacity = 0.85;
+    requestAnimationFrame(()=>{
+      f.style.transition = 'opacity 0.4s';
+      f.style.opacity = 0;
+    });
+  }
+
+  function drawOffice(){
+    // ambient gradient floor/wall
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#13161a'); g.addColorStop(1,'#06070a');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+    // desk
+    ctx.fillStyle = '#1c1f24';
+    ctx.fillRect(0, H*0.74, W, H*0.30);
+    ctx.fillStyle = '#0e1013';
+    ctx.fillRect(0, H*0.74, W, 6);
+
+    // monitor glow (camera button hint)
+    ctx.save();
+    ctx.translate(W/2, H*0.86);
+    ctx.fillStyle = '#0c1f22';
+    ctx.fillRect(-90,-46,180,86);
+    ctx.strokeStyle = '#2a4a4f'; ctx.strokeRect(-90,-46,180,86);
+    ctx.fillStyle = 'rgba(91,125,140,0.35)';
+    ctx.fillRect(-82,-38,164,70);
+    ctx.fillStyle = '#5b7d8c';
+    ctx.font = '12px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('CAM', 0, 4);
+    ctx.restore();
+
+    // left hallway opening
+    drawHallOpening(60, true);
+    // right hallway opening
+    drawHallOpening(W-60, false);
+
+    // distant robot peeking indicators when at 'hallway' stage (not yet door) — subtle silhouette far down hall
+    S.robots.forEach(r=>{
+      if(r.stage==='hall'){
+        const x = r.doorSide==='left' ? 150 : W-150;
+        drawRobotIcon(ctx, x, H*0.62, 0.35, r.kind, false, 0.55);
+      }
+    });
+
+    // ceiling light flicker text
+    ctx.fillStyle = 'rgba(217,212,199,0.08)';
+    ctx.fillRect(0,0,W,30);
+  }
+
+  function drawHallOpening(x, isLeft){
+    ctx.save();
+    const w = 170;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(x - (isLeft?0:w), H*0.18);
+    ctx.lineTo(x + (isLeft?w:0), H*0.18);
+    ctx.lineTo(x + (isLeft?w*1.3:-w*0.3), H*0.78);
+    ctx.lineTo(x - (isLeft?w*0.3:w*1.3), H*0.78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(91,125,140,0.10)';
+    ctx.fill();
+    ctx.strokeStyle = '#23262b'; ctx.lineWidth=4; ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawHallView(side){
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#0a0c0f'); g.addColorStop(1,'#020203');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+    // perspective corridor
+    ctx.save();
+    ctx.strokeStyle = '#1d2127'; ctx.lineWidth = 3;
+    for(let i=1;i<=4;i++){
+      const inset = i*90;
+      ctx.strokeRect(inset*0.4, inset*0.5, W-inset*0.8, H-inset*1.0);
+    }
+    ctx.restore();
+
+    // flashlight cone if active
+    if(S.flashlightActive > 0){
+      ctx.save();
+      const grad = ctx.createRadialGradient(W/2,H*0.55,40,W/2,H*0.55,420);
+      grad.addColorStop(0,'rgba(244,211,94,0.55)');
+      grad.addColorStop(1,'rgba(244,211,94,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,W,H);
+      ctx.restore();
+    }
+
+    const robot = S.robots.find(r=>r.doorSide===side && (r.stage==='door'||r.stage==='hall'));
+    if(robot){
+      if(robot.stage==='door'){
+        const eyesLit = S.flashlightActive>0;
+        drawRobotIcon(ctx, W/2, H*0.62, 1.9, robot.kind, eyesLit, 1);
+        ctx.save();
+        ctx.fillStyle = 'rgba(196,41,30,0.85)';
+        ctx.font = 'bold 18px Courier New';
+        ctx.textAlign='center';
+        ctx.fillText('AT YOUR DOOR — SHINE THE LIGHT [F]', W/2, H*0.16);
+        ctx.restore();
+      } else {
+        drawRobotIcon(ctx, W/2, H*0.62, 0.7, robot.kind, false, 0.85);
+      }
+    }
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(217,212,199,0.5)';
+    ctx.font = '14px Courier New';
+    ctx.textAlign='center';
+    ctx.fillText((side==='left'?'LEFT HALL':'RIGHT HALL'), W/2, H*0.92);
+    ctx.restore();
+  }
+
+  const ROOMS = {
+    stage: {x:200,y:140,label:'STAGE'},
+    parts: {x:760,y:140,label:'PARTS & SERVICE'},
+    hallL: {x:300,y:330,label:'LEFT HALL'},
+    hallR: {x:660,y:330,label:'RIGHT HALL'},
+    office:{x:480,y:460,label:'OFFICE'},
+  };
+
+  function robotRoomKey(r){
+    if(r.stage==='home') return r.home;
+    if(r.stage==='hall') return r.doorSide==='left' ? 'hallL':'hallR';
+    if(r.stage==='door') return r.doorSide==='left' ? 'hallL':'hallR';
+    return r.home;
+  }
+
+  function drawCameraView(){
+    ctx.fillStyle = '#03100f'; ctx.fillRect(0,0,W,H);
+    // static
+    ctx.save();
+    ctx.globalAlpha = 0.05;
+    for(let i=0;i<60;i++){
+      ctx.fillStyle = Math.random()>0.5 ? '#5b7d8c' : '#000';
+      ctx.fillRect(Math.random()*W, Math.random()*H, Math.random()*40, 2);
+    }
+    ctx.restore();
+
+    // connections
+    ctx.strokeStyle = 'rgba(91,125,140,0.4)'; ctx.lineWidth=2;
+    function line(a,b){ ctx.beginPath(); ctx.moveTo(ROOMS[a].x,ROOMS[a].y); ctx.lineTo(ROOMS[b].x,ROOMS[b].y); ctx.stroke(); }
+    line('stage','hallL'); line('stage','hallR');
+    line('parts','hallL'); line('parts','hallR');
+    line('hallL','office'); line('hallR','office');
+
+    Object.keys(ROOMS).forEach(k=>{
+      const r = ROOMS[k];
+      ctx.fillStyle = k==='office' ? '#3a4750' : '#15252a';
+      ctx.strokeStyle = '#3a4f54';
+      ctx.beginPath(); ctx.arc(r.x,r.y,28,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#7fa3ad';
+      ctx.font = '11px Courier New'; ctx.textAlign='center';
+      ctx.fillText(r.label, r.x, r.y+44);
+    });
+
+    S.robots.forEach((r,i)=>{
+      const key = robotRoomKey(r);
+      const room = ROOMS[key];
+      const offset = (i-1)*14;
+      drawRobotIcon(ctx, room.x+offset, room.y-6, 0.3, r.kind, false, r.stunTimer>0?0.4:1);
+    });
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(91,125,140,0.9)';
+    ctx.font = 'bold 14px Courier New';
+    ctx.textAlign='center';
+    ctx.fillText('CCTV — they only move while you watch', W/2, 36);
+    ctx.restore();
+  }
+
+  function render(){
+    ctx.save();
+    if(shakeT>0){
+      const mag = 6;
+      ctx.translate((Math.random()-0.5)*mag, (Math.random()-0.5)*mag);
+    }
+    if(S.viewing==='center') drawOffice();
+    else if(S.viewing==='left') drawHallView('left');
+    else if(S.viewing==='right') drawHallView('right');
+    else if(S.viewing==='camera') drawCameraView();
+    ctx.restore();
+  }
+
+  // ---------------- Game loop ----------------
+  let lastT = performance.now();
+  function loop(t){
+    const dt = Math.min(0.05, (t-lastT)/1000);
+    lastT = t;
+    if(shakeT>0) shakeT -= dt*1000;
+    if(!S.paused) update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    S.elapsedSec += dt;
+    S.inGameMinutes = Math.min(360, (S.elapsedSec/S.nightLenSec)*360);
+    updateClock();
+
+    if(S.flashlightCooldown>0) S.flashlightCooldown -= dt;
+    if(S.flashlightActive>0){
+      S.flashlightActive -= dt;
+    }
+
+    const cfg = nightDifficulty(S.night===6?5.9:S.night);
+
+    S.robots.forEach(r=>{
+      if(r.stunTimer>0){ r.stunTimer -= dt; return; }
+      if(r.stage==='door'){
+        r.doorTimerLeft -= dt;
+        const lookingAtIt = (S.viewing==='left'&&r.doorSide==='left') || (S.viewing==='right'&&r.doorSide==='right');
+        const repelled = lookingAtIt && S.flashlightActive>0;
+        if(repelled){
+          r.stage='home'; r.doorSide=null; r.stunTimer = 2.2;
+          chime(true);
+        } else if(r.doorTimerLeft<=0){
+          loseLife(r);
+        }
+      }
+    });
+
+    // camera advances robots
+    if(S.viewing==='camera'){
+      S.camTickTimer += dt;
+      const interval = cfg.camTickInterval;
+      if(S.camTickTimer >= interval){
+        S.camTickTimer = 0;
+        playStatic();
+        S.robots.forEach(r=>{
+          if(r.stunTimer>0 || r.stage==='door') return;
+          const speedMult = r.kind==='fred' ? cfg.fredSpeedMult : 1;
+          const chance = Math.min(0.95, cfg.advanceChance * speedMult);
+          if(Math.random() < chance){
+            advanceRobot(r, cfg);
+          }
+        });
+      }
+    }
+
+    // ambient footstep audio cue if something is in a hallway and you're peeking it, or on camera
+    if(Math.random() < dt*0.6){
+      const active = S.robots.find(r=>r.stage!=='home');
+      if(active && (S.viewing==='camera' || (S.viewing==='left'&&active.doorSide==='left') || (S.viewing==='right'&&active.doorSide==='right'))){
+        const base = active.kind==='fred' ? 70 : 55;
+        thump(base, 0.35, active.kind==='fred'?0.18:0.1);
+      }
+    }
+
+    if(S.inGameMinutes >= 360){
+      nightSuccess();
+    }
+  }
+  function playStatic(){ staticHiss(0.18, 0.05); }
+
+  function advanceRobot(r, cfg){
+    if(r.stage==='home'){
+      r.stage='hall';
+      r.doorSide = (r.home==='stage') ? (Math.random()<0.5?'left':'right') : (Math.random()<0.5?'left':'right');
+    } else if(r.stage==='hall'){
+      r.stage='door';
+      r.doorTimerLeft = cfg.doorGrace * (r.kind==='fred'?0.75:1);
+    }
+  }
+
+  function updateClock(){
+    const totalMin = S.inGameMinutes;
+    let hour = Math.floor(totalMin/60) + 12;
+    let min = Math.floor(totalMin%60);
+    let displayHour = hour>12 ? hour-12 : hour;
+    if(hour>=12 && hour<13) displayHour = 12;
+    if(hour>=24) hour-=24;
+    let ampm = (hour>=12 && hour<24) ? 'AM' : 'AM';
+    // simplified: always AM since 12am-6am range
+    document.getElementById('clock').innerHTML = `${displayHour}:${String(min).padStart(2,'0')}<span class="ampm"> AM</span>`;
+  }
+
+  function updateHud(){
+    document.getElementById('hudNight').textContent = S.night;
+    document.getElementById('hudScore').textContent = S.score;
+    document.getElementById('lives').textContent = '♥ '.repeat(Math.max(0,S.lives)).trim() || '—';
+  }
+
+  // ---------------- UI wiring ----------------
+  function show(id){
+    document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+  function hideAllOverlays(){
+    document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  }
+
+  function setViewing(v){
+    if(S.paused) return;
+    S.viewing = v;
+    clickSound();
+    document.querySelectorAll('.ctl-btn').forEach(b=>b.classList.remove('active'));
+    if(v==='left') document.getElementById('btnLeft').classList.add('active');
+    if(v==='right') document.getElementById('btnRight').classList.add('active');
+    if(v==='camera') document.getElementById('btnCam').classList.add('active');
+    if(v==='center') document.getElementById('btnCenter').classList.add('active');
+  }
+
+  function tryFlashlight(){
+    if(S.paused) return;
+    if(S.viewing!=='left' && S.viewing!=='right') { toast("Look down a hallway first."); return; }
+    if(S.flashlightCooldown>0) return;
+    S.flashlightActive = 0.5;
+    S.flashlightCooldown = 0.9;
+    clickSound();
+  }
+
+  let toastTimer=null;
+  function toast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'), 1400);
+  }
+
+  document.getElementById('btnLeft').addEventListener('click', ()=>setViewing('left'));
+  document.getElementById('btnRight').addEventListener('click', ()=>setViewing('right'));
+  document.getElementById('btnCenter').addEventListener('click', ()=>setViewing('center'));
+  document.getElementById('btnCam').addEventListener('click', ()=>setViewing('camera'));
+  document.getElementById('btnLight').addEventListener('click', tryFlashlight);
+
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if(k==='a' || k==='arrowleft') setViewing('left');
+    else if(k==='d' || k==='arrowright') setViewing('right');
+    else if(k==='s' || k==='arrowdown') setViewing('center');
+    else if(k==='c') setViewing(S.viewing==='camera' ? 'center' : 'camera');
+    else if(k==='f' || k===' ') tryFlashlight();
+  });
+
+  document.getElementById('btnPlay').addEventListener('click', ()=>{
+    ensureAudio();
+    startNight(1);
+  });
+  document.getElementById('btnHow').addEventListener('click', ()=> show('screenHow'));
+  document.getElementById('btnHowBack').addEventListener('click', ()=> show('screenTitle'));
+
+  document.getElementById('btnStartNight').addEventListener('click', ()=>{
+    hideAllOverlays();
+    S.paused = false;
+    updateHud();
+  });
+
+  document.getElementById('btnRestartWeek').addEventListener('click', ()=>{
+    S.bonusEarned = false;
+    startNight(1);
+  });
+
+  document.getElementById('btnNextNight').addEventListener('click', (e)=>{
+    if(e.target.dataset.toEscape==='1'){
+      e.target.dataset.toEscape='';
+      startBonusRound();
+      return;
+    }
+    startNight(S.night+1);
+  });
+
+  document.getElementById('btnTakeNight6').addEventListener('click', ()=>{
+    startNight(6);
+  });
+  document.getElementById('btnSkipToEscape').addEventListener('click', ()=>{
+    startBonusRound();
+  });
+
+  document.getElementById('btnPlayAgain').addEventListener('click', ()=>{
+    S.score = 0; S.bonusEarned = false;
+    show('screenTitle');
+  });
+
+  // ---------------- Bonus QTE round ----------------
+  const QTE_KEYS = ['W','A','S','D','F'];
+  let qteState = null;
+  function startBonusRound(){
+    hideAllOverlays();
+    const seqLen = 5;
+    const seq = [];
+    for(let i=0;i<seqLen;i++) seq.push(QTE_KEYS[Math.floor(Math.random()*QTE_KEYS.length)]);
+    qteState = { seq, idx:0, timeLeft:6.0, active:true };
+    renderQte();
+    document.getElementById('qte').classList.remove('hidden');
+    qteLoopT = performance.now();
+    requestAnimationFrame(qteLoop);
+  }
+  function renderQte(){
+    const wrap = document.getElementById('qteKeys');
+    wrap.innerHTML = '';
+    qteState.seq.forEach((k,i)=>{
+      const d = document.createElement('div');
+      d.className = 'qte-key' + (i<qteState.idx?' done':'') + (i===qteState.idx?' next':'');
+      d.textContent = k;
+      wrap.appendChild(d);
+    });
+  }
+  let qteLoopT = 0;
+  function qteLoop(t){
+    if(!qteState || !qteState.active){ return; }
+    const dt = Math.min(0.05,(t-qteLoopT)/1000);
+    qteLoopT = t;
+    qteState.timeLeft -= dt;
+    const bar = document.getElementById('qteBar');
+    bar.style.width = Math.max(0,(qteState.timeLeft/6.0)*100)+'%';
+    if(qteState.timeLeft<=0){
+      qteFinish(false);
+      return;
+    }
+    requestAnimationFrame(qteLoop);
+  }
+  window.addEventListener('keydown', (e)=>{
+    if(!qteState || !qteState.active) return;
+    const k = e.key.toUpperCase();
+    if(k === qteState.seq[qteState.idx]){
+      clickSound();
+      qteState.idx++;
+      renderQte();
+      if(qteState.idx >= qteState.seq.length){
+        qteFinish(true);
+      }
+    }
+  });
+  function qteFinish(success){
+    qteState.active = false;
+    document.getElementById('qte').classList.add('hidden');
+    if(success){
+      S.score += 1;
+      S.bonusEarned = true;
+      chime(true);
+    } else {
+      chime(false);
+    }
+    updateHud();
+    finishGame();
+  }
+
+  function finishGame(){
+    const txt = `Final score: ${S.score} point${S.score===1?'':'s'} ` +
+      `(${Math.min(S.night,TOTAL_NIGHTS)} night${TOTAL_NIGHTS===1?'':'s'} survived` +
+      (S.night===6?', plus Night 6':'') +
+      (S.bonusEarned?', plus the bonus escape':'') + ').';
+    document.getElementById('victoryText').textContent = txt;
+    show('screenVictory');
+  }
+
+  // ---------------- Touch support for hold-style buttons (none needed, click is fine) ----------------
+
+  updateHud();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
