@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>The Hunting</title>
+<style>
+  :root {
+    --bg: #050705;
+    --panel: #0e1410;
+    --panel-edge: #233022;
+    --blood: #c81e3a;
+    --blood-bright: #e8425c;
+    --toxic: #7fff6b;
+    --toxic-dim: #3f7a36;
+    --bone: #e8e6de;
+    --bone-dim: #9a958a;
+    --amber: #e8a33d;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background: var(--bg);
+    overflow: hidden;
+    font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+    color: var(--bone);
+    cursor: crosshair;
+    user-select: none;
+  }
+
+  #gameCanvas { position: absolute; top: 0; left: 0; display: block; }
+
+  .stamp {
+    font-family: Impact, 'Arial Narrow', sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    position: absolute; top: 0; left: 0; width: 100%;
+    padding: 18px 22px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .hud-block {
+    background: rgba(10, 14, 10, 0.55);
+    border: 1px solid var(--panel-edge);
+    border-radius: 4px;
+    padding: 10px 14px;
+    backdrop-filter: blur(2px);
+  }
+  #hpWrap { width: 220px; }
+  #hpLabel { font-size: 11px; letter-spacing: 0.15em; color: var(--bone-dim); margin-bottom: 5px; }
+  #hpBarOuter { width: 100%; height: 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--panel-edge); border-radius: 2px; overflow: hidden; }
+  #hpBarInner { height: 100%; width: 100%; background: linear-gradient(90deg, var(--blood), var(--blood-bright)); transition: width 0.15s ease; }
+
+  #statBlock { text-align: right; font-size: 13px; line-height: 1.7; }
+  #statBlock .num { color: var(--toxic); font-weight: bold; }
+  #statBlock .pelt { color: var(--amber); font-weight: bold; }
+
+  #waveBanner {
+    position: absolute; top: 90px; left: 50%; transform: translate(-50%, -10px);
+    font-size: 22px; letter-spacing: 0.2em; color: var(--blood-bright);
+    opacity: 0; pointer-events: none; z-index: 6;
+    text-shadow: 0 0 12px rgba(200,30,58,0.8);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  #waveBanner.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- Overlays ---------- */
+  .overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+    background: radial-gradient(ellipse at center, rgba(10,12,9,0.88) 0%, rgba(2,3,2,0.97) 75%);
+  }
+  .overlay.hidden { display: none; }
+
+  .panel {
+    width: min(520px, 90vw);
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 6px;
+    padding: 34px 36px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(0,0,0,0.6);
+    cursor: default;
+  }
+
+  h1.title {
+    font-size: clamp(34px, 6vw, 56px);
+    margin: 0 0 4px 0;
+    color: var(--bone);
+    text-shadow: 0 0 18px rgba(200,30,58,0.55), 0 0 2px #000;
+  }
+  h1.title .toxic { color: var(--toxic); text-shadow: 0 0 18px rgba(127,255,107,0.55); }
+
+  .subtitle { font-size: 13px; letter-spacing: 0.2em; color: var(--bone-dim); margin-bottom: 22px; }
+
+  .credit { font-size: 11px; letter-spacing: 0.1em; color: var(--toxic-dim); margin-bottom: 26px; }
+
+  .lore {
+    font-size: 14px; color: var(--bone-dim); line-height: 1.6;
+    margin-bottom: 24px; text-align: left;
+  }
+  .lore b { color: var(--bone); }
+
+  button.btn {
+    font-family: inherit;
+    font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--blood); color: var(--bone);
+    border: none; border-radius: 3px;
+    padding: 14px 30px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  button.btn:hover { background: var(--blood-bright); transform: translateY(-1px); }
+  button.btn:active { transform: translateY(0); }
+  button.btn.secondary { background: var(--toxic-dim); }
+  button.btn.secondary:hover { background: var(--toxic); color: #06200a; }
+  button.btn:disabled { background: #3a3a3a; color: #777; cursor: not-allowed; transform: none; }
+
+  .controls-row { display: flex; gap: 18px; justify-content: center; margin: 18px 0 26px; font-size: 13px; color: var(--bone-dim); }
+  .controls-row .key { background: #1d251c; border: 1px solid var(--panel-edge); border-radius: 3px; padding: 3px 8px; color: var(--bone); margin: 0 4px; font-family: monospace; }
+
+  /* ---------- Shop ---------- */
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 26px; }
+  .upgrade-card {
+    background: #131a12; border: 1px solid var(--panel-edge); border-radius: 4px;
+    padding: 14px 10px; text-align: left;
+  }
+  .upgrade-card .uname { font-size: 13px; font-weight: bold; color: var(--bone); margin-bottom: 3px; }
+  .upgrade-card .udesc { font-size: 11px; color: var(--bone-dim); margin-bottom: 10px; min-height: 28px; }
+  .upgrade-card button { width: 100%; padding: 8px; font-size: 12px; }
+  .pelt-readout { font-size: 16px; color: var(--amber); margin-bottom: 6px; }
+  .pelt-readout .icon { margin-right: 4px; }
+
+  .stats-list { text-align: left; font-size: 14px; line-height: 2; margin: 20px 0; color: var(--bone-dim); }
+  .stats-list .v { color: var(--toxic); float: right; font-weight: bold; }
+  .stats-list .row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--panel-edge); padding: 3px 0; }
+
+  #deathPanel h1.title { color: var(--blood-bright); }
+  #winPanel h1.title { color: var(--toxic); }
+
+  .scratch {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(75deg, transparent 48%, rgba(200,30,58,0.18) 49%, rgba(200,30,58,0.18) 50%, transparent 51%),
+      linear-gradient(105deg, transparent 46%, rgba(200,30,58,0.12) 47%, rgba(200,30,58,0.12) 49%, transparent 50%);
+  }
+
+  @media (max-width: 480px) {
+    .panel { padding: 24px 20px; }
+    .shop-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud">
+  <div id="hpWrap" class="hud-block">
+    <div id="hpLabel">HEALTH</div>
+    <div id="hpBarOuter"><div id="hpBarInner"></div></div>
+  </div>
+  <div id="statBlock" class="hud-block">
+    <div>SCORE&nbsp; <span class="num" id="scoreVal">0</span> / 50</div>
+    <div>PELTS&nbsp; <span class="pelt" id="peltVal">0</span></div>
+    <div>WAVE&nbsp; <span class="num" id="waveVal">1</span> &nbsp;|&nbsp; TIME <span id="timeVal">0:00</span></div>
+  </div>
+</div>
+
+<div id="waveBanner" class="stamp"></div>
+
+<!-- START SCREEN -->
+<div id="startScreen" class="overlay">
+  <div class="panel">
+    <h1 class="title stamp">THE <span class="toxic">HUNTING</span></h1>
+    <div class="subtitle stamp">Survive the forest. Kill what's left of it.</div>
+    <div class="credit stamp">Designed by Hunter &amp; Connor</div>
+    <div class="lore">
+      The forest used to be quiet. Now it isn't. <b>Boars, wolves and something worse</b>
+      are coming out of the treeline, and you're the only one left to hold the line.
+      Every kill earns <b>2 points</b> toward the hunt &mdash; and a <b>pelt</b> to spend
+      at the trading post between waves. Reach <b>50 points</b> to win. Run out of health
+      and the forest wins instead.
+    </div>
+    <div class="controls-row">
+      <div><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> move</div>
+      <div>mouse aim</div>
+      <div>click / hold to shoot</div>
+    </div>
+    <button class="btn" id="startBtn">Start the Hunt</button>
+  </div>
+</div>
+
+<!-- SHOP SCREEN -->
+<div id="shopScreen" class="overlay hidden">
+  <div class="panel">
+    <h1 class="title stamp">WAVE <span id="shopWaveNum" class="toxic">1</span> CLEAR</h1>
+    <div class="subtitle stamp">Trading Post</div>
+    <div class="pelt-readout"><span class="icon">&#9679;</span><span id="shopPelts">0</span> pelts available</div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <button class="btn" id="nextWaveBtn">Back to the Hunt</button>
+  </div>
+</div>
+
+<!-- DEATH SCREEN -->
+<div id="deathScreen" class="overlay hidden">
+  <div class="scratch"></div>
+  <div class="panel" id="deathPanel">
+    <h1 class="title stamp">YOU DIDN'T SURVIVE</h1>
+    <div class="subtitle stamp">The forest took back the night</div>
+    <div class="stats-list" id="deathStats"></div>
+    <button class="btn" id="retryBtn">Hunt Again</button>
+  </div>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="winScreen" class="overlay hidden">
+  <div class="panel" id="winPanel">
+    <h1 class="title stamp">THE HUNT IS WON</h1>
+    <div class="subtitle stamp">50 points. The forest is quiet again.</div>
+    <div class="stats-list" id="winStats"></div>
+    <button class="btn secondary" id="playAgainBtn">Hunt Again</button>
+  </div>
+</div>
+
+<script>
+// ===== THE HUNTING — game logic =====
+(function () {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- State ----------
+  const STATE = { START: 'start', PLAYING: 'playing', SHOP: 'shop', DEAD: 'dead', WIN: 'win' };
+  let state = STATE.START;
+
+  const WIN_SCORE = 50;
+
+  const keys = {};
+  const mouse = { x: canvas.width / 2, y: canvas.height / 2, down: false };
+
+  window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+  window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+  canvas.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  canvas.addEventListener('mousedown', () => { mouse.down = true; });
+  window.addEventListener('mouseup', () => { mouse.down = false; });
+
+  // ---------- Player ----------
+  function freshPlayer() {
+    return {
+      x: 0, y: 0, angle: 0,
+      speed: 3.2,
+      hp: 10, maxHp: 10,
+      damage: 1,
+      fireRate: 16, // frames between shots
+      fireCooldown: 0,
+      bulletSpeed: 9,
+      score: 0,
+      pelts: 0,
+      kills: 0,
+      wave: 1,
+      shopVisits: 0,
+    };
+  }
+  let player = freshPlayer();
+
+  let bullets = [];
+  let enemies = [];
+  let particles = [];
+  let ambient = [];
+  let elapsed = 0; // frames
+  let waveEnemiesRemaining = 0;
+  let waveActive = false;
+  let waveTransitionTimer = 0;
+
+  function resetGame() {
+    player = freshPlayer();
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    bullets = [];
+    enemies = [];
+    particles = [];
+    elapsed = 0;
+    startWave(1);
+  }
+
+  function initAmbient() {
+    ambient = [];
+    for (let i = 0; i < 40; i++) {
+      ambient.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.6 + 0.4,
+        vy: -(Math.random() * 0.3 + 0.1),
+        vx: (Math.random() - 0.5) * 0.2,
+        a: Math.random() * 0.5 + 0.1,
+      });
+    }
+  }
+  initAmbient();
+
+  // ---------- Wave logic ----------
+  function startWave(n) {
+    player.wave = n;
+    const total = n === 1 ? 3 : 4 + n * 2;
+    waveEnemiesRemaining = total;
+    waveActive = true;
+    spawnQueue(total, n);
+  }
+
+  function spawnQueue(total, waveNum) {
+    let spawned = 0;
+    const interval = waveNum === 1 ? 1300 : Math.max(250, 900 - waveNum * 60);
+    const spawnInterval = setInterval(() => {
+      if (spawned >= total || state !== STATE.PLAYING) {
+        clearInterval(spawnInterval);
+        return;
+      }
+      spawnEnemy(waveNum);
+      spawned++;
+    }, interval);
+  }
+
+  function spawnEnemy(waveNum) {
+    const edge = Math.floor(Math.random() * 4);
+    let x, y;
+    const pad = 40;
+    if (edge === 0) { x = -pad; y = Math.random() * canvas.height; }
+    else if (edge === 1) { x = canvas.width + pad; y = Math.random() * canvas.height; }
+    else if (edge === 2) { x = Math.random() * canvas.width; y = -pad; }
+    else { x = Math.random() * canvas.width; y = canvas.height + pad; }
+
+    const mutantChance = waveNum <= 1 ? 0 : Math.min(0.1 + waveNum * 0.06, 0.55);
+    const isMutant = Math.random() < mutantChance;
+    const isWolf = waveNum > 1 && !isMutant && Math.random() < 0.45;
+
+    let type;
+    if (isMutant) type = 'mutant';
+    else if (isWolf) type = 'wolf';
+    else type = 'boar';
+
+    const base = {
+      boar: { hp: 2, speed: 1.6, r: 14, dmg: 1, color: '#8a5a3a' },
+      wolf: { hp: 3, speed: 2.2, r: 15, dmg: 1, color: '#6b6f76' },
+      mutant: { hp: 6 + Math.floor(waveNum / 2), speed: 1.1, r: 22, dmg: 2, color: '#5fae3f' },
+    }[type];
+
+    enemies.push({
+      x, y, type,
+      hp: base.hp, maxHp: base.hp,
+      speed: base.speed + waveNum * 0.04,
+      r: base.r,
+      dmg: base.dmg,
+      color: base.color,
+      hitFlash: 0,
+      wobble: Math.random() * Math.PI * 2,
+    });
+  }
+
+  // ---------- Combat ----------
+  function tryFire() {
+    if (player.fireCooldown > 0) return;
+    player.fireCooldown = player.fireRate;
+    const a = player.angle;
+    bullets.push({
+      x: player.x + Math.cos(a) * 18,
+      y: player.y + Math.sin(a) * 18,
+      vx: Math.cos(a) * player.bulletSpeed,
+      vy: Math.sin(a) * player.bulletSpeed,
+      life: 70,
+      dmg: player.damage,
+    });
+    spawnMuzzleParticle();
+  }
+
+  function spawnMuzzleParticle() {
+    particles.push({
+      x: player.x + Math.cos(player.angle) * 20,
+      y: player.y + Math.sin(player.angle) * 20,
+      r: 6, life: 8, color: '#e8a33d', vx: 0, vy: 0, type: 'muzzle',
+    });
+  }
+
+  function spawnBloodParticles(x, y, color) {
+    for (let i = 0; i < 8; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = Math.random() * 2.5 + 0.5;
+      particles.push({
+        x, y, r: Math.random() * 2.5 + 1,
+        life: 24 + Math.random() * 10,
+        color,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        type: 'blood',
+      });
+    }
+  }
+
+  function killEnemy(e) {
+    player.score += 2;
+    player.pelts += 1;
+    player.kills += 1;
+    spawnBloodParticles(e.x, e.y, e.type === 'mutant' ? '#7fff6b' : '#c81e3a');
+    waveEnemiesRemaining--;
+  }
+
+  // ---------- Update ----------
+  function updatePlayer() {
+    let dx = 0, dy = 0;
+    if (keys['w'] || keys['arrowup']) dy -= 1;
+    if (keys['s'] || keys['arrowdown']) dy += 1;
+    if (keys['a'] || keys['arrowleft']) dx -= 1;
+    if (keys['d'] || keys['arrowright']) dx += 1;
+    const len = Math.hypot(dx, dy) || 1;
+    player.x += (dx / len) * player.speed;
+    player.y += (dy / len) * player.speed;
+    player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
+    player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+
+    player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+
+    if (player.fireCooldown > 0) player.fireCooldown--;
+    if (mouse.down) tryFire();
+  }
+
+  function updateBullets() {
+    bullets.forEach((b) => {
+      b.x += b.vx; b.y += b.vy; b.life--;
+    });
+    bullets = bullets.filter((b) => b.life > 0 && b.x > -20 && b.x < canvas.width + 20 && b.y > -20 && b.y < canvas.height + 20);
+  }
+
+  function updateEnemies() {
+    enemies.forEach((e) => {
+      const ang = Math.atan2(player.y - e.y, player.x - e.x);
+      e.wobble += 0.15;
+      const wob = Math.sin(e.wobble) * 0.3;
+      e.x += Math.cos(ang + wob) * e.speed;
+      e.y += Math.sin(ang + wob) * e.speed;
+      if (e.hitFlash > 0) e.hitFlash--;
+
+      const distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
+      if (distToPlayer < e.r + 16) {
+        player.hp -= e.dmg * 0.04;
+        if (player.hp < 0) player.hp = 0;
+      }
+    });
+  }
+
+  function checkCollisions() {
+    for (let bi = bullets.length - 1; bi >= 0; bi--) {
+      const b = bullets[bi];
+      for (let ei = enemies.length - 1; ei >= 0; ei--) {
+        const e = enemies[ei];
+        const d = Math.hypot(b.x - e.x, b.y - e.y);
+        if (d < e.r) {
+          e.hp -= b.dmg;
+          e.hitFlash = 6;
+          bullets.splice(bi, 1);
+          if (e.hp <= 0) {
+            killEnemy(e);
+            enemies.splice(ei, 1);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  function updateParticles() {
+    particles.forEach((p) => { p.x += p.vx; p.y += p.vy; p.life--; });
+    particles = particles.filter((p) => p.life > 0);
+    ambient.forEach((a) => {
+      a.x += a.vx; a.y += a.vy;
+      if (a.y < -5) a.y = canvas.height + 5;
+      if (a.x < -5) a.x = canvas.width + 5;
+      if (a.x > canvas.width + 5) a.x = -5;
+    });
+  }
+
+  // ---------- HUD callbacks (wired from outside) ----------
+  let onHpChange = () => {};
+  let onScoreChange = () => {};
+  let onWaveClear = () => {};
+  let onPlayerDeath = () => {};
+  let onWin = () => {};
+
+  function update() {
+    if (state !== STATE.PLAYING) return;
+    elapsed++;
+    updatePlayer();
+    updateBullets();
+    updateEnemies();
+    checkCollisions();
+    updateParticles();
+
+    onHpChange(player.hp, player.maxHp);
+    onScoreChange(player.score, player.pelts, player.wave, elapsed);
+
+    if (player.hp <= 0) {
+      state = STATE.DEAD;
+      onPlayerDeath(player);
+      return;
+    }
+
+    if (player.score >= WIN_SCORE) {
+      state = STATE.WIN;
+      onWin(player);
+      return;
+    }
+
+    if (waveActive && waveEnemiesRemaining <= 0 && enemies.length === 0) {
+      waveActive = false;
+      state = STATE.SHOP;
+      onWaveClear(player);
+    }
+  }
+
+  // ---------- Render ----------
+  function drawBackground() {
+    const g = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, 60,
+      canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.75
+    );
+    g.addColorStop(0, '#161d14');
+    g.addColorStop(1, '#050705');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ambient.forEach((a) => {
+      ctx.globalAlpha = a.a;
+      ctx.fillStyle = '#7fff6b';
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawPlayer() {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.angle);
+    ctx.fillStyle = '#e8e6de';
+    ctx.shadowColor = '#c81e3a';
+    ctx.shadowBlur = player.hp < player.maxHp * 0.3 ? 18 : 6;
+    ctx.beginPath();
+    ctx.moveTo(16, 0);
+    ctx.lineTo(-12, -10);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-12, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#9a958a';
+    ctx.fillRect(2, -2.5, 16, 5);
+    ctx.restore();
+  }
+
+  function drawEnemies() {
+    enemies.forEach((e) => {
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : e.color;
+      ctx.shadowColor = e.type === 'mutant' ? '#7fff6b' : '#000';
+      ctx.shadowBlur = e.type === 'mutant' ? 14 : 0;
+      ctx.beginPath();
+      ctx.arc(0, 0, e.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // eyes
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = e.type === 'mutant' ? '#caffbf' : '#ff4444';
+      ctx.beginPath();
+      ctx.arc(-e.r * 0.3, -e.r * 0.25, 2.4, 0, Math.PI * 2);
+      ctx.arc(e.r * 0.3, -e.r * 0.25, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // hp bar
+      const w = e.r * 1.8;
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(-w / 2, -e.r - 12, w, 4);
+      ctx.fillStyle = e.type === 'mutant' ? '#7fff6b' : '#c81e3a';
+      ctx.fillRect(-w / 2, -e.r - 12, w * (e.hp / e.maxHp), 4);
+      ctx.restore();
+    });
+  }
+
+  function drawBullets() {
+    ctx.fillStyle = '#ffd36b';
+    bullets.forEach((b) => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function drawParticles() {
+    particles.forEach((p) => {
+      ctx.globalAlpha = Math.max(p.life / 24, 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawVignette() {
+    const g = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.35,
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.75
+    );
+    const pulse = player.hp < player.maxHp * 0.3 ? (Math.sin(elapsed * 0.2) * 0.15 + 0.55) : 0.45;
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, `rgba(0,0,0,${pulse})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function render() {
+    drawBackground();
+    if (state === STATE.PLAYING || state === STATE.DEAD || state === STATE.WIN) {
+      drawEnemies();
+      drawBullets();
+      drawPlayer();
+      drawParticles();
+      drawVignette();
+    }
+  }
+
+  function loop() {
+    update();
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Public API ----------
+  window.HuntingGame = {
+    STATE,
+    getState: () => state,
+    setState: (s) => { state = s; },
+    start: () => { state = STATE.PLAYING; resetGame(); },
+    resumeFromShop: () => {
+      state = STATE.PLAYING;
+      startWave(player.wave + 1);
+    },
+    restart: () => { state = STATE.PLAYING; resetGame(); },
+    getPlayer: () => player,
+    getElapsed: () => elapsed,
+    upgrades: {
+      damage: (cost) => { if (player.pelts >= cost) { player.pelts -= cost; player.damage += 1; return true; } return false; },
+      fireRate: (cost) => { if (player.pelts >= cost) { player.pelts -= cost; player.fireRate = Math.max(4, player.fireRate - 3); return true; } return false; },
+      maxHp: (cost) => { if (player.pelts >= cost) { player.pelts -= cost; player.maxHp += 3; player.hp = Math.min(player.maxHp, player.hp + 3); return true; } return false; },
+      speed: (cost) => { if (player.pelts >= cost) { player.pelts -= cost; player.speed += 0.5; return true; } return false; },
+    },
+    callbacks: {
+      set onHpChange(fn) { onHpChange = fn; },
+      set onScoreChange(fn) { onScoreChange = fn; },
+      set onWaveClear(fn) { onWaveClear = fn; },
+      set onPlayerDeath(fn) { onPlayerDeath = fn; },
+      set onWin(fn) { onWin = fn; },
+    },
+    WIN_SCORE,
+  };
+
+  loop();
+})();
+
+</script>
+<script>
+(function () {
+  const startScreen = document.getElementById('startScreen');
+  const shopScreen = document.getElementById('shopScreen');
+  const deathScreen = document.getElementById('deathScreen');
+  const winScreen = document.getElementById('winScreen');
+
+  const hpBar = document.getElementById('hpBarInner');
+  const scoreVal = document.getElementById('scoreVal');
+  const peltVal = document.getElementById('peltVal');
+  const waveVal = document.getElementById('waveVal');
+  const timeVal = document.getElementById('timeVal');
+  const waveBanner = document.getElementById('waveBanner');
+
+  function fmtTime(frames) {
+    const secs = Math.floor(frames / 60);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function showWaveBanner(text) {
+    waveBanner.textContent = text;
+    waveBanner.classList.add('show');
+    setTimeout(() => waveBanner.classList.remove('show'), 1600);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    startScreen.classList.add('hidden');
+    HuntingGame.start();
+    showWaveBanner('WAVE 1');
+  });
+
+  HuntingGame.callbacks.onHpChange = (hp, maxHp) => {
+    hpBar.style.width = Math.max(0, (hp / maxHp) * 100) + '%';
+  };
+
+  HuntingGame.callbacks.onScoreChange = (score, pelts, wave, elapsed) => {
+    scoreVal.textContent = Math.min(score, HuntingGame.WIN_SCORE);
+    peltVal.textContent = pelts;
+    waveVal.textContent = wave;
+    timeVal.textContent = fmtTime(elapsed);
+  };
+
+  const UPGRADES = [
+    { key: 'damage', name: 'Sharper Rounds', desc: '+1 damage per shot', baseCost: 3 },
+    { key: 'fireRate', name: 'Quick Trigger', desc: 'Shoot faster', baseCost: 4 },
+    { key: 'maxHp', name: 'Hide Armour', desc: '+3 max health, heal 3', baseCost: 4 },
+    { key: 'speed', name: 'Worn Boots', desc: '+ movement speed', baseCost: 3 },
+  ];
+  const purchaseCounts = { damage: 0, fireRate: 0, maxHp: 0, speed: 0 };
+
+  function costFor(u) { return u.baseCost + purchaseCounts[u.key] * 2; }
+
+  function renderShop() {
+    const player = HuntingGame.getPlayer();
+    document.getElementById('shopWaveNum').textContent = player.wave;
+    document.getElementById('shopPelts').textContent = player.pelts;
+
+    const grid = document.getElementById('shopGrid');
+    grid.innerHTML = '';
+    UPGRADES.forEach((u) => {
+      const cost = costFor(u);
+      const card = document.createElement('div');
+      card.className = 'upgrade-card';
+      card.innerHTML =
+        '<div class="uname">' + u.name + '</div>' +
+        '<div class="udesc">' + u.desc + '</div>' +
+        '<button class="btn" data-key="' + u.key + '">Buy &mdash; ' + cost + ' pelts</button>';
+      const btn = card.querySelector('button');
+      if (player.pelts < cost) btn.disabled = true;
+      btn.addEventListener('click', () => {
+        const ok = HuntingGame.upgrades[u.key](cost);
+        if (ok) {
+          purchaseCounts[u.key]++;
+          renderShop();
+        }
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  HuntingGame.callbacks.onWaveClear = () => {
+    renderShop();
+    shopScreen.classList.remove('hidden');
+  };
+
+  document.getElementById('nextWaveBtn').addEventListener('click', () => {
+    shopScreen.classList.add('hidden');
+    const player = HuntingGame.getPlayer();
+    HuntingGame.resumeFromShop();
+    showWaveBanner('WAVE ' + player.wave);
+  });
+
+  function fillStats(containerId, player) {
+    const el = document.getElementById(containerId);
+    el.innerHTML =
+      '<div class="row"><span>Final Score</span><span class="v">' + Math.min(player.score, HuntingGame.WIN_SCORE) + '</span></div>' +
+      '<div class="row"><span>Kills</span><span class="v">' + player.kills + '</span></div>' +
+      '<div class="row"><span>Waves Survived</span><span class="v">' + player.wave + '</span></div>' +
+      '<div class="row"><span>Pelts Collected</span><span class="v">' + player.pelts + '</span></div>' +
+      '<div class="row"><span>Time Survived</span><span class="v">' + fmtTime(HuntingGame.getElapsed()) + '</span></div>';
+  }
+
+  HuntingGame.callbacks.onPlayerDeath = (player) => {
+    fillStats('deathStats', player);
+    deathScreen.classList.remove('hidden');
+  };
+
+  HuntingGame.callbacks.onWin = (player) => {
+    fillStats('winStats', player);
+    winScreen.classList.remove('hidden');
+  };
+
+  document.getElementById('retryBtn').addEventListener('click', () => {
+    deathScreen.classList.add('hidden');
+    HuntingGame.restart();
+    showWaveBanner('WAVE 1');
+  });
+
+  document.getElementById('playAgainBtn').addEventListener('click', () => {
+    winScreen.classList.add('hidden');
+    HuntingGame.restart();
+    showWaveBanner('WAVE 1');
+  });
+})();
+</script>
+</body>
+</html>
