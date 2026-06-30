@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibija's Memory Game 🐾</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&family=Nunito:wght@400;700;800&display=swap');
+
+  :root {
+    --cream: #FFF5E6;
+    --pink: #FFB3C6;
+    --mint: #B5EAD7;
+    --lavender: #C7B2E0;
+    --yellow: #FFE999;
+    --peach: #FFCBA4;
+    --red: #FF6B6B;
+    --sky: #AED9F5;
+    --dark: #3D2B4A;
+    --card-back: #C7B2E0;
+    --shadow: rgba(61,43,74,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,179,198,0.3) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(181,234,215,0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(199,178,224,0.2) 0%, transparent 60%);
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 18px 16px 10px;
+    position: relative;
+  }
+  .game-title {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .game-title span { color: var(--red); }
+  .subtitle {
+    font-size: 0.8rem;
+    color: #8c6fa8;
+    margin-top: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── HUD ── */
+  .hud {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 16px 12px;
+    flex-wrap: wrap;
+  }
+  .hud-pill {
+    background: white;
+    border: 2px solid var(--dark);
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 3px 3px 0 var(--dark);
+  }
+  .hud-pill.points { background: var(--yellow); }
+  .hud-pill.level  { background: var(--mint); }
+  .hud-pill.pairs  { background: var(--pink); }
+
+  /* ── HINT BUTTON ── */
+  .hint-area {
+    text-align: center;
+    margin-bottom: 8px;
+    min-height: 36px;
+  }
+  #hint-btn {
+    display: none;
+    background: var(--peach);
+    border: 2px solid var(--dark);
+    border-radius: 999px;
+    padding: 6px 20px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--dark);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  #hint-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--dark); }
+  #hint-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--dark); }
+  #hint-msg {
+    font-size: 0.8rem;
+    color: #8c6fa8;
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* ── GRID ── */
+  #board {
+    display: grid;
+    gap: 10px;
+    padding: 10px 16px 20px;
+    max-width: 700px;
+    margin: 0 auto;
+    justify-items: center;
+  }
+
+  /* ── CARD ── */
+  .card {
+    width: 100%;
+    aspect-ratio: 1;
+    perspective: 600px;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(.4,.2,.2,1);
+    border-radius: 14px;
+  }
+  .card.flipped .card-inner  { transform: rotateY(180deg); }
+  .card.matched .card-inner  { transform: rotateY(180deg); }
+  .card.matched .card-front  { border-color: #2ecc71 !important; box-shadow: 0 0 0 3px #2ecc71, 3px 3px 0 var(--dark); }
+  .card.hint-glow .card-back { box-shadow: 0 0 0 4px gold, 3px 3px 0 var(--dark) !important; }
+
+  .card-front, .card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 14px;
+    border: 2.5px solid var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 3px 3px 0 var(--dark);
+  }
+  .card-back {
+    background: var(--card-back);
+    font-size: 1.8rem;
+  }
+  .card-front {
+    transform: rotateY(180deg);
+    background: white;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .card-emoji { font-size: 2.2rem; line-height: 1; }
+  .card-label { font-size: 0.6rem; font-weight: 700; color: var(--dark); text-align: center; }
+
+  /* ── LEVEL BANNER ── */
+  #level-banner {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(61,43,74,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #level-banner.show { display: flex; }
+  .banner-box {
+    background: white;
+    border: 3px solid var(--dark);
+    border-radius: 24px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 8px 8px 0 var(--dark);
+    animation: popIn 0.4s cubic-bezier(.17,.67,.35,1.4);
+    max-width: 360px;
+    width: 90%;
+  }
+  .banner-emoji { font-size: 3.5rem; }
+  .banner-title {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 8px 0 4px;
+  }
+  .banner-sub { font-size: 0.9rem; color: #8c6fa8; margin-bottom: 16px; }
+  #banner-btn {
+    background: var(--mint);
+    border: 2.5px solid var(--dark);
+    border-radius: 999px;
+    padding: 10px 30px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--dark);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  #banner-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--dark); }
+
+  /* ── WIN SCREEN ── */
+  #win-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(61,43,74,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #win-screen.show { display: flex; }
+  .win-box {
+    background: linear-gradient(135deg, var(--pink), var(--lavender), var(--mint));
+    border: 3px solid var(--dark);
+    border-radius: 28px;
+    padding: 50px 40px;
+    text-align: center;
+    box-shadow: 10px 10px 0 var(--dark);
+    animation: popIn 0.5s cubic-bezier(.17,.67,.35,1.4);
+    max-width: 380px;
+    width: 90%;
+  }
+  .win-emoji { font-size: 4rem; }
+  .win-title {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 10px 0 6px;
+  }
+  .win-score { font-size: 1.1rem; color: var(--dark); font-weight: 700; margin-bottom: 20px; }
+  #restart-btn {
+    background: var(--yellow);
+    border: 2.5px solid var(--dark);
+    border-radius: 999px;
+    padding: 12px 36px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--dark);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  #restart-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--dark); }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    z-index: 300;
+    pointer-events: none;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+  @keyframes popIn {
+    0%   { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── CAPYBARA DECO ── */
+  .capy-deco {
+    position: fixed;
+    bottom: 10px;
+    right: 14px;
+    font-size: 2rem;
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="game-title">Bibija's <span>Memory</span> Game 🐾</div>
+  <div class="subtitle">Heisei Retro Edition · Match the Animals!</div>
+</header>
+
+<div class="hud">
+  <div class="hud-pill points">⭐ <span id="score-display">0</span> pts</div>
+  <div class="hud-pill level">🌸 Level <span id="level-display">1</span> / 10</div>
+  <div class="hud-pill pairs">🃏 <span id="pairs-display">0</span> / <span id="total-pairs">0</span> pairs</div>
+</div>
+
+<div class="hint-area">
+  <button id="hint-btn">💡 Buy Hint (−10 pts)</button>
+  <div id="hint-msg"></div>
+</div>
+
+<div id="board"></div>
+
+<!-- Level Complete Banner -->
+<div id="level-banner">
+  <div class="banner-box">
+    <div class="banner-emoji" id="banner-emoji">🎉</div>
+    <div class="banner-title" id="banner-title">Level 1 Complete!</div>
+    <div class="banner-sub" id="banner-sub">You matched all the cards!</div>
+    <button id="banner-btn">Next Level →</button>
+  </div>
+</div>
+
+<!-- Win Screen -->
+<div id="win-screen">
+  <div class="win-box">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title">You Did It!</div>
+    <div class="win-score" id="win-score-text">Final Score: 0 pts</div>
+    <button id="restart-btn">Play Again 🔄</button>
+  </div>
+</div>
+
+<div class="capy-deco">🦫</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const ALL_ANIMALS = [
+  { emoji: '🐘', name: 'Elephant' },
+  { emoji: '🦁', name: 'Lion' },
+  { emoji: '🐧', name: 'Penguin' },
+  { emoji: '🦊', name: 'Fox' },
+  { emoji: '🐸', name: 'Frog' },
+  { emoji: '🦋', name: 'Butterfly' },
+  { emoji: '🐢', name: 'Turtle' },
+  { emoji: '🦒', name: 'Giraffe' },
+  { emoji: '🐳', name: 'Whale' },
+  { emoji: '🦜', name: 'Parrot' },
+  { emoji: '🦔', name: 'Hedgehog' },
+  { emoji: '🐺', name: 'Wolf' },
+  { emoji: '🦈', name: 'Shark' },
+  { emoji: '🐨', name: 'Koala' },
+  { emoji: '🦩', name: 'Flamingo' },
+];
+
+// Pairs per level: 3,4,5,6,7,8,9,10,12,15
+const PAIRS_PER_LEVEL = [3,4,5,6,7,8,9,10,12,15];
+const CARD_BACK_SYMBOLS = ['🌸','⭐','🌈','🎀','✨','💫','🎐','🎑','🍡','🌺'];
+const CONFETTI_COLOURS = ['#FFB3C6','#B5EAD7','#C7B2E0','#FFE999','#FFCBA4','#AED9F5','#FF6B6B','#fff'];
+const HINT_COST = 10;
+const LEVEL_5_CLUES = [
+  'One pair is hiding in the top-left corner! 👀',
+  'Look in the bottom-right — two cards match there! 🔍',
+  'Try the middle row — a pair is waiting! 🌸',
+  'The rarest animal is somewhere near the top! ✨',
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let level = 1;
+let score = 0;
+let pairsFound = 0;
+let totalPairs = 0;
+let flipped = [];
+let locked = false;
+let matchedCount = 0;
+let hintsUsed = 0;
+let currentAnimals = [];
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+function startLevel(lvl) {
+  level = lvl;
+  pairsFound = 0;
+  flipped = [];
+  locked = false;
+  matchedCount = 0;
+  hintsUsed = 0;
+
+  const numPairs = PAIRS_PER_LEVEL[lvl - 1];
+  totalPairs = numPairs;
+
+  // Pick animals (cycle if needed)
+  const pool = [...ALL_ANIMALS];
+  shuffle(pool);
+  currentAnimals = pool.slice(0, numPairs);
+
+  // Build card deck
+  const cards = [];
+  currentAnimals.forEach((a, i) => {
+    cards.push({ id: i*2,   animal: a, pairId: i });
+    cards.push({ id: i*2+1, animal: a, pairId: i });
+  });
+  shuffle(cards);
+
+  // Determine columns
+  const cols = numPairs <= 4 ? 3 : numPairs <= 6 ? 4 : numPairs <= 9 ? 4 : numPairs <= 12 ? 5 : 5;
+  const cardSize = Math.min(110, Math.floor((Math.min(window.innerWidth, 700) - 32 - (cols-1)*10) / cols));
+
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
+
+  cards.forEach((c, idx) => {
+    const backSym = CARD_BACK_SYMBOLS[(lvl - 1) % CARD_BACK_SYMBOLS.length];
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.pair = c.pairId;
+    el.dataset.uid = idx;
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="card-back">${backSym}</div>
+        <div class="card-front">
+          <div class="card-emoji">${c.animal.emoji}</div>
+          <div class="card-label">${c.animal.name}</div>
+        </div>
+      </div>`;
+    el.addEventListener('click', () => onCardClick(el));
+    board.appendChild(el);
+  });
+
+  updateHUD();
+
+  // Hint button visibility (Level 5+)
+  const hintBtn = document.getElementById('hint-btn');
+  hintBtn.style.display = lvl >= 5 ? 'inline-block' : 'none';
+  document.getElementById('hint-msg').textContent = '';
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('level-display').textContent = level;
+  document.getElementById('pairs-display').textContent = pairsFound;
+  document.getElementById('total-pairs').textContent = totalPairs;
+}
+
+// ── CLICK ─────────────────────────────────────────────────────────────────
+function onCardClick(card) {
+  if (locked) return;
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if (flipped.length >= 2) return;
+
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    locked = true;
+    const [a, b] = flipped;
+    if (a.dataset.pair === b.dataset.pair) {
+      // Match!
+      score += 5;
+      pairsFound++;
+      matchedCount++;
+      setTimeout(() => {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        flipped = [];
+        locked = false;
+        updateHUD();
+        if (matchedCount === totalPairs) onLevelComplete();
+      }, 400);
+    } else {
+      // No match
+      setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+        flipped = [];
+        locked = false;
+      }, 900);
+    }
+  }
+}
+
+// ── HINT ──────────────────────────────────────────────────────────────────
+document.getElementById('hint-btn').addEventListener('click', () => {
+  if (score < HINT_COST) {
+    document.getElementById('hint-msg').textContent = `You need at least ${HINT_COST} pts to buy a hint!`;
+    return;
+  }
+  score -= HINT_COST;
+  updateHUD();
+
+  // Find an unmatched pair and briefly glow one card
+  const unmatched = [...document.querySelectorAll('.card:not(.matched):not(.flipped)')];
+  const pairGroups = {};
+  unmatched.forEach(c => {
+    const p = c.dataset.pair;
+    if (!pairGroups[p]) pairGroups[p] = [];
+    pairGroups[p].push(c);
+  });
+  const validPairs = Object.values(pairGroups).filter(g => g.length === 2);
+  if (validPairs.length === 0) return;
+
+  const pair = validPairs[Math.floor(Math.random() * validPairs.length)];
+  pair.forEach(c => {
+    c.classList.add('hint-glow');
+    setTimeout(() => c.classList.remove('hint-glow'), 1200);
+  });
+
+  const clue = LEVEL_5_CLUES[hintsUsed % LEVEL_5_CLUES.length];
+  hintsUsed++;
+  document.getElementById('hint-msg').textContent = `💡 ${clue}`;
+});
+
+// ── LEVEL COMPLETE ─────────────────────────────────────────────────────────
+function onLevelComplete() {
+  launchConfetti(60);
+
+  const isLast = level === 10;
+  document.getElementById('banner-emoji').textContent = isLast ? '🏆' : '🎉';
+  document.getElementById('banner-title').textContent = isLast ? 'You Beat All 10 Levels!' : `Level ${level} Complete!`;
+  document.getElementById('banner-sub').textContent = isLast
+    ? `Amazing! Final score: ${score} pts`
+    : `You matched all ${totalPairs} pairs! Score: ${score} pts`;
+  document.getElementById('banner-btn').textContent = isLast ? 'See Results 🏆' : 'Next Level →';
+
+  setTimeout(() => {
+    document.getElementById('level-banner').classList.add('show');
+  }, 600);
+}
+
+document.getElementById('banner-btn').addEventListener('click', () => {
+  document.getElementById('level-banner').classList.remove('show');
+  if (level >= 10) {
+    showWin();
+  } else {
+    startLevel(level + 1);
+  }
+});
+
+function showWin() {
+  document.getElementById('win-score-text').textContent = `Final Score: ${score} pts`;
+  document.getElementById('win-screen').classList.add('show');
+  launchConfetti(120);
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.getElementById('win-screen').classList.remove('show');
+  score = 0;
+  startLevel(1);
+});
+
+// ── CONFETTI ──────────────────────────────────────────────────────────────
+function launchConfetti(n) {
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.background = CONFETTI_COLOURS[Math.floor(Math.random() * CONFETTI_COLOURS.length)];
+      el.style.width = (8 + Math.random() * 10) + 'px';
+      el.style.height = (8 + Math.random() * 10) + 'px';
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      const dur = 1.5 + Math.random() * 2;
+      el.style.animationDuration = dur + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), dur * 1000);
+    }, i * 30);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ── START ─────────────────────────────────────────────────────────────────
+startLevel(1);
+</script>
+</body>
+</html>
