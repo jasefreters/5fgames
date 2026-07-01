@@ -5,57 +5,359 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rugby League Bull Rush</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; overflow: hidden; font-family: sans-serif; }
-    #mount { width: 100vw; height: 100vh; }
-    #hud { position: absolute; top: 12px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 16px; pointer-events: none; display: none; }
-    #hud-left, #hud-right { background: rgba(0,0,0,0.6); color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 15px; }
-    #controls-hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: #ccc; padding: 5px 14px; border-radius: 8px; font-size: 12px; pointer-events: none; display: none; }
-    #flash { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 42px; font-weight: bold; text-shadow: 0 0 20px rgba(0,0,0,0.8); pointer-events: none; display: none; }
-    #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
-    #overlay.hidden { display: none; }
-    .ov-title { font-size: 48px; font-weight: bold; color: #00ff88; text-shadow: 0 0 20px #00ff88; }
-    .ov-sub { font-size: 18px; color: #aaa; margin: 8px 0 28px; }
-    .ov-info { color: #ccc; font-size: 14px; margin-bottom: 28px; text-align: center; line-height: 1.8; }
-    .ov-score { font-size: 56px; font-weight: bold; color: #00ff88; }
-    .ov-round { color: #aaa; margin: 6px 0 24px; }
-    .ov-btn { padding: 14px 40px; font-size: 20px; font-weight: bold; background: #00ff88; color: #002b5c; border: none; border-radius: 10px; cursor: pointer; }
-    .ov-btn:hover { background: #00e87a; }
-    #gameover-title { font-size: 44px; font-weight: bold; color: #ff4444; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#000; overflow:hidden; font-family:sans-serif; }
+    #mount { width:100vw; height:100vh; }
+    #hud { position:absolute; top:12px; left:0; right:0; display:none; justify-content:space-between; padding:0 16px; pointer-events:none; }
+    #hud-left, #hud-right { background:rgba(0,0,0,0.6); color:#fff; padding:6px 14px; border-radius:8px; font-size:15px; }
+    #stamina-wrap { position:absolute; bottom:44px; left:50%; transform:translateX(-50%); width:220px; pointer-events:none; display:none; }
+    #stamina-label { color:#fff; font-size:12px; text-align:center; margin-bottom:4px; text-shadow:0 1px 3px #000; }
+    #stamina-track { background:rgba(0,0,0,0.5); border-radius:6px; height:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.3); }
+    #stamina-bar { width:100%; height:100%; background:#00ff88; border-radius:6px; transition:background 0.3s; }
+    #hint { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.5); color:#ccc; padding:5px 14px; border-radius:8px; font-size:12px; pointer-events:none; display:none; }
+    #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:42px; font-weight:bold; text-shadow:0 0 20px rgba(0,0,0,0.8); pointer-events:none; display:none; }
+    .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; }
+    .hidden { display:none !important; }
+    .btn { padding:14px 40px; font-size:20px; font-weight:bold; background:#00ff88; color:#002b5c; border:none; border-radius:10px; cursor:pointer; }
+    .btn:hover { background:#00e87a; }
   </style>
 </head>
 <body>
   <div id="mount"></div>
+
   <div id="hud">
     <div id="hud-left"></div>
     <div id="hud-right"></div>
   </div>
-  <div id="controls-hint">WASD / Arrow Keys to move &nbsp;|&nbsp; Hold mouse drag to look around</div>
+
+  <div id="stamina-wrap">
+    <div id="stamina-label">⚡ BOOST (Space / Shift)</div>
+    <div id="stamina-track"><div id="stamina-bar"></div></div>
+  </div>
+
+  <div id="hint">WASD / Arrows to move &nbsp;|&nbsp; Space / Shift to boost &nbsp;|&nbsp; Drag mouse to look</div>
   <div id="flash"></div>
 
-  <!-- Title Screen -->
-  <div id="overlay" style="background:rgba(0,20,0,0.82);">
-    <div class="ov-title">🏉 BULL RUSH</div>
-    <div class="ov-sub">Rugby League Edition</div>
-    <div class="ov-info">
+  <!-- Title -->
+  <div id="screen-title" class="screen" style="background:rgba(0,20,0,0.82);">
+    <div style="font-size:48px;font-weight:bold;color:#00ff88;text-shadow:0 0 20px #00ff88;">🏉 BULL RUSH</div>
+    <div style="font-size:18px;color:#aaa;margin:8px 0 28px;">Rugby League Edition</div>
+    <div style="color:#ccc;font-size:14px;margin-bottom:28px;text-align:center;line-height:1.8;">
       Run through the defenders to score a try!<br/>
-      <b>WASD</b> or <b>Arrow Keys</b> to move<br/>
+      <b>WASD / Arrow Keys</b> to move<br/>
+      <b>Space or Shift</b> to boost (limited stamina)<br/>
       <b>Hold + drag mouse</b> to look around<br/>
       3 tackles and you're out
     </div>
-    <button class="ov-btn" id="start-btn">KICK OFF</button>
+    <button class="btn" id="start-btn">KICK OFF</button>
   </div>
 
-  <!-- Game Over Screen -->
-  <div id="gameover" class="hidden" style="position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;">
-    <div id="gameover-title">FULL TIME</div>
+  <!-- Game Over -->
+  <div id="screen-gameover" class="screen hidden" style="background:rgba(0,0,0,0.85);">
+    <div style="font-size:44px;font-weight:bold;color:#ff4444;">FULL TIME</div>
     <div style="font-size:22px;margin:12px 0 6px;">Final Score</div>
-    <div class="ov-score" id="final-score">0</div>
-    <div class="ov-round" id="final-round"></div>
-    <button class="ov-btn" id="replay-btn">PLAY AGAIN</button>
+    <div id="go-score" style="font-size:56px;font-weight:bold;color:#00ff88;"></div>
+    <div id="go-round" style="color:#aaa;margin:6px 0 24px;"></div>
+    <button class="btn" id="replay-btn">PLAY AGAIN</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="game.js"></script>
+  <script>
+  (function() {
+    const FIELD_W=30, FIELD_D=60;
+    const PLAYER_SPEED=12, BOOST_SPEED=22, DEF_SPEED_BASE=5;
+    const TACKLE_DIST=1.4, MAX_LIVES=3;
+    const STAMINA_MAX=100, STAMINA_DRAIN=55, STAMINA_REGEN=22;
+
+    // ── Scene ──────────────────────────────────────────────
+    const mount = document.getElementById('mount');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.Fog(0x87ceeb, 50, 130);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    renderer.shadowMap.enabled = true;
+    mount.appendChild(renderer.domElement);
+
+    const camera = new THREE.PerspectiveCamera(60, mount.clientWidth/mount.clientHeight, 0.1, 200);
+
+    // ── Lights ─────────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+    sun.position.set(10,30,10); sun.castShadow=true; scene.add(sun);
+
+    // ── Field ──────────────────────────────────────────────
+    const field = new THREE.Mesh(
+      new THREE.PlaneGeometry(FIELD_W, FIELD_D),
+      new THREE.MeshLambertMaterial({ color:0x2d8a2d })
+    );
+    field.rotation.x = -Math.PI/2; field.receiveShadow=true; scene.add(field);
+
+    for (let i=0; i<6; i++) {
+      if (i%2===0) continue;
+      const stripe = new THREE.Mesh(
+        new THREE.PlaneGeometry(FIELD_W, FIELD_D/6),
+        new THREE.MeshLambertMaterial({ color:0x278227 })
+      );
+      stripe.rotation.x=-Math.PI/2;
+      stripe.position.set(0, 0.005, -FIELD_D/2 + FIELD_D/12 + i*FIELD_D/6);
+      scene.add(stripe);
+    }
+
+    function addLine(w,d,x,z,color) {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(w,d),
+        new THREE.MeshLambertMaterial({ color })
+      );
+      m.rotation.x=-Math.PI/2; m.position.set(x,0.01,z); scene.add(m);
+    }
+    addLine(FIELD_W,0.3, 0,-FIELD_D/2+2, 0xffffff);
+    addLine(FIELD_W,0.3, 0, FIELD_D/2-2, 0xffff00);
+    addLine(0.3,FIELD_D,-FIELD_W/2,0, 0xffffff);
+    addLine(0.3,FIELD_D, FIELD_W/2,0, 0xffffff);
+    addLine(FIELD_W,0.15,0,0, 0xffffff);
+
+    // Goalposts
+    const postMat = new THREE.MeshLambertMaterial({ color:0xffff00 });
+    [-2.7,2.7].forEach(x => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,6), postMat);
+      p.position.set(x,3,-FIELD_D/2+2); scene.add(p);
+    });
+    const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,5.4), postMat);
+    cb.rotation.z=Math.PI/2; cb.position.set(0,6,-FIELD_D/2+2); scene.add(cb);
+
+    // Clouds
+    const cloudGeo = new THREE.SphereGeometry(1,6,4);
+    const cloudMat = new THREE.MeshLambertMaterial({ color:0xffffff });
+    [[12,18,-20],[-10,22,10],[20,15,5],[-18,20,-30],[5,25,30]].forEach(([x,y,z]) => {
+      for (let c=0; c<3; c++) {
+        const cl = new THREE.Mesh(cloudGeo, cloudMat);
+        cl.scale.set(3+c,1.5,2); cl.position.set(x+c*2.5,y,z); scene.add(cl);
+      }
+    });
+
+    // ── Player ─────────────────────────────────────────────
+    const playerGroup = new THREE.Group();
+    const bodyM = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,1.2), new THREE.MeshLambertMaterial({ color:0x002b5c }));
+    bodyM.position.y=0.6; bodyM.castShadow=true; playerGroup.add(bodyM);
+    const headM = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshLambertMaterial({ color:0xffcc99 }));
+    headM.position.y=1.55; headM.castShadow=true; playerGroup.add(headM);
+    const ballM = new THREE.Mesh(new THREE.SphereGeometry(0.22,8,6), new THREE.MeshLambertMaterial({ color:0x8B4513 }));
+    ballM.position.set(0.5,0.8,0); playerGroup.add(ballM);
+    scene.add(playerGroup);
+
+    // ── Input ──────────────────────────────────────────────
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.code]=true; if(e.code==='Space') e.preventDefault(); });
+    window.addEventListener('keyup',   e => { keys[e.code]=false; });
+
+    const mouse = { yaw:0, pitch:0.4, down:false, lastX:0, lastY:0 };
+    window.addEventListener('mousemove', e => {
+      if (!mouse.down) return;
+      mouse.yaw  -= (e.clientX-mouse.lastX)*0.005;
+      mouse.pitch = Math.max(0.1,Math.min(1.2,mouse.pitch+(e.clientY-mouse.lastY)*0.005));
+      mouse.lastX=e.clientX; mouse.lastY=e.clientY;
+    });
+    window.addEventListener('mousedown', e => { mouse.down=true; mouse.lastX=e.clientX; mouse.lastY=e.clientY; });
+    window.addEventListener('mouseup',   () => { mouse.down=false; });
+    mount.addEventListener('touchstart', e => { if(e.touches.length!==1)return; mouse.lastX=e.touches[0].clientX; mouse.lastY=e.touches[0].clientY; });
+    mount.addEventListener('touchmove',  e => {
+      if(e.touches.length!==1)return;
+      mouse.yaw  -= (e.touches[0].clientX-mouse.lastX)*0.005;
+      mouse.pitch = Math.max(0.1,Math.min(1.2,mouse.pitch+(e.touches[0].clientY-mouse.lastY)*0.005));
+      mouse.lastX=e.touches[0].clientX; mouse.lastY=e.touches[0].clientY;
+    });
+
+    // ── UI refs ────────────────────────────────────────────
+    const hud         = document.getElementById('hud');
+    const hudLeft     = document.getElementById('hud-left');
+    const hudRight    = document.getElementById('hud-right');
+    const staminaWrap = document.getElementById('stamina-wrap');
+    const staminaBar  = document.getElementById('stamina-bar');
+    const staminaLbl  = document.getElementById('stamina-label');
+    const hint        = document.getElementById('hint');
+    const flash       = document.getElementById('flash');
+    const scrTitle    = document.getElementById('screen-title');
+    const scrGameover = document.getElementById('screen-gameover');
+    const goScore     = document.getElementById('go-score');
+    const goRound     = document.getElementById('go-round');
+
+    function showHUD() {
+      hud.style.display='flex'; staminaWrap.style.display='block'; hint.style.display='block';
+    }
+    function hideHUD() {
+      hud.style.display='none'; staminaWrap.style.display='none'; hint.style.display='none';
+    }
+    function updateHUD(lives, score, round, stamina) {
+      hudLeft.textContent  = '❤️ ' + '●'.repeat(lives) + '○'.repeat(MAX_LIVES-lives) + '  Round ' + round;
+      hudRight.textContent = '🏆 ' + score;
+      const pct = stamina/STAMINA_MAX;
+      staminaBar.style.width = (pct*100)+'%';
+      staminaBar.style.background = pct>0.5?'#00ff88':pct>0.25?'#ffcc00':'#ff4444';
+      staminaLbl.textContent = '⚡ BOOST ' + (stamina<STAMINA_MAX*0.15?'(recharging...)':'(Space / Shift)');
+    }
+    let flashTimer=null;
+    function showFlash(msg,color) {
+      flash.textContent=msg; flash.style.color=color; flash.style.display='block';
+      if (flashTimer) clearTimeout(flashTimer);
+      flashTimer=setTimeout(()=>{ flash.style.display='none'; },1500);
+    }
+
+    // ── Defenders ──────────────────────────────────────────
+    const defMeshes=[];
+    function createDef(x,z) {
+      const g=new THREE.Group();
+      const b=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,1.2), new THREE.MeshLambertMaterial({ color:0xc0392b }));
+      b.position.y=0.6; b.castShadow=true; g.add(b);
+      const h=new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshLambertMaterial({ color:0xffcc99 }));
+      h.position.y=1.55; h.castShadow=true; g.add(h);
+      g.position.set(x,0,z); scene.add(g); return g;
+    }
+
+    // ── Game State ─────────────────────────────────────────
+    const gs = {
+      active:false, tackled:false, scored:false,
+      lives:MAX_LIVES, score:0, round:1, stamina:STAMINA_MAX,
+      playerPos: new THREE.Vector3(0,0,FIELD_D/2-3),
+      playerVel: new THREE.Vector3(),
+      defenders:[], defData:[],
+    };
+
+    function spawnRound(round) {
+      defMeshes.forEach(m=>scene.remove(m)); defMeshes.length=0;
+      gs.defenders.length=0; gs.defData.length=0;
+      const count=2+round;
+      const safeZone=FIELD_D/2-8;
+      const spread=FIELD_D-safeZone-6;
+      for (let i=0;i<count;i++) {
+        const z=(safeZone-2)-(spread/count)*i;
+        const x=(Math.random()-0.5)*(FIELD_W-4);
+        const m=createDef(x,z);
+        defMeshes.push(m); gs.defenders.push(m);
+        gs.defData.push({ vel:new THREE.Vector3(), wanderAngle:Math.random()*Math.PI*2 });
+      }
+      gs.playerPos.set(0,0,FIELD_D/2-3);
+      gs.playerVel.set(0,0,0);
+      gs.tackled=false; gs.scored=false; gs.active=true; gs.stamina=STAMINA_MAX;
+    }
+
+    function resetPlayer() {
+      gs.playerPos.set(0,0,FIELD_D/2-3);
+      gs.playerVel.set(0,0,0);
+      gs.tackled=false; gs.scored=false; gs.active=true; gs.stamina=STAMINA_MAX;
+    }
+
+    function startGame() {
+      gs.lives=MAX_LIVES; gs.score=0; gs.round=1; gs.stamina=STAMINA_MAX;
+      scrTitle.classList.add('hidden');
+      scrGameover.classList.add('hidden');
+      showHUD();
+      spawnRound(1);
+    }
+
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('replay-btn').addEventListener('click', startGame);
+
+    // ── Loop ───────────────────────────────────────────────
+    let prevTime=performance.now();
+    let boosting=false;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now=performance.now();
+      const dt=Math.min((now-prevTime)/1000,0.05);
+      prevTime=now;
+
+      if (gs.active && !gs.tackled && !gs.scored) {
+        boosting=(keys['Space']||keys['ShiftLeft']||keys['ShiftRight'])&&gs.stamina>0;
+        gs.stamina = boosting
+          ? Math.max(0,   gs.stamina-STAMINA_DRAIN*dt)
+          : Math.min(STAMINA_MAX, gs.stamina+STAMINA_REGEN*dt);
+
+        const speed=boosting?BOOST_SPEED:PLAYER_SPEED;
+        const move=new THREE.Vector3();
+        if(keys['ArrowUp']  ||keys['KeyW']) move.z-=1;
+        if(keys['ArrowDown']||keys['KeyS']) move.z+=1;
+        if(keys['ArrowLeft']||keys['KeyA']) move.x-=1;
+        if(keys['ArrowRight']||keys['KeyD'])move.x+=1;
+        if(move.lengthSq()>0) move.normalize().multiplyScalar(speed);
+        gs.playerVel.lerp(move,0.2);
+        gs.playerPos.addScaledVector(gs.playerVel,dt);
+        gs.playerPos.x=Math.max(-FIELD_W/2+0.5,Math.min(FIELD_W/2-0.5,gs.playerPos.x));
+        gs.playerPos.z=Math.max(-FIELD_D/2+0.5,Math.min(FIELD_D/2-0.5,gs.playerPos.z));
+
+        // Try
+        if (gs.playerPos.z<=-FIELD_D/2+2.5) {
+          gs.scored=true; gs.active=false;
+          gs.score+=50+gs.round*20; gs.round++;
+          updateHUD(gs.lives,gs.score,gs.round,gs.stamina);
+          showFlash('TRY! 🏉','#00ff88');
+          setTimeout(()=>{ spawnRound(gs.round); },1800);
+        }
+
+        // Defenders
+        const defSpeed=DEF_SPEED_BASE+gs.round*0.5;
+        gs.defenders.forEach((def,i)=>{
+          const dd=gs.defData[i];
+          const toP=new THREE.Vector3().subVectors(gs.playerPos,def.position);
+          const dist=toP.length();
+          const steering=new THREE.Vector3();
+          if (dist<14) {
+            steering.copy(toP).normalize().multiplyScalar(defSpeed);
+          } else {
+            dd.wanderAngle+=(Math.random()-0.5)*0.5;
+            steering.set(Math.sin(dd.wanderAngle),0,Math.cos(dd.wanderAngle)).multiplyScalar(defSpeed*0.4);
+          }
+          dd.vel.lerp(steering,0.08);
+          def.position.addScaledVector(dd.vel,dt);
+          def.position.x=Math.max(-FIELD_W/2+0.5,Math.min(FIELD_W/2-0.5,def.position.x));
+          def.position.z=Math.max(-FIELD_D/2+0.5,Math.min(FIELD_D/2-0.5,def.position.z));
+          if(toP.lengthSq()>0.01) def.rotation.y=Math.atan2(toP.x,toP.z);
+
+          if(dist<TACKLE_DIST&&!gs.tackled){
+            gs.tackled=true; gs.active=false; gs.lives--;
+            updateHUD(gs.lives,gs.score,gs.round,gs.stamina);
+            if(gs.lives<=0){
+              showFlash('TACKLED! 💥','#ff4444');
+              setTimeout(()=>{
+                hideHUD();
+                goScore.textContent=gs.score;
+                goRound.textContent='Round '+(gs.round-1)+' reached';
+                scrGameover.classList.remove('hidden');
+              },1000);
+            } else {
+              showFlash('TACKLED! 💥','#ff4444');
+              setTimeout(resetPlayer,1200);
+            }
+          }
+        });
+
+        if(gs.playerVel.lengthSq()>0.5) playerGroup.rotation.y=Math.atan2(gs.playerVel.x,gs.playerVel.z);
+        updateHUD(gs.lives,gs.score,gs.round,gs.stamina);
+      }
+
+      playerGroup.position.copy(gs.playerPos);
+      camera.fov=boosting?THREE.MathUtils.lerp(camera.fov,70,0.1):THREE.MathUtils.lerp(camera.fov,60,0.1);
+      camera.updateProjectionMatrix();
+
+      const cd=10;
+      camera.position.set(
+        gs.playerPos.x+cd*Math.sin(mouse.yaw)*Math.cos(mouse.pitch),
+        gs.playerPos.y+cd*Math.sin(mouse.pitch),
+        gs.playerPos.z+cd*Math.cos(mouse.yaw)*Math.cos(mouse.pitch)
+      );
+      camera.lookAt(gs.playerPos.x,gs.playerPos.y+1,gs.playerPos.z);
+      renderer.render(scene,camera);
+    }
+    animate();
+
+    window.addEventListener('resize',()=>{
+      camera.aspect=mount.clientWidth/mount.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(mount.clientWidth,mount.clientHeight);
+    });
+  })();
+  </script>
 </body>
 </html>
