@@ -2,998 +2,920 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>SURVIVE — Night Shift</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SURVIVE</title>
 <style>
-  :root{
-    --bg: #07080a;
-    --panel: #111418;
-    --line: #2a2f36;
-    --amber: #e8a33d;
-    --red: #c4291e;
-    --sick: #f4d35e;
-    --cold: #5b7d8c;
-    --text: #d9d4c7;
-    --dim: #6c7178;
-  }
-  *{box-sizing:border-box;}
-  html,body{
-    margin:0; padding:0; height:100%; background:var(--bg);
-    font-family: 'Courier New', Courier, monospace;
-    color:var(--text);
-    overflow:hidden;
-    -webkit-user-select:none; user-select:none;
-    touch-action:manipulation;
-  }
-  #wrap{
-    position:relative; width:100vw; height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at center, #0d0f12 0%, #020203 100%);
-  }
-  #stage{
-    position:relative;
-    width:min(100vw, 177.7vh);
-    height:min(100vh, 56.25vw);
-    background:#000;
-    box-shadow: 0 0 80px rgba(0,0,0,0.8) inset;
-    overflow:hidden;
-  }
-  canvas{
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    display:block;
-  }
-  .vignette{
-    position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%);
-    z-index:5;
-  }
-  .scanlines{
-    position:absolute; inset:0; pointer-events:none; z-index:6;
-    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px, transparent 2px, transparent 3px);
-    opacity:0.5;
-    mix-blend-mode: multiply;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; font-family:'Courier New',monospace; color:#fff; overflow:hidden; height:100vh; width:100vw; user-select:none; }
 
-  /* ---- HUD ---- */
-  #hud{
-    position:absolute; top:0; left:0; right:0; z-index:10;
-    display:flex; justify-content:space-between; align-items:flex-start;
-    padding: 14px 18px; pointer-events:none;
-    font-size: clamp(11px, 1.6vw, 15px);
-    letter-spacing:1px;
-  }
-  .hud-block{
-    background:rgba(8,9,11,0.55);
-    border:1px solid var(--line);
-    padding:6px 12px;
-    color:var(--amber);
-    text-shadow:0 0 6px rgba(232,163,61,0.4);
-  }
-  #lives{ color:var(--red); text-shadow:0 0 6px rgba(196,41,30,0.5); margin-top:6px;}
-  #clock{ font-size: clamp(16px, 2.4vw, 26px); text-align:right;}
-  #clock .ampm{ font-size:0.6em; color:var(--dim);}
+.screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; z-index:10; }
+.screen.active { display:flex; }
 
-  /* ---- overlays / screens ---- */
-  .overlay{
-    position:absolute; inset:0; z-index:30;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; padding:5vh 6vw;
-    background:rgba(2,2,3,0.92);
-  }
-  .hidden{ display:none !important; }
-  h1.title{
-    font-size:clamp(28px,6vw,64px); color:var(--red);
-    text-shadow: 0 0 18px rgba(196,41,30,0.6), 0 0 40px rgba(196,41,30,0.3);
-    letter-spacing:6px; margin:0 0 6px 0;
-  }
-  .sub{ color:var(--dim); letter-spacing:3px; font-size:clamp(10px,1.6vw,14px); margin-bottom:28px;}
-  p.flavor{ max-width:560px; line-height:1.6; color:var(--text); font-size:clamp(12px,1.6vw,15px); }
-  .btn{
-    font-family:inherit; background:var(--panel); color:var(--amber);
-    border:1px solid var(--amber); padding:12px 28px; margin-top:18px;
-    font-size:clamp(13px,1.8vw,17px); letter-spacing:2px; cursor:pointer;
-    pointer-events:all;
-  }
-  .btn:hover{ background:var(--amber); color:#000; }
-  .btn.danger{ border-color:var(--red); color:var(--red);}
-  .btn.danger:hover{ background:var(--red); color:#fff;}
-  .btn.ghost{ border-color:var(--line); color:var(--dim); font-size:0.8em; padding:8px 18px;}
-  .night-num{
-    font-size:clamp(48px,10vw,110px); color:var(--text); margin:6px 0;
-    letter-spacing:2px;
-  }
-  ul.howto{ text-align:left; max-width:520px; line-height:1.8; font-size:clamp(11px,1.5vw,14px); color:var(--text); }
-  ul.howto li span{ color:var(--sick); }
+/* TITLE */
+#title-screen { background:#111; }
+#title-screen h1 { font-size:5rem; letter-spacing:1rem; color:#ff2200; text-shadow:0 0 40px #ff220088; animation:flicker 3s infinite; margin-bottom:0.3rem; }
+.subtitle { color:#555; font-size:0.8rem; letter-spacing:0.4rem; margin-bottom:2rem; }
+.story { max-width:400px; text-align:center; color:#888; font-size:0.8rem; line-height:1.9; margin-bottom:2rem; border:1px solid #333; padding:1.2rem 1.5rem; background:#0a0a0a; }
+.start-btn { background:none; border:2px solid #ff2200; color:#ff2200; font-family:'Courier New',monospace; font-size:1rem; letter-spacing:0.3rem; padding:0.8rem 2.5rem; cursor:pointer; }
+.start-btn:hover { background:#ff220022; }
 
-  /* ---- controls ---- */
-  #controls{
-    position:absolute; bottom:0; left:0; right:0; z-index:10;
-    display:flex; justify-content:space-between; align-items:flex-end;
-    padding: 0 16px 16px 16px; pointer-events:none;
-  }
-  .ctl-group{ display:flex; gap:10px; pointer-events:all; }
-  .ctl-btn{
-    font-family:inherit; background:rgba(17,20,24,0.75); color:var(--text);
-    border:1px solid var(--line); padding:10px 16px; font-size:clamp(11px,1.6vw,15px);
-    letter-spacing:1px; cursor:pointer; backdrop-filter:blur(2px);
-  }
-  .ctl-btn.active{ border-color:var(--sick); color:var(--sick); box-shadow:0 0 10px rgba(244,211,94,0.4);}
-  .ctl-btn.light{ border-color:var(--sick); }
-  .ctl-btn.cam{ border-color:var(--cold); }
-  .ctl-btn:active{ transform:scale(0.95); }
-  .key{ color:var(--dim); font-size:0.75em; }
+/* NIGHT INTRO */
+#night-intro { background:#000; }
+#night-intro h2 { font-size:3.5rem; color:#ff2200; letter-spacing:0.5rem; text-shadow:0 0 30px #ff2200; }
+#night-intro p { color:#555; font-size:0.8rem; letter-spacing:0.2rem; margin-top:0.5rem; }
 
-  #toast{
-    position:absolute; top:46%; left:50%; transform:translate(-50%,-50%);
-    z-index:25; color:var(--amber); font-size:clamp(16px,2.6vw,28px);
-    letter-spacing:3px; text-shadow:0 0 14px rgba(232,163,61,0.6);
-    pointer-events:none; opacity:0; transition:opacity 0.25s;
-    text-align:center;
-  }
-  #toast.show{ opacity:1; }
+/* PLAY SCREEN */
+#play-screen { background:#000; flex-direction:column; display:none; }
+#play-screen.active { display:flex; }
 
-  #flash{
-    position:absolute; inset:0; z-index:40; background:#fff; opacity:0;
-    pointer-events:none;
-  }
+/* CANVAS */
+#game-canvas { display:block; flex:1; }
 
-  #jumpscare{
-    position:absolute; inset:0; z-index:50; background:#000;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none;
-  }
+/* HUD */
+#hud { height:64px; background:#0d0d0d; border-top:2px solid #222; display:flex; align-items:center; justify-content:space-between; padding:0 1.5rem; flex-shrink:0; }
+.hud-block { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.hud-label { font-size:0.5rem; letter-spacing:0.2rem; color:#444; }
+.hud-value { font-size:1rem; color:#ccc; letter-spacing:0.1rem; }
+.lives-row { display:flex; gap:5px; }
+.life { font-size:1rem; transition:opacity 0.3s; }
+.life.lost { opacity:0.15; filter:grayscale(1); }
+#action-btns { display:flex; gap:0.6rem; }
+.abtn { background:none; border:1px solid #444; color:#888; font-family:'Courier New',monospace; font-size:0.6rem; letter-spacing:0.15rem; padding:0.45rem 0.8rem; cursor:pointer; }
+.abtn:hover { border-color:#ffcc44; color:#ffcc44; }
+.abtn.on { border-color:#ff4400; color:#ff4400; background:#ff440018; }
 
-  #qte{
-    position:absolute; inset:0; z-index:35; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; background:rgba(2,2,3,0.85);
-  }
-  .qte-keys{ display:flex; gap:18px; margin:30px 0; }
-  .qte-key{
-    width:64px; height:64px; border:2px solid var(--line); display:flex;
-    align-items:center; justify-content:center; font-size:24px; color:var(--dim);
-  }
-  .qte-key.next{ border-color:var(--sick); color:var(--sick); box-shadow:0 0 14px rgba(244,211,94,0.5); }
-  .qte-key.done{ border-color:var(--cold); color:var(--cold); opacity:0.5; }
-  .qte-bar-track{ width:60vw; max-width:480px; height:10px; background:var(--panel); border:1px solid var(--line); }
-  .qte-bar{ height:100%; background:var(--red); width:100%; }
+/* CAMERA OVERLAY */
+#cam-overlay { position:absolute; inset:0; background:#000; z-index:20; display:none; flex-direction:column; }
+#cam-overlay.open { display:flex; }
+#cam-canvas { flex:1; display:block; }
+#cam-bar { height:70px; background:#030a03; border-top:1px solid #0a2a0a; display:flex; align-items:center; justify-content:space-between; padding:0 1.2rem; }
+.cbtn { background:none; border:1px solid #0a3a0a; color:#0a9a0a; font-family:'Courier New',monospace; font-size:0.55rem; letter-spacing:0.1rem; padding:0.4rem 0.7rem; cursor:pointer; line-height:1.4; }
+.cbtn:hover,.cbtn.on { background:#00aa0022; border-color:#00cc00; color:#00cc00; }
+#close-cam-btn { border-color:#aa0000; color:#cc0000; }
+#close-cam-btn:hover { background:#aa000022; }
 
-  .credit{ position:absolute; bottom:6px; right:10px; z-index:60; font-size:10px; color:#3a3d42; letter-spacing:1px;}
+/* JUMPSCARE */
+#jumpscare { position:absolute; inset:0; z-index:100; background:#000; display:none; align-items:center; justify-content:center; flex-direction:column; }
+#jumpscare.active { display:flex; }
+.scare-face { font-size:14rem; animation:scare-zoom 0.25s ease-out; }
+.scare-text { font-size:2.5rem; color:#ff0000; letter-spacing:0.5rem; margin-top:0.5rem; animation:flicker 0.15s infinite; }
+
+/* NIGHT COMPLETE */
+#night-complete { background:#050505; }
+#night-complete h2 { font-size:2.5rem; color:#00dd00; letter-spacing:0.4rem; margin-bottom:1rem; }
+.nc-stats { color:#777; font-size:0.8rem; letter-spacing:0.1rem; line-height:2.2; text-align:center; margin-bottom:2rem; }
+.nc-stats span { color:#ffcc44; }
+.bigbtn { background:none; border:1px solid currentColor; font-family:'Courier New',monospace; font-size:0.85rem; letter-spacing:0.3rem; padding:0.7rem 2rem; cursor:pointer; margin:0.3rem; }
+.bigbtn.green { color:#00dd00; }
+.bigbtn.red { color:#ff2200; }
+.bigbtn.gold { color:#ffcc44; }
+.bigbtn:hover { opacity:0.7; }
+
+/* GAMEOVER */
+#game-over-screen { background:#050505; }
+#game-over-screen h2 { font-size:3rem; color:#ff2200; letter-spacing:0.5rem; text-shadow:0 0 20px #ff2200; margin-bottom:0.5rem; }
+.go-sub { color:#555; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
+.go-stats { color:#666; font-size:0.8rem; line-height:2.2; margin-bottom:2rem; text-align:center; }
+.go-stats span { color:#ffcc44; }
+
+/* WIN */
+#win-screen { background:#050505; }
+#win-screen h2 { font-size:2.5rem; color:#ffcc44; letter-spacing:0.4rem; text-shadow:0 0 20px #ffcc44; margin-bottom:0.5rem; }
+.win-sub { color:#666; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
+.win-score { font-size:4rem; color:#fff; }
+.win-label { color:#444; font-size:0.65rem; letter-spacing:0.2rem; margin-bottom:2rem; }
+
+/* HUD alerts */
+#stomp-alert { position:absolute; top:10px; right:12px; font-size:0.6rem; color:#ff4400; letter-spacing:0.15rem; opacity:0; transition:opacity 0.3s; z-index:5; }
+#stomp-alert.on { opacity:1; animation:flicker 0.4s infinite; }
+#view-lbl { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:0.55rem; color:#444; letter-spacing:0.25rem; z-index:5; }
+#bonus-lbl { position:absolute; top:36px; left:50%; transform:translateX(-50%); font-size:0.6rem; color:#ffcc44; letter-spacing:0.15rem; opacity:0; z-index:5; }
+#bonus-lbl.on { opacity:1; animation:flicker 2s infinite; }
+
+@keyframes flicker { 0%,94%,100%{opacity:1} 95%{opacity:0.3} 97%{opacity:0.8} }
+@keyframes scare-zoom { 0%{transform:scale(0.2);opacity:0} 100%{transform:scale(1);opacity:1} }
 </style>
 </head>
 <body>
-<div id="wrap">
-  <div id="stage">
-    <canvas id="c" width="960" height="540"></canvas>
-    <div class="vignette"></div>
-    <div class="scanlines"></div>
+<div id="game" style="position:relative;width:100vw;height:100vh;overflow:hidden;">
 
-    <div id="hud">
-      <div>
-        <div class="hud-block">NIGHT <span id="hudNight">1</span></div>
-        <div class="hud-block" id="lives">♥ ♥ ♥</div>
-      </div>
-      <div>
-        <div class="hud-block" id="clock">12:00<span class="ampm"> AM</span></div>
-        <div class="hud-block" style="margin-top:6px;">SCORE <span id="hudScore">0</span></div>
-      </div>
+<!-- TITLE -->
+<div class="screen active" id="title-screen">
+  <h1>SURVIVE</h1>
+  <div class="subtitle">SURVIVE THE ANIMATRONICS</div>
+  <div class="story">You took a minimum-wage security job at an abandoned pizzeria.<br><br>Your only task: keep the thieves out.<br><br>Nobody mentioned the robots.</div>
+  <button class="start-btn" onclick="startGame()">[ BEGIN ]</button>
+</div>
+
+<!-- NIGHT INTRO -->
+<div class="screen" id="night-intro">
+  <h2 id="ni-title">NIGHT 1</h2>
+  <p id="ni-sub">12:00 AM — 6:00 AM</p>
+</div>
+
+<!-- PLAY SCREEN -->
+<div class="screen" id="play-screen">
+  <canvas id="game-canvas"></canvas>
+  <div id="stomp-alert">⚠ STOMPING NEARBY</div>
+  <div id="view-lbl">LOOKING AHEAD</div>
+  <div id="bonus-lbl">★ BONUS NIGHT ★</div>
+  <div id="hud">
+    <div class="hud-block"><div class="hud-label">NIGHT</div><div class="hud-value" id="hud-night">1</div></div>
+    <div class="hud-block"><div class="hud-label">TIME</div><div class="hud-value" id="hud-time">12:00</div></div>
+    <div id="action-btns">
+      <button class="abtn" id="btn-flash" onclick="toggleFlash()">[ F ] FLASHLIGHT</button>
+      <button class="abtn" id="btn-cam" onclick="openCams()">[ C ] CAMERAS</button>
     </div>
-
-    <div id="toast"></div>
-    <div id="flash"></div>
-    <div id="jumpscare"><canvas id="jc" width="960" height="540"></canvas></div>
-
-    <div id="controls">
-      <div class="ctl-group">
-        <button class="ctl-btn" id="btnLeft">◀ LEFT HALL <span class="key">[A]</span></button>
-        <button class="ctl-btn" id="btnCenter">DESK <span class="key">[S]</span></button>
-        <button class="ctl-btn" id="btnRight">RIGHT HALL ▶ <span class="key">[D]</span></button>
-      </div>
-      <div class="ctl-group">
-        <button class="ctl-btn cam" id="btnCam">CAMERAS <span class="key">[C]</span></button>
-        <button class="ctl-btn light" id="btnLight">FLASHLIGHT <span class="key">[F]</span></button>
-      </div>
-    </div>
-
-    <!-- TITLE -->
-    <div class="overlay" id="screenTitle">
-      <h1 class="title">SURVIVE</h1>
-      <div class="sub">NIGHT SHIFT — ABANDONED PIZZERIA</div>
-      <p class="flavor">You took the job because it paid more than minimum wage for doing
-        nothing... or so they said. Three animatronics still walk the halls after dark.
-        Keep them out of your office until 6 AM. Five nights. Three lives. Don't look away
-        too long.</p>
-      <button class="btn" id="btnPlay">CLOCK IN</button>
-      <button class="btn ghost" id="btnHow">HOW TO SURVIVE</button>
-    </div>
-
-    <!-- HOW TO -->
-    <div class="overlay hidden" id="screenHow">
-      <h1 class="title" style="font-size:clamp(20px,4vw,34px);">HOW TO SURVIVE</h1>
-      <ul class="howto">
-        <li><span>Cameras [C]</span> — check the Stage, Parts &amp; Service, and both halls. The animatronics only move while you're watching the cameras, so don't leave them up too long.</li>
-        <li><span>Look Left / Right [A] / [D]</span> — peek down a hallway. If something has reached your door, you'll see it.</li>
-        <li><span>Flashlight [F]</span> — while looking down a hallway with something at your door, shine the light. Their eyes burn and they retreat.</li>
-        <li><span>Miss it</span> and you lose a life. Lose all three and you restart the week from Night 1.</li>
-        <li><span>The big one</span> from Parts &amp; Service is faster than the rest. Listen for the heavy footsteps.</li>
-        <li><span>Survive Night 5</span> to win. An optional <span>Night 6</span> is unlocked after — beat it for a bonus point.</li>
-      </ul>
-      <button class="btn" id="btnHowBack">GOT IT</button>
-    </div>
-
-    <!-- NIGHT INTRO -->
-    <div class="overlay hidden" id="screenNightIntro">
-      <div class="sub">NIGHT</div>
-      <div class="night-num" id="introNightNum">1</div>
-      <p class="flavor" id="introFlavor">12:00 AM. Lock in. Watch the halls.</p>
-      <button class="btn" id="btnStartNight">BEGIN SHIFT</button>
-    </div>
-
-    <!-- JUMPSCARE TO LIFE LOST MESSAGE -->
-    <div class="overlay hidden" id="screenCaught">
-      <h1 class="title">YOU WERE CAUGHT</h1>
-      <p class="flavor" id="caughtText">All three lives lost. The week starts over.</p>
-      <button class="btn danger" id="btnRestartWeek">RESTART THE WEEK</button>
-    </div>
-
-    <!-- NIGHT COMPLETE -->
-    <div class="overlay hidden" id="screenNightComplete">
-      <div class="sub">6:00 AM</div>
-      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">SHIFT OVER</h1>
-      <p class="flavor" id="completeText">You survived Night 1. +1 point.</p>
-      <button class="btn" id="btnNextNight">CONTINUE</button>
-    </div>
-
-    <!-- WIN / BONUS NIGHT OFFER -->
-    <div class="overlay hidden" id="screenBonusOffer">
-      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">YOU SURVIVED THE WEEK</h1>
-      <p class="flavor">Five nights down — that's the job done. There's one more shift on the
-        board if you want it: <strong>Night 6</strong>. It's really hard. Beat it for one
-        extra point.</p>
-      <button class="btn danger" id="btnTakeNight6">WORK NIGHT 6</button>
-      <button class="btn ghost" id="btnSkipToEscape">CLOCK OUT FOR GOOD</button>
-    </div>
-
-    <!-- BONUS ROUND -->
-    <div class="overlay hidden" id="qte">
-      <div class="sub">BONUS — FIX THE POWER &amp; ESCAPE</div>
-      <p class="flavor">The breaker's fried. Match the sequence before the door seals.</p>
-      <div class="qte-keys" id="qteKeys"></div>
-      <div class="qte-bar-track"><div class="qte-bar" id="qteBar"></div></div>
-    </div>
-
-    <!-- FINAL VICTORY -->
-    <div class="overlay hidden" id="screenVictory">
-      <h1 class="title" style="color:var(--amber); text-shadow:0 0 18px rgba(232,163,61,0.5);">CLOCKED OUT</h1>
-      <p class="flavor" id="victoryText"></p>
-      <button class="btn" id="btnPlayAgain">PLAY AGAIN</button>
-    </div>
-
-    <div class="credit">SURVIVE — built from Edric's game design planner</div>
+    <div class="hud-block"><div class="hud-label">LIVES</div><div class="lives-row" id="lives-row"><span class="life">❤️</span><span class="life">❤️</span><span class="life">❤️</span></div></div>
+    <div class="hud-block"><div class="hud-label">SCORE</div><div class="hud-value" id="hud-score">0</div></div>
   </div>
 </div>
 
+<!-- CAMERAS -->
+<div id="cam-overlay">
+  <canvas id="cam-canvas"></canvas>
+  <div id="cam-bar">
+    <div style="display:flex;gap:0.5rem;">
+      <button class="cbtn on" id="cb1" onclick="setCam(1)">CAM 1<br>STAGE</button>
+      <button class="cbtn" id="cb2" onclick="setCam(2)">CAM 2<br>BACKSTAGE</button>
+      <button class="cbtn" id="cb3" onclick="setCam(3)">CAM 3<br>LEFT HALL</button>
+      <button class="cbtn" id="cb4" onclick="setCam(4)">CAM 4<br>RIGHT HALL</button>
+    </div>
+    <button class="cbtn" id="close-cam-btn" onclick="closeCams()">✕ CLOSE CAMERAS</button>
+  </div>
+</div>
+
+<!-- JUMPSCARE -->
+<div id="jumpscare">
+  <div class="scare-face" id="scare-face">🐻</div>
+  <div class="scare-text">IT'S ME</div>
+</div>
+
+<!-- NIGHT COMPLETE -->
+<div class="screen" id="night-complete">
+  <h2 id="nc-h">NIGHT 1 COMPLETE</h2>
+  <div class="nc-stats" id="nc-stats"></div>
+  <button class="bigbtn green" id="nc-btn" onclick="nextNight()">NEXT NIGHT ▶</button>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="game-over-screen">
+  <h2>GAME OVER</h2>
+  <div class="go-sub" id="go-sub">YOU WERE CAUGHT</div>
+  <div class="go-stats" id="go-stats"></div>
+  <button class="bigbtn red" onclick="restartWeek()">↺ RESTART THIS WEEK</button>
+  <button class="bigbtn gold" onclick="startGame()">↺ START OVER</button>
+</div>
+
+<!-- WIN -->
+<div class="screen" id="win-screen">
+  <h2>YOU SURVIVED</h2>
+  <div class="win-sub" id="win-sub">ALL NIGHTS COMPLETE</div>
+  <div class="win-score" id="win-score">0</div>
+  <div class="win-label">POINTS</div>
+  <button class="bigbtn gold" onclick="startGame()">PLAY AGAIN</button>
+</div>
+
+</div><!-- end game -->
 <script>
-(function(){
-  "use strict";
+// ─── CONSTANTS ───────────────────────────────────────────────
+const MAX_NIGHTS = 6;
+const NIGHT_MS   = 50000; // 50s per night
+const HOURS      = ['12:00','1:00','2:00','3:00','4:00','5:00','6:00'];
+const R = { STAGE:'stage', PARTS:'parts', LHALL:'lhall', LDOOR:'ldoor', RDOOR:'rdoor', RHALL:'rhall' };
+const BONNIE_PATH = [R.STAGE, R.LHALL, R.LDOOR];
+const CHICA_PATH  = [R.STAGE, R.RHALL, R.RDOOR];
+const FRED_PATH   = [R.STAGE, R.LHALL, R.LDOOR, R.RDOOR];
 
-  // ---------------- Audio ----------------
-  let actx = null;
-  function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+// ─── STATE ───────────────────────────────────────────────────
+let G = {};
 
-  function thump(freq, dur, vol){
-    if(!actx) return;
-    const t = actx.currentTime;
-    const osc = actx.createOscillator();
-    const gain = actx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, t);
-    osc.frequency.exponentialRampToValueAtTime(Math.max(20,freq*0.6), t+dur);
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(vol, t+0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, t+dur);
-    osc.connect(gain); gain.connect(actx.destination);
-    osc.start(t); osc.stop(t+dur+0.05);
-  }
-  function staticHiss(dur, vol){
-    if(!actx) return;
-    const bufferSize = actx.sampleRate * dur;
-    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1)*0.6; }
-    const src = actx.createBufferSource(); src.buffer = buffer;
-    const gain = actx.createGain();
-    gain.gain.setValueAtTime(vol, actx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
-    const filt = actx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=1800;
-    src.connect(filt); filt.connect(gain); gain.connect(actx.destination);
-    src.start();
-  }
-  function clickSound(){
-    if(!actx) return;
-    const t = actx.currentTime;
-    const osc = actx.createOscillator(); const gain = actx.createGain();
-    osc.type='square'; osc.frequency.setValueAtTime(900,t);
-    gain.gain.setValueAtTime(0.15,t); gain.gain.exponentialRampToValueAtTime(0.001,t+0.06);
-    osc.connect(gain); gain.connect(actx.destination); osc.start(t); osc.stop(t+0.07);
-  }
-  function chime(success){
-    if(!actx) return;
-    const notes = success ? [523,659,784] : [300,260,220];
-    notes.forEach((f,i)=>{
-      const t = actx.currentTime + i*0.12;
-      const osc=actx.createOscillator(); const gain=actx.createGain();
-      osc.type='triangle'; osc.frequency.setValueAtTime(f,t);
-      gain.gain.setValueAtTime(0.2,t); gain.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-      osc.connect(gain); gain.connect(actx.destination); osc.start(t); osc.stop(t+0.32);
-    });
-  }
-  function jumpscareNoise(){
-    if(!actx) return;
-    const t = actx.currentTime;
-    const bufferSize = actx.sampleRate * 0.5;
-    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1); }
-    const src = actx.createBufferSource(); src.buffer = buffer;
-    const gain = actx.createGain();
-    gain.gain.setValueAtTime(0.9, t); gain.gain.exponentialRampToValueAtTime(0.001, t+0.5);
-    src.connect(gain); gain.connect(actx.destination); src.start();
-    const osc = actx.createOscillator(); const g2 = actx.createGain();
-    osc.type='sawtooth'; osc.frequency.setValueAtTime(90,t); osc.frequency.exponentialRampToValueAtTime(40,t+0.5);
-    g2.gain.setValueAtTime(0.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
-    osc.connect(g2); g2.connect(actx.destination); osc.start(t); osc.stop(t+0.55);
-  }
-
-  // ---------------- State ----------------
-  const TOTAL_NIGHTS = 5;
-  const S = {
+function resetState() {
+  G = {
+    phase: 'title',
     night: 1,
     lives: 3,
     score: 0,
-    bonusEarned: false,
-    viewing: 'center', // center | left | right | camera
-    paused: true,
-    inGameMinutes: 0,  // 0..360 (12am..6am)
-    nightLenSec: 62,    // real seconds per night, tuned per night
-    elapsedSec: 0,
-    flashlightCooldown: 0,
-    flashlightActive: 0,
-    camTickTimer: 0,
-    robots: [], // {id,name,kind,stage,doorSide,doorTimer,doorGrace,stunTimer,speedTier}
-    night6: false,
+    viewPos: 0,      // -1 left | 0 center | 1 right
+    flashOn: false,
+    camsOpen: false,
+    currentCam: 1,
+    nightElapsed: 0,
+    nightTick: null,
+    moveTick: null,
+    bonnie:   { room: R.STAGE, agr: 0.18 },
+    chica:    { room: R.STAGE, agr: 0.14 },
+    fredbear: { room: R.PARTS, agr: 0.28 },
+    flashTimer: null,
   };
+}
 
-  function nightDifficulty(n){
-    // returns tuning per night
-    return {
-      camTickInterval: Math.max(1.6, 3.0 - n*0.22),
-      advanceChance: Math.min(0.85, 0.30 + n*0.10),
-      doorGrace: Math.max(3.2, 6.2 - n*0.4),
-      fredUnlocked: n >= 3,
-      fredSpeedMult: 1.6 + n*0.06,
-    };
-  }
+// ─── AUDIO ───────────────────────────────────────────────────
+let _ctx = null;
+function ac() { if(!_ctx) _ctx = new (window.AudioContext||window.webkitAudioContext)(); return _ctx; }
 
-  function resetRobots(){
-    const cfg = nightDifficulty(S.night);
-    S.robots = [
-      { id:'bear', name:'Bear-bot', kind:'bear', stage:'home', home:'stage', doorSide:null, doorTimerLeft:0, stunTimer:0 },
-      { id:'rabbit', name:'Rabbit-bot', kind:'rabbit', stage:'home', home:'stage', doorSide:null, doorTimerLeft:0, stunTimer:0 },
-    ];
-    if(cfg.fredUnlocked){
-      S.robots.push({ id:'fred', name:'Fred Bear', kind:'fred', stage:'home', home:'parts', doorSide:null, doorTimerLeft:0, stunTimer:0 });
-    }
-  }
+function thump(hz=55, vol=0.35, dur=0.35) {
+  try { const c=ac(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.setValueAtTime(hz,c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(hz*0.25,c.currentTime+dur);
+    g.gain.setValueAtTime(vol,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur); } catch(e){}
+}
+function screech() {
+  try { const c=ac(), n=c.sampleRate*1.5, b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.max(0,1-i/n);
+    const s=c.createBufferSource(), g=c.createGain();
+    s.buffer=b; g.gain.setValueAtTime(0.9,c.currentTime);
+    s.connect(g); g.connect(c.destination); s.start(); } catch(e){}
+}
+function ding() {
+  try { const c=ac(),o=c.createOscillator(),g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(880,c.currentTime);
+    g.gain.setValueAtTime(0.3,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.8);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.8); } catch(e){}
+}
 
-  function startNight(n){
-    S.night = n;
-    S.lives = 3;
-    S.elapsedSec = 0;
-    S.inGameMinutes = 0;
-    const cfg = nightDifficulty(n);
-    S.nightLenSec = 62 + n*3;
-    resetRobots();
-    S.viewing = 'center';
-    S.camTickTimer = 0;
-    S.flashlightCooldown = 0;
-    show('screenNightIntro');
-    document.getElementById('introNightNum').textContent = n===6 ? '6 (BONUS)' : n;
-    document.getElementById('introFlavor').textContent = n===6
-      ? "Everyone said you'd never make it this far. Night 6 isn't on the schedule \u2014 you don't have to be here."
-      : "12:00 AM. Lock in. Watch the halls, check the cameras, don't get caught looking the wrong way.";
-  }
+// ─── SCREENS ─────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+}
 
-  function loseLife(causedBy){
-    S.lives -= 1;
-    flashScreen();
-    updateHud();
-    if(S.lives <= 0){
-      jumpscare(causedBy, true);
-    } else {
-      jumpscare(causedBy, false);
-    }
-  }
+// ─── CANVAS SETUP ────────────────────────────────────────────
+const canvas = document.getElementById('game-canvas');
+const ctx2   = canvas.getContext('2d');
+const camCv  = document.getElementById('cam-canvas');
+const camCtx = camCv.getContext('2d');
 
-  function jumpscare(robot, fatal){
-    ensureAudio();
-    S.paused = true;
-    jumpscareNoise();
-    const jc = document.getElementById('jumpscare');
-    const jcv = document.getElementById('jc');
-    drawJumpscareFace(jcv, robot ? robot.kind : 'bear');
-    jc.style.opacity = 1; jc.style.pointerEvents='all';
-    shake(420);
-    setTimeout(()=>{
-      jc.style.opacity = 0; jc.style.pointerEvents='none';
-      if(fatal){
-        document.getElementById('caughtText').textContent =
-          `All three lives lost on Night ${S.night}. The week starts over from Night 1. Score resets to 0.`;
-        S.score = 0;
-        show('screenCaught');
-      } else {
-        if(robot){
-          robot.stage = 'home';
-          robot.doorSide = null;
-          robot.stunTimer = 4;
-        }
-        S.viewing = 'center';
-        S.paused = false;
-      }
-    }, 650);
-  }
+function resizeCanvases() {
+  const ps = document.getElementById('play-screen');
+  canvas.width  = ps.clientWidth  || window.innerWidth;
+  canvas.height = ps.clientHeight || (window.innerHeight - 64);
+  camCv.width   = window.innerWidth;
+  camCv.height  = window.innerHeight - 70;
+}
+window.addEventListener('resize', () => { resizeCanvases(); });
+resizeCanvases();
 
-  function nightSuccess(){
-    S.paused = true;
-    let pts = 1;
-    S.score += pts;
-    updateHud();
-    chime(true);
-    if(S.night < TOTAL_NIGHTS){
-      document.getElementById('completeText').textContent = `You survived Night ${S.night}. +1 point.`;
-      show('screenNightComplete');
-    } else if(S.night === TOTAL_NIGHTS){
-      show('screenBonusOffer');
-    } else if(S.night === 6){
-      document.getElementById('completeText').textContent = `Night 6 survived. +1 bonus point!`;
-      S.bonusEarned = true;
-      updateHud();
-      show('screenNightComplete');
-      document.getElementById('btnNextNight').dataset.toEscape = '1';
-    }
-  }
+// ─── DRAWING: OFFICE ─────────────────────────────────────────
+let animFrame = null;
 
-  // ---------------- Canvas drawing ----------------
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
+function drawOffice() {
   const W = canvas.width, H = canvas.height;
+  ctx2.clearRect(0,0,W,H);
 
-  function robotColor(kind){
-    if(kind==='bear') return '#caa24a';
-    if(kind==='rabbit') return '#d8d2c2';
-    if(kind==='fred') return '#b5552a';
-    return '#999';
+  const vp = G.viewPos; // -1=left, 0=center, 1=right
+
+  if (vp === 0) drawCenter(W, H);
+  else if (vp === -1) drawLeftHall(W, H);
+  else if (vp === 1) drawRightHall(W, H);
+
+  // Flashlight overlay
+  if (G.flashOn) {
+    const grd = ctx2.createRadialGradient(W/2, H*1.1, 0, W/2, H*0.5, W*0.55);
+    grd.addColorStop(0, 'rgba(255,240,180,0.18)');
+    grd.addColorStop(0.5, 'rgba(255,220,100,0.07)');
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx2.fillStyle = grd;
+    ctx2.fillRect(0,0,W,H);
+  }
+}
+
+function drawCenter(W, H) {
+  // Background wall — warm amber/brown
+  const bg = ctx2.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#2a1a08');
+  bg.addColorStop(0.5,'#1e1205');
+  bg.addColorStop(1,'#100900');
+  ctx2.fillStyle = bg;
+  ctx2.fillRect(0,0,W,H);
+
+  // Ceiling band
+  ctx2.fillStyle = '#1a1005';
+  ctx2.fillRect(0,0,W,H*0.15);
+
+  // Floor
+  const floor = ctx2.createLinearGradient(0,H*0.7,0,H);
+  floor.addColorStop(0,'#1a1005');
+  floor.addColorStop(1,'#0d0800');
+  ctx2.fillStyle = floor;
+  ctx2.fillRect(0,H*0.7,W,H*0.3);
+  ctx2.strokeStyle='#2a1a08';
+  ctx2.lineWidth=2;
+  ctx2.beginPath(); ctx2.moveTo(0,H*0.7); ctx2.lineTo(W,H*0.7); ctx2.stroke();
+
+  // Side walls with door frames
+  ctx2.fillStyle='#1a1005';
+  ctx2.fillRect(0,0,W*0.12,H);
+  ctx2.fillRect(W*0.88,0,W*0.12,H);
+
+  // Left door frame
+  const ldx = W*0.13, ldy = H*0.1, ldw = W*0.18, ldh = H*0.62;
+  ctx2.fillStyle='#0a0800'; ctx2.fillRect(ldx, ldy, ldw, ldh);
+  ctx2.strokeStyle='#3a2a10'; ctx2.lineWidth=4;
+  ctx2.strokeRect(ldx, ldy, ldw, ldh);
+  // door top arch
+  ctx2.fillStyle='#3a2a10';
+  ctx2.fillRect(ldx-4, ldy-4, ldw+8, 8);
+
+  // Right door frame
+  const rdx = W*0.69, rdy = H*0.1, rdw = W*0.18, rdh = H*0.62;
+  ctx2.fillStyle='#0a0800'; ctx2.fillRect(rdx, rdy, rdw, rdh);
+  ctx2.strokeStyle='#3a2a10'; ctx2.lineWidth=4;
+  ctx2.strokeRect(rdx, rdy, rdw, rdh);
+  ctx2.fillStyle='#3a2a10';
+  ctx2.fillRect(rdx-4, rdy-4, rdw+8, 8);
+
+  // Desk
+  const deskY = H*0.68, deskH = H*0.32;
+  ctx2.fillStyle='#2a1a08';
+  ctx2.fillRect(W*0.2, deskY, W*0.6, deskH);
+  ctx2.fillStyle='#1a1005';
+  ctx2.fillRect(W*0.22, deskY+8, W*0.56, deskH-8);
+  ctx2.strokeStyle='#4a3a18'; ctx2.lineWidth=3;
+  ctx2.strokeRect(W*0.2, deskY, W*0.6, deskH);
+
+  // Overhead light
+  ctx2.fillStyle='#4a3a18';
+  ctx2.fillRect(W*0.4, 0, W*0.2, 12);
+  const lg = ctx2.createRadialGradient(W/2, 12, 0, W/2, 12, W*0.35);
+  lg.addColorStop(0,'rgba(255,220,120,0.12)');
+  lg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx2.fillStyle=lg;
+  ctx2.fillRect(W*0.1, 0, W*0.8, H*0.6);
+
+  // Pizza poster on wall
+  ctx2.fillStyle='#2a1808';
+  ctx2.fillRect(W*0.44, H*0.18, W*0.12, H*0.2);
+  ctx2.strokeStyle='#5a3a18'; ctx2.lineWidth=2;
+  ctx2.strokeRect(W*0.44, H*0.18, W*0.12, H*0.2);
+  ctx2.fillStyle='#6a3010'; ctx2.font=`${H*0.06}px Arial`;
+  ctx2.textAlign='center'; ctx2.fillText('🍕',W/2, H*0.31);
+
+  // Left door darkness — animatronic in doorway?
+  if (G.bonnie.room === R.LDOOR || G.fredbear.room === R.LDOOR) {
+    const isFredbear = G.fredbear.room === R.LDOOR;
+    drawRobotInDoor(ldx, ldy, ldw, ldh, isFredbear ? '🐻' : '🐰', isFredbear ? 1.3 : 1.0, isFredbear ? '#ff2200' : '#ccaa00');
+  } else {
+    // Dark hallway glimpse
+    drawDarkHall(ldx+4, ldy+4, ldw-8, ldh-8, -1);
   }
 
-  function drawRobotIcon(c, cx, cy, scale, kind, eyesLit, alpha){
-    c.save();
-    c.globalAlpha = alpha===undefined?1:alpha;
-    c.translate(cx, cy);
-    c.scale(scale, scale);
-    const col = robotColor(kind);
-    c.fillStyle = col;
-    // body
-    c.beginPath(); c.ellipse(0, 40, 46, 50, 0, 0, Math.PI*2); c.fill();
-    // head
-    c.beginPath(); c.ellipse(0, -30, 38, 34, 0, 0, Math.PI*2); c.fill();
-    // ears
-    if(kind==='rabbit'){
-      c.beginPath(); c.ellipse(-16, -78, 9, 36, -0.15, 0, Math.PI*2); c.fill();
-      c.beginPath(); c.ellipse(16, -78, 9, 36, 0.15, 0, Math.PI*2); c.fill();
-    } else {
-      c.beginPath(); c.arc(-30, -56, 16, 0, Math.PI*2); c.fill();
-      c.beginPath(); c.arc(30, -56, 16, 0, Math.PI*2); c.fill();
-      if(kind==='fred'){
-        // jagged shoulder spikes for the bigger faster one
-        c.beginPath();
-        c.moveTo(-44,10); c.lineTo(-60,-6); c.lineTo(-42,-2); c.lineTo(-54,-22); c.lineTo(-30,-10);
-        c.closePath(); c.fill();
-        c.beginPath();
-        c.moveTo(44,10); c.lineTo(60,-6); c.lineTo(42,-2); c.lineTo(54,-22); c.lineTo(30,-10);
-        c.closePath(); c.fill();
-      }
+  // Right door
+  if (G.chica.room === R.RDOOR || G.fredbear.room === R.RDOOR) {
+    const isFredbear = G.fredbear.room === R.RDOOR;
+    drawRobotInDoor(rdx, rdy, rdw, rdh, isFredbear ? '🐻' : '🐻', isFredbear ? 1.2 : 1.0, isFredbear ? '#ff2200' : '#ff6600');
+  } else {
+    drawDarkHall(rdx+4, rdy+4, rdw-8, rdh-8, 1);
+  }
+
+  // Direction arrows
+  ctx2.fillStyle='rgba(255,255,255,0.06)';
+  ctx2.fillRect(0, H*0.4, W*0.1, H*0.25);
+  ctx2.fillRect(W*0.9, H*0.4, W*0.1, H*0.25);
+  ctx2.fillStyle='rgba(255,255,255,0.3)'; ctx2.font=`${H*0.07}px Arial`;
+  ctx2.textAlign='center';
+  ctx2.fillText('◀', W*0.05, H*0.555);
+  ctx2.fillText('▶', W*0.95, H*0.555);
+  ctx2.fillStyle='rgba(255,255,255,0.15)'; ctx2.font=`${H*0.022}px 'Courier New'`;
+  ctx2.fillText('LEFT', W*0.05, H*0.595);
+  ctx2.fillText('RIGHT', W*0.95, H*0.595);
+}
+
+function drawDarkHall(x, y, w, h, side) {
+  // Hallway perspective inside door
+  const grd = ctx2.createLinearGradient(side<0 ? x+w : x, y, side<0 ? x : x+w, y+h);
+  grd.addColorStop(0,'#0d0800');
+  grd.addColorStop(1,'#050400');
+  ctx2.fillStyle = grd;
+  ctx2.fillRect(x, y, w, h);
+  // floor line
+  ctx2.strokeStyle='#1a1005'; ctx2.lineWidth=1;
+  ctx2.beginPath(); ctx2.moveTo(x,y+h*0.75); ctx2.lineTo(x+w,y+h*0.75); ctx2.stroke();
+  // subtle depth lines
+  ctx2.strokeStyle='#1a1008'; ctx2.lineWidth=1;
+  for(let i=1;i<=3;i++) {
+    const px = side<0 ? x+w - (w*i/4) : x + (w*i/4);
+    ctx2.beginPath(); ctx2.moveTo(px,y); ctx2.lineTo(px,y+h); ctx2.stroke();
+  }
+}
+
+function drawRobotInDoor(x, y, w, h, emoji, scale, glowColor) {
+  // Dark red glow from door
+  const grd = ctx2.createRadialGradient(x+w/2, y+h*0.4, 0, x+w/2, y+h*0.4, w);
+  grd.addColorStop(0, glowColor+'44');
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx2.fillStyle = grd;
+  ctx2.fillRect(x-w*0.5, y-h*0.2, w*2, h*1.4);
+
+  // Draw robot emoji large
+  const sz = Math.min(w,h) * 0.9 * scale;
+  ctx2.font = `${sz}px Arial`;
+  ctx2.textAlign = 'center';
+  ctx2.textBaseline = 'middle';
+  // shadow
+  ctx2.shadowColor = glowColor;
+  ctx2.shadowBlur = 30;
+  ctx2.fillText(emoji, x + w/2, y + h*0.45);
+  ctx2.shadowBlur = 0;
+  ctx2.textBaseline = 'alphabetic';
+
+  // Eye glow
+  ctx2.fillStyle = glowColor + 'cc';
+  ctx2.shadowColor = glowColor;
+  ctx2.shadowBlur = 15;
+  ctx2.beginPath();
+  ctx2.arc(x+w*0.38, y+h*0.28, sz*0.05, 0, Math.PI*2);
+  ctx2.arc(x+w*0.62, y+h*0.28, sz*0.05, 0, Math.PI*2);
+  ctx2.fill();
+  ctx2.shadowBlur = 0;
+}
+
+function drawLeftHall(W, H) {
+  // Left hallway view
+  const bg = ctx2.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a1005');
+  bg.addColorStop(0.6,'#150d03');
+  bg.addColorStop(1,'#0a0800');
+  ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
+
+  // Perspective walls
+  ctx2.fillStyle='#120e04';
+  // left wall
+  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W*0.25,H*0.15); ctx2.lineTo(W*0.25,H*0.85); ctx2.lineTo(0,H); ctx2.closePath(); ctx2.fill();
+  // right wall
+  ctx2.fillStyle='#1a1408';
+  ctx2.beginPath(); ctx2.moveTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W,H); ctx2.closePath(); ctx2.fill();
+  // ceiling
+  ctx2.fillStyle='#100c03';
+  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.25,H*0.15); ctx2.closePath(); ctx2.fill();
+  // floor
+  ctx2.fillStyle='#0d0a02';
+  ctx2.beginPath(); ctx2.moveTo(0,H); ctx2.lineTo(W,H); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W*0.25,H*0.85); ctx2.closePath(); ctx2.fill();
+  // tunnel
+  ctx2.fillStyle='#060400';
+  ctx2.fillRect(W*0.25, H*0.15, W*0.5, H*0.7);
+
+  // depth lines
+  ctx2.strokeStyle='#2a1a08'; ctx2.lineWidth=2;
+  ctx2.strokeRect(W*0.25, H*0.15, W*0.5, H*0.7);
+
+  // Animatronic if in left hall
+  if (G.bonnie.room === R.LHALL || G.fredbear.room === R.LHALL) {
+    const isF = G.fredbear.room === R.LHALL;
+    const sz = H * (isF ? 0.65 : 0.55);
+    ctx2.font=`${sz}px Arial`; ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    const color = isF ? '#ff2200' : '#ffaa00';
+    ctx2.shadowColor=color; ctx2.shadowBlur=40;
+    ctx2.fillText(isF ? '🐻':'🐰', W/2, H*0.5);
+    ctx2.shadowBlur=0; ctx2.textBaseline='alphabetic';
+    // Eyes
+    ctx2.fillStyle=color+'cc'; ctx2.shadowColor=color; ctx2.shadowBlur=20;
+    ctx2.beginPath();
+    ctx2.arc(W*0.44, H*0.38, sz*0.04, 0, Math.PI*2);
+    ctx2.arc(W*0.56, H*0.38, sz*0.04, 0, Math.PI*2);
+    ctx2.fill(); ctx2.shadowBlur=0;
+  }
+
+  drawNavButtons(W, H, 'center');
+}
+
+function drawRightHall(W, H) {
+  const bg = ctx2.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a1005'); bg.addColorStop(0.6,'#150d03'); bg.addColorStop(1,'#0a0800');
+  ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
+
+  ctx2.fillStyle='#1a1408';
+  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W*0.25,H*0.15); ctx2.lineTo(W*0.25,H*0.85); ctx2.lineTo(0,H); ctx2.closePath(); ctx2.fill();
+  ctx2.fillStyle='#120e04';
+  ctx2.beginPath(); ctx2.moveTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W,H); ctx2.closePath(); ctx2.fill();
+  ctx2.fillStyle='#100c03';
+  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.25,H*0.15); ctx2.closePath(); ctx2.fill();
+  ctx2.fillStyle='#0d0a02';
+  ctx2.beginPath(); ctx2.moveTo(0,H); ctx2.lineTo(W,H); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W*0.25,H*0.85); ctx2.closePath(); ctx2.fill();
+  ctx2.fillStyle='#060400';
+  ctx2.fillRect(W*0.25, H*0.15, W*0.5, H*0.7);
+  ctx2.strokeStyle='#2a1a08'; ctx2.lineWidth=2;
+  ctx2.strokeRect(W*0.25, H*0.15, W*0.5, H*0.7);
+
+  if (G.chica.room === R.RHALL || G.fredbear.room === R.RHALL) {
+    const isF = G.fredbear.room === R.RHALL;
+    const sz = H * (isF ? 0.65 : 0.55);
+    ctx2.font=`${sz}px Arial`; ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    const color = isF ? '#ff2200' : '#ff6600';
+    ctx2.shadowColor=color; ctx2.shadowBlur=40;
+    ctx2.fillText('🐻', W/2, H*0.5);
+    ctx2.shadowBlur=0; ctx2.textBaseline='alphabetic';
+    ctx2.fillStyle=color+'cc'; ctx2.shadowColor=color; ctx2.shadowBlur=20;
+    ctx2.beginPath();
+    ctx2.arc(W*0.44, H*0.38, sz*0.04, 0, Math.PI*2);
+    ctx2.arc(W*0.56, H*0.38, sz*0.04, 0, Math.PI*2);
+    ctx2.fill(); ctx2.shadowBlur=0;
+  }
+
+  drawNavButtons(W, H, 'center');
+}
+
+function drawNavButtons(W, H, backDir) {
+  ctx2.fillStyle='rgba(255,255,255,0.05)';
+  ctx2.fillRect(0, H*0.4, W*0.1, H*0.25);
+  ctx2.fillRect(W*0.9, H*0.4, W*0.1, H*0.25);
+  ctx2.fillStyle='rgba(255,255,255,0.3)'; ctx2.font=`${H*0.07}px Arial`; ctx2.textAlign='center';
+  ctx2.fillText('◀', W*0.05, H*0.555);
+  ctx2.fillText('▶', W*0.95, H*0.555);
+}
+
+// ─── DRAW: CAMERA ─────────────────────────────────────────────
+function drawCamera() {
+  const W = camCv.width, H = camCv.height;
+  camCtx.clearRect(0,0,W,H);
+
+  // Green night-vision bg
+  camCtx.fillStyle='#010a01'; camCtx.fillRect(0,0,W,H);
+
+  const cam = G.currentCam;
+
+  if (cam === 1) drawCamStage(W,H);
+  else if (cam === 2) drawCamParts(W,H);
+  else if (cam === 3) drawCamLHall(W,H);
+  else if (cam === 4) drawCamRHall(W,H);
+
+  // Scanlines
+  for(let y=0; y<H; y+=4) {
+    camCtx.fillStyle='rgba(0,0,0,0.35)';
+    camCtx.fillRect(0,y,W,2);
+  }
+
+  // Vignette
+  const vig = camCtx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.8);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.6)');
+  camCtx.fillStyle=vig; camCtx.fillRect(0,0,W,H);
+
+  // REC label
+  camCtx.fillStyle='#cc0000'; camCtx.font=`${H*0.035}px 'Courier New'`;
+  camCtx.textAlign='left'; camCtx.textBaseline='top';
+  camCtx.fillText('● REC', 16, 14);
+  const labels=['CAM 1 — SHOW STAGE','CAM 2 — BACKSTAGE','CAM 3 — LEFT HALL','CAM 4 — RIGHT HALL'];
+  camCtx.fillStyle='#00aa00'; camCtx.font=`${H*0.03}px 'Courier New'`;
+  camCtx.fillText(labels[cam-1], 16, 14+H*0.04);
+  camCtx.textBaseline='alphabetic';
+}
+
+function camRoom(x,y,w,h) {
+  // Room background
+  const bg=camCtx.createLinearGradient(x,y,x,y+h);
+  bg.addColorStop(0,'#020802'); bg.addColorStop(1,'#010501');
+  camCtx.fillStyle=bg; camCtx.fillRect(x,y,w,h);
+  camCtx.strokeStyle='#0a2a0a'; camCtx.lineWidth=2; camCtx.strokeRect(x,y,w,h);
+}
+
+function camAnim(emoji, cx, cy, sz, color='#00aa00') {
+  camCtx.font=`${sz}px Arial`; camCtx.textAlign='center'; camCtx.textBaseline='middle';
+  camCtx.shadowColor=color; camCtx.shadowBlur=25;
+  // green-tint filter trick via globalCompositeOperation
+  camCtx.fillText(emoji, cx, cy);
+  camCtx.shadowBlur=0; camCtx.textBaseline='alphabetic';
+  // Eye glow
+  camCtx.fillStyle=color+'dd'; camCtx.shadowColor=color; camCtx.shadowBlur=12;
+  camCtx.beginPath();
+  camCtx.arc(cx-sz*0.12, cy-sz*0.1, sz*0.05, 0, Math.PI*2);
+  camCtx.arc(cx+sz*0.12, cy-sz*0.1, sz*0.05, 0, Math.PI*2);
+  camCtx.fill(); camCtx.shadowBlur=0;
+}
+
+function drawCamStage(W,H) {
+  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
+  camRoom(rx,ry,rw,rh);
+  // Stage platform
+  camCtx.fillStyle='#030e03';
+  camCtx.fillRect(rx+rw*0.1, ry+rh*0.55, rw*0.8, rh*0.15);
+  camCtx.strokeStyle='#0a3a0a'; camCtx.lineWidth=1;
+  camCtx.strokeRect(rx+rw*0.1, ry+rh*0.55, rw*0.8, rh*0.15);
+  // "FREDDY FAZBEAR'S PIZZA" sign
+  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
+  camCtx.textAlign='center';
+  camCtx.fillText("FREDDY FAZBEAR'S PIZZA", W/2, ry+rh*0.15);
+
+  // Robots
+  const bOn = G.bonnie.room === R.STAGE;
+  const cOn = G.chica.room === R.STAGE;
+  if(bOn) {
+    camAnim('🐰', rx+rw*0.25, ry+rh*0.55, rh*0.42, '#ccaa00');
+    camCtx.fillStyle='#ccaa00'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
+    camCtx.fillText('SPRINGBONNIE', rx+rw*0.25, ry+rh*0.72);
+  }
+  if(cOn) {
+    camAnim('🐻', rx+rw*0.75, ry+rh*0.55, rh*0.42, '#00cc44');
+    camCtx.fillStyle='#00cc44'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
+    camCtx.fillText('CHICA', rx+rw*0.75, ry+rh*0.72);
+  }
+
+  if(!bOn && !cOn) {
+    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
+    camCtx.textAlign='center'; camCtx.fillText('EMPTY', W/2, H/2);
+  }
+}
+
+function drawCamParts(W,H) {
+  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
+  camRoom(rx,ry,rw,rh);
+  camCtx.fillStyle='#030803';
+  camCtx.fillRect(rx+rw*0.05, ry+rh*0.6, rw*0.9, rh*0.1);
+  // Spare parts vibe
+  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
+  camCtx.textAlign='center'; camCtx.fillText('BACKSTAGE', W/2, ry+rh*0.15);
+
+  if(G.fredbear.room === R.STAGE) {
+    camAnim('🐻', W/2, ry+rh*0.52, rh*0.5, '#cc3300');
+    camCtx.fillStyle='#cc3300'; camCtx.font=`${H*0.028}px 'Courier New'`; camCtx.textAlign='center';
+    camCtx.fillText('FREDBEAR', W/2, ry+rh*0.72);
+  } else {
+    camCtx.fillStyle='#cc330066'; camCtx.font=`${H*0.04}px 'Courier New'`;
+    camCtx.textAlign='center'; camCtx.fillText('ROAMING...', W/2, H/2);
+    camCtx.fillStyle='#cc330044'; camCtx.font=`${H*0.025}px 'Courier New'`;
+    camCtx.fillText('CHECK OTHER CAMS', W/2, H/2+H*0.05);
+  }
+}
+
+function drawCamHall(W, H, side) {
+  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
+  camRoom(rx,ry,rw,rh);
+  // Perspective lines
+  camCtx.strokeStyle='#0a2a0a'; camCtx.lineWidth=1;
+  const cx=rx+rw/2, cy=ry+rh*0.5;
+  camCtx.beginPath();
+  camCtx.moveTo(rx,ry); camCtx.lineTo(rx+rw*0.3, ry+rh*0.15);
+  camCtx.moveTo(rx,ry+rh); camCtx.lineTo(rx+rw*0.3, ry+rh*0.85);
+  camCtx.moveTo(rx+rw,ry); camCtx.lineTo(rx+rw*0.7, ry+rh*0.15);
+  camCtx.moveTo(rx+rw,ry+rh); camCtx.lineTo(rx+rw*0.7, ry+rh*0.85);
+  camCtx.stroke();
+  camCtx.strokeRect(rx+rw*0.3, ry+rh*0.15, rw*0.4, rh*0.7);
+}
+
+function drawCamLHall(W,H) {
+  drawCamHall(W,H,-1);
+  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
+  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
+  camCtx.textAlign='center'; camCtx.fillText('LEFT HALL', W/2, ry+rh*0.12);
+
+  const inHall = G.bonnie.room===R.LHALL || G.fredbear.room===R.LHALL;
+  if(inHall) {
+    const isF=G.fredbear.room===R.LHALL;
+    camAnim(isF?'🐻':'🐰', W/2, ry+rh*0.52, rh*0.5, isF?'#cc3300':'#ccaa00');
+    camCtx.fillStyle=isF?'#cc3300':'#ccaa00'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
+    camCtx.fillText(isF?'FREDBEAR':'SPRINGBONNIE', W/2, ry+rh*0.72);
+  } else {
+    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
+    camCtx.textAlign='center'; camCtx.fillText('CLEAR', W/2, H/2);
+  }
+}
+
+function drawCamRHall(W,H) {
+  drawCamHall(W,H,1);
+  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
+  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
+  camCtx.textAlign='center'; camCtx.fillText('RIGHT HALL', W/2, ry+rh*0.12);
+
+  const inHall = G.chica.room===R.RHALL || G.fredbear.room===R.RHALL;
+  if(inHall) {
+    const isF=G.fredbear.room===R.RHALL;
+    camAnim(isF?'🐻':'🐻', W/2, ry+rh*0.55, rh*0.5, isF?'#cc3300':'#00cc44');
+  } else {
+    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
+    camCtx.textAlign='center'; camCtx.fillText('CLEAR', W/2, H/2);
+  }
+}
+
+// ─── RENDER LOOP ─────────────────────────────────────────────
+function renderLoop() {
+  if(G.phase==='playing') drawOffice();
+  if(G.camsOpen) drawCamera();
+  animFrame = requestAnimationFrame(renderLoop);
+}
+
+// ─── GAME FLOW ───────────────────────────────────────────────
+function startGame() {
+  ac();
+  resetState();
+  beginNight();
+}
+
+function beginNight() {
+  G.bonnie.room=R.STAGE; G.chica.room=R.STAGE; G.fredbear.room=R.STAGE;
+  const m = 0.8 + (G.night-1)*0.22;
+  G.bonnie.agr   = Math.min(0.88, 0.18*m);
+  G.chica.agr    = Math.min(0.82, 0.14*m);
+  G.fredbear.agr = Math.min(0.94, 0.28*m*1.4);
+  G.flashOn=false; G.viewPos=0; G.camsOpen=false;
+  G.nightElapsed=0;
+
+  document.getElementById('ni-title').textContent = G.night===MAX_NIGHTS ? '★ BONUS NIGHT ★' : `NIGHT ${G.night}`;
+  document.getElementById('ni-sub').textContent   = G.night===MAX_NIGHTS ? 'SURVIVE FOR AN EXTRA POINT' : '12:00 AM — 6:00 AM';
+  show('night-intro');
+
+  document.getElementById('bonus-lbl').classList.toggle('on', G.night===MAX_NIGHTS);
+
+  setTimeout(()=>{
+    show('play-screen');
+    G.phase='playing';
+    document.getElementById('cam-overlay').classList.remove('open');
+    resizeCanvases();
+    updateViewLabel();
+    updateHUD();
+    startTimers();
+    if(!animFrame) renderLoop();
+  }, 2400);
+}
+
+function startTimers() {
+  clearInterval(G.nightTick); clearInterval(G.moveTick);
+  G.nightTick = setInterval(()=>{
+    if(G.phase!=='playing') return;
+    G.nightElapsed += 100;
+    const idx = Math.min(6, Math.floor((G.nightElapsed/NIGHT_MS)*6));
+    document.getElementById('hud-time').textContent = HOURS[idx];
+    if(G.nightElapsed >= NIGHT_MS) nightComplete();
+  }, 100);
+  G.moveTick = setInterval(()=>{
+    if(G.phase!=='playing') return;
+    moveRobots();
+    checkAttack();
+    updateStompAlert();
+    if(G.camsOpen) drawCamera();
+  }, 2200 - G.night*120);
+}
+
+function moveRobots() {
+  tryMove(G.bonnie, BONNIE_PATH, 1);
+  tryMove(G.chica,  CHICA_PATH,  1);
+  tryMove(G.fredbear, FRED_PATH, 1.6);
+}
+
+function tryMove(bot, path, speedMult) {
+  if(Math.random() < bot.agr * speedMult) {
+    const i = path.indexOf(bot.room);
+    if(i >= 0 && i < path.length-1) {
+      bot.room = path[i+1];
+      if(bot.room===R.LHALL||bot.room===R.RHALL) thump(50,0.3,0.4);
+      if(bot.room===R.LDOOR||bot.room===R.RDOOR) thump(35,0.5,0.55);
     }
-    // seams / panel lines
-    c.strokeStyle = 'rgba(0,0,0,0.35)'; c.lineWidth = 2;
-    c.beginPath(); c.moveTo(-20,-30); c.lineTo(20,-30); c.stroke();
-    c.beginPath(); c.moveTo(-30,40); c.lineTo(30,40); c.stroke();
-    // eyes
-    c.fillStyle = eyesLit ? '#ffffff' : (kind==='fred' ? '#ff2a1a' : '#e0c84a');
-    if(eyesLit){
-      c.shadowColor = '#fff'; c.shadowBlur = 18;
-    } else {
-      c.shadowColor = kind==='fred' ? '#ff2a1a' : '#e0c84a'; c.shadowBlur = 10;
-    }
-    c.beginPath(); c.arc(-13,-32,6,0,Math.PI*2); c.fill();
-    c.beginPath(); c.arc(13,-32,6,0,Math.PI*2); c.fill();
-    c.shadowBlur = 0;
-    // teeth
-    c.fillStyle = '#1c1c1c';
-    c.fillRect(-14,-12,28,8);
-    c.fillStyle = '#eee';
-    for(let i=-12;i<14;i+=6){ c.fillRect(i,-12,4,7); }
-    c.restore();
   }
+}
 
-  function drawJumpscareFace(cv, kind){
-    const jctx = cv.getContext('2d');
-    jctx.clearRect(0,0,cv.width,cv.height);
-    jctx.fillStyle = '#000'; jctx.fillRect(0,0,cv.width,cv.height);
-    drawRobotIcon(jctx, cv.width/2, cv.height/2+60, 4.2, kind, true, 1);
+function checkAttack() {
+  if(G.phase!=='playing') return;
+  // Flashlight scares bots at doors
+  if(G.flashOn) {
+    if(G.bonnie.room===R.LDOOR)   G.bonnie.room=R.LHALL;
+    if(G.chica.room===R.RDOOR)    G.chica.room=R.RHALL;
+    if(G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR) G.fredbear.room=R.LHALL;
+    return;
   }
-
-  let shakeT = 0;
-  function shake(ms){ shakeT = ms; }
-
-  function flashScreen(){
-    const f = document.getElementById('flash');
-    f.style.transition = 'none';
-    f.style.opacity = 0.85;
-    requestAnimationFrame(()=>{
-      f.style.transition = 'opacity 0.4s';
-      f.style.opacity = 0;
-    });
+  if(G.bonnie.room===R.LDOOR && G.viewPos!==-1) { jumpscare('🐰', G.bonnie, R.STAGE); return; }
+  if(G.chica.room===R.RDOOR  && G.viewPos!==1)  { jumpscare('🐻', G.chica,  R.STAGE); return; }
+  if((G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR) && Math.random()<0.65) {
+    jumpscare('🐻', G.fredbear, R.STAGE, true);
   }
+}
 
-  function drawOffice(){
-    // ambient gradient floor/wall
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#13161a'); g.addColorStop(1,'#06070a');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+function updateStompAlert() {
+  const near=[R.LHALL,R.RHALL,R.LDOOR,R.RDOOR];
+  const on = near.includes(G.bonnie.room)||near.includes(G.chica.room)||near.includes(G.fredbear.room);
+  document.getElementById('stomp-alert').classList.toggle('on',on);
+}
 
-    // desk
-    ctx.fillStyle = '#1c1f24';
-    ctx.fillRect(0, H*0.74, W, H*0.30);
-    ctx.fillStyle = '#0e1013';
-    ctx.fillRect(0, H*0.74, W, 6);
+function jumpscare(emoji, bot, resetRoom, isFred=false) {
+  if(G.phase!=='playing') return;
+  G.phase='scare';
+  clearInterval(G.nightTick); clearInterval(G.moveTick);
+  screech();
+  bot.room = resetRoom;
+  const js=document.getElementById('jumpscare');
+  document.getElementById('scare-face').textContent=emoji;
+  js.style.display='flex';
+  setTimeout(()=>{
+    js.style.display='';
+    G.lives--;
+    updateHUD();
+    if(G.lives<=0) gameOverFn();
+    else { G.phase='playing'; startTimers(); }
+  }, 1800);
+}
 
-    // monitor glow (camera button hint)
-    ctx.save();
-    ctx.translate(W/2, H*0.86);
-    ctx.fillStyle = '#0c1f22';
-    ctx.fillRect(-90,-46,180,86);
-    ctx.strokeStyle = '#2a4a4f'; ctx.strokeRect(-90,-46,180,86);
-    ctx.fillStyle = 'rgba(91,125,140,0.35)';
-    ctx.fillRect(-82,-38,164,70);
-    ctx.fillStyle = '#5b7d8c';
-    ctx.font = '12px Courier New';
-    ctx.textAlign = 'center';
-    ctx.fillText('CAM', 0, 4);
-    ctx.restore();
+function nightComplete() {
+  if(G.phase!=='playing') return;
+  G.phase='nightend';
+  clearInterval(G.nightTick); clearInterval(G.moveTick);
+  ding();
+  G.score++;
+  const bonus=G.night===MAX_NIGHTS;
+  document.getElementById('nc-h').textContent = bonus ? '★ BONUS NIGHT COMPLETE!' : `NIGHT ${G.night} COMPLETE`;
+  document.getElementById('nc-stats').innerHTML =
+    `Score: <span>${G.score} point${G.score!==1?'s':''}</span><br>Lives remaining: <span>${G.lives}</span>${bonus?'<br><span>★ Bonus point earned!</span>':''}`;
+  document.getElementById('nc-btn').textContent = G.night>=MAX_NIGHTS ? 'SEE RESULTS ▶' : `NIGHT ${G.night+1} ▶`;
+  show('night-complete');
+}
 
-    // left hallway opening
-    drawHallOpening(60, true);
-    // right hallway opening
-    drawHallOpening(W-60, false);
+function nextNight() {
+  if(G.night>=MAX_NIGHTS) { winFn(); return; }
+  G.night++;
+  beginNight();
+}
 
-    // distant robot peeking indicators when at 'hallway' stage (not yet door) — subtle silhouette far down hall
-    S.robots.forEach(r=>{
-      if(r.stage==='hall'){
-        const x = r.doorSide==='left' ? 150 : W-150;
-        drawRobotIcon(ctx, x, H*0.62, 0.35, r.kind, false, 0.55);
-      }
-    });
+function gameOverFn() {
+  G.phase='gameover';
+  document.getElementById('go-sub').textContent=`CAUGHT ON NIGHT ${G.night}`;
+  document.getElementById('go-stats').innerHTML=`Nights survived: <span>${G.score}</span><br>Night reached: <span>${G.night}</span>`;
+  show('game-over-screen');
+}
 
-    // ceiling light flicker text
-    ctx.fillStyle = 'rgba(217,212,199,0.08)';
-    ctx.fillRect(0,0,W,30);
+function restartWeek() { G.lives=3; beginNight(); }
+
+function winFn() {
+  G.phase='win';
+  document.getElementById('win-sub').textContent=`ALL ${MAX_NIGHTS} NIGHTS SURVIVED — INCLUDING THE BONUS`;
+  document.getElementById('win-score').textContent=G.score;
+  show('win-screen');
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────
+function lookLeft() {
+  if(G.phase!=='playing') return;
+  G.viewPos = G.viewPos===-1 ? 0 : -1;
+  updateViewLabel();
+}
+function lookRight() {
+  if(G.phase!=='playing') return;
+  G.viewPos = G.viewPos===1 ? 0 : 1;
+  updateViewLabel();
+}
+function updateViewLabel() {
+  const lbl=['LOOKING LEFT','LOOKING AHEAD','LOOKING RIGHT'];
+  document.getElementById('view-lbl').textContent=lbl[G.viewPos+1];
+}
+
+function toggleFlash() {
+  if(G.phase!=='playing') return;
+  if(G.flashTimer) { clearTimeout(G.flashTimer); G.flashTimer=null; }
+  G.flashOn=!G.flashOn;
+  document.getElementById('btn-flash').classList.toggle('on',G.flashOn);
+  if(G.flashOn) {
+    thump(200,0.1,0.15);
+    checkAttack();
+    G.flashTimer=setTimeout(()=>{ G.flashOn=false; document.getElementById('btn-flash').classList.remove('on'); },3000);
   }
+}
 
-  function drawHallOpening(x, isLeft){
-    ctx.save();
-    const w = 170;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.moveTo(x - (isLeft?0:w), H*0.18);
-    ctx.lineTo(x + (isLeft?w:0), H*0.18);
-    ctx.lineTo(x + (isLeft?w*1.3:-w*0.3), H*0.78);
-    ctx.lineTo(x - (isLeft?w*0.3:w*1.3), H*0.78);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(91,125,140,0.10)';
-    ctx.fill();
-    ctx.strokeStyle = '#23262b'; ctx.lineWidth=4; ctx.stroke();
-    ctx.restore();
-  }
+function openCams() {
+  if(G.phase!=='playing') return;
+  G.camsOpen=true;
+  document.getElementById('cam-overlay').classList.add('open');
+  document.getElementById('btn-cam').classList.add('on');
+  setCam(G.currentCam);
+  resizeCanvases();
+  drawCamera();
+}
+function closeCams() {
+  G.camsOpen=false;
+  document.getElementById('cam-overlay').classList.remove('open');
+  document.getElementById('btn-cam').classList.remove('on');
+}
+function setCam(n) {
+  G.currentCam=n;
+  document.querySelectorAll('.cbtn').forEach((b,i)=>b.classList.toggle('on',i===n-1));
+  drawCamera();
+}
 
-  function drawHallView(side){
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#0a0c0f'); g.addColorStop(1,'#020203');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+// ─── HUD UPDATE ──────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('hud-night').textContent=G.night;
+  document.getElementById('hud-score').textContent=G.score;
+  document.querySelectorAll('.life').forEach((l,i)=>l.classList.toggle('lost',i>=G.lives));
+}
 
-    // perspective corridor
-    ctx.save();
-    ctx.strokeStyle = '#1d2127'; ctx.lineWidth = 3;
-    for(let i=1;i<=4;i++){
-      const inset = i*90;
-      ctx.strokeRect(inset*0.4, inset*0.5, W-inset*0.8, H-inset*1.0);
-    }
-    ctx.restore();
+// ─── CANVAS CLICK ZONES (arrows) ─────────────────────────────
+canvas.addEventListener('click', e=>{
+  if(G.phase!=='playing') return;
+  const x=e.offsetX, W=canvas.width;
+  if(x < W*0.1) lookLeft();
+  else if(x > W*0.9) lookRight();
+});
 
-    // flashlight cone if active
-    if(S.flashlightActive > 0){
-      ctx.save();
-      const grad = ctx.createRadialGradient(W/2,H*0.55,40,W/2,H*0.55,420);
-      grad.addColorStop(0,'rgba(244,211,94,0.55)');
-      grad.addColorStop(1,'rgba(244,211,94,0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0,0,W,H);
-      ctx.restore();
-    }
+// ─── KEYBOARD ────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(G.phase!=='playing' && G.phase!=='playing') return;
+  const k=e.key.toLowerCase();
+  if(k==='f') toggleFlash();
+  if(k==='c') G.camsOpen ? closeCams() : openCams();
+  if(k==='arrowleft'||k==='a') lookLeft();
+  if(k==='arrowright'||k==='d') lookRight();
+  if(k==='escape') closeCams();
+});
 
-    const robot = S.robots.find(r=>r.doorSide===side && (r.stage==='door'||r.stage==='hall'));
-    if(robot){
-      if(robot.stage==='door'){
-        const eyesLit = S.flashlightActive>0;
-        drawRobotIcon(ctx, W/2, H*0.62, 1.9, robot.kind, eyesLit, 1);
-        ctx.save();
-        ctx.fillStyle = 'rgba(196,41,30,0.85)';
-        ctx.font = 'bold 18px Courier New';
-        ctx.textAlign='center';
-        ctx.fillText('AT YOUR DOOR — SHINE THE LIGHT [F]', W/2, H*0.16);
-        ctx.restore();
-      } else {
-        drawRobotIcon(ctx, W/2, H*0.62, 0.7, robot.kind, false, 0.85);
-      }
-    }
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(217,212,199,0.5)';
-    ctx.font = '14px Courier New';
-    ctx.textAlign='center';
-    ctx.fillText((side==='left'?'LEFT HALL':'RIGHT HALL'), W/2, H*0.92);
-    ctx.restore();
-  }
-
-  const ROOMS = {
-    stage: {x:200,y:140,label:'STAGE'},
-    parts: {x:760,y:140,label:'PARTS & SERVICE'},
-    hallL: {x:300,y:330,label:'LEFT HALL'},
-    hallR: {x:660,y:330,label:'RIGHT HALL'},
-    office:{x:480,y:460,label:'OFFICE'},
-  };
-
-  function robotRoomKey(r){
-    if(r.stage==='home') return r.home;
-    if(r.stage==='hall') return r.doorSide==='left' ? 'hallL':'hallR';
-    if(r.stage==='door') return r.doorSide==='left' ? 'hallL':'hallR';
-    return r.home;
-  }
-
-  function drawCameraView(){
-    ctx.fillStyle = '#03100f'; ctx.fillRect(0,0,W,H);
-    // static
-    ctx.save();
-    ctx.globalAlpha = 0.05;
-    for(let i=0;i<60;i++){
-      ctx.fillStyle = Math.random()>0.5 ? '#5b7d8c' : '#000';
-      ctx.fillRect(Math.random()*W, Math.random()*H, Math.random()*40, 2);
-    }
-    ctx.restore();
-
-    // connections
-    ctx.strokeStyle = 'rgba(91,125,140,0.4)'; ctx.lineWidth=2;
-    function line(a,b){ ctx.beginPath(); ctx.moveTo(ROOMS[a].x,ROOMS[a].y); ctx.lineTo(ROOMS[b].x,ROOMS[b].y); ctx.stroke(); }
-    line('stage','hallL'); line('stage','hallR');
-    line('parts','hallL'); line('parts','hallR');
-    line('hallL','office'); line('hallR','office');
-
-    Object.keys(ROOMS).forEach(k=>{
-      const r = ROOMS[k];
-      ctx.fillStyle = k==='office' ? '#3a4750' : '#15252a';
-      ctx.strokeStyle = '#3a4f54';
-      ctx.beginPath(); ctx.arc(r.x,r.y,28,0,Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#7fa3ad';
-      ctx.font = '11px Courier New'; ctx.textAlign='center';
-      ctx.fillText(r.label, r.x, r.y+44);
-    });
-
-    S.robots.forEach((r,i)=>{
-      const key = robotRoomKey(r);
-      const room = ROOMS[key];
-      const offset = (i-1)*14;
-      drawRobotIcon(ctx, room.x+offset, room.y-6, 0.3, r.kind, false, r.stunTimer>0?0.4:1);
-    });
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(91,125,140,0.9)';
-    ctx.font = 'bold 14px Courier New';
-    ctx.textAlign='center';
-    ctx.fillText('CCTV — they only move while you watch', W/2, 36);
-    ctx.restore();
-  }
-
-  function render(){
-    ctx.save();
-    if(shakeT>0){
-      const mag = 6;
-      ctx.translate((Math.random()-0.5)*mag, (Math.random()-0.5)*mag);
-    }
-    if(S.viewing==='center') drawOffice();
-    else if(S.viewing==='left') drawHallView('left');
-    else if(S.viewing==='right') drawHallView('right');
-    else if(S.viewing==='camera') drawCameraView();
-    ctx.restore();
-  }
-
-  // ---------------- Game loop ----------------
-  let lastT = performance.now();
-  function loop(t){
-    const dt = Math.min(0.05, (t-lastT)/1000);
-    lastT = t;
-    if(shakeT>0) shakeT -= dt*1000;
-    if(!S.paused) update(dt);
-    render();
-    requestAnimationFrame(loop);
-  }
-
-  function update(dt){
-    S.elapsedSec += dt;
-    S.inGameMinutes = Math.min(360, (S.elapsedSec/S.nightLenSec)*360);
-    updateClock();
-
-    if(S.flashlightCooldown>0) S.flashlightCooldown -= dt;
-    if(S.flashlightActive>0){
-      S.flashlightActive -= dt;
-    }
-
-    const cfg = nightDifficulty(S.night===6?5.9:S.night);
-
-    S.robots.forEach(r=>{
-      if(r.stunTimer>0){ r.stunTimer -= dt; return; }
-      if(r.stage==='door'){
-        r.doorTimerLeft -= dt;
-        const lookingAtIt = (S.viewing==='left'&&r.doorSide==='left') || (S.viewing==='right'&&r.doorSide==='right');
-        const repelled = lookingAtIt && S.flashlightActive>0;
-        if(repelled){
-          r.stage='home'; r.doorSide=null; r.stunTimer = 2.2;
-          chime(true);
-        } else if(r.doorTimerLeft<=0){
-          loseLife(r);
-        }
-      }
-    });
-
-    // camera advances robots
-    if(S.viewing==='camera'){
-      S.camTickTimer += dt;
-      const interval = cfg.camTickInterval;
-      if(S.camTickTimer >= interval){
-        S.camTickTimer = 0;
-        playStatic();
-        S.robots.forEach(r=>{
-          if(r.stunTimer>0 || r.stage==='door') return;
-          const speedMult = r.kind==='fred' ? cfg.fredSpeedMult : 1;
-          const chance = Math.min(0.95, cfg.advanceChance * speedMult);
-          if(Math.random() < chance){
-            advanceRobot(r, cfg);
-          }
-        });
-      }
-    }
-
-    // ambient footstep audio cue if something is in a hallway and you're peeking it, or on camera
-    if(Math.random() < dt*0.6){
-      const active = S.robots.find(r=>r.stage!=='home');
-      if(active && (S.viewing==='camera' || (S.viewing==='left'&&active.doorSide==='left') || (S.viewing==='right'&&active.doorSide==='right'))){
-        const base = active.kind==='fred' ? 70 : 55;
-        thump(base, 0.35, active.kind==='fred'?0.18:0.1);
-      }
-    }
-
-    if(S.inGameMinutes >= 360){
-      nightSuccess();
-    }
-  }
-  function playStatic(){ staticHiss(0.18, 0.05); }
-
-  function advanceRobot(r, cfg){
-    if(r.stage==='home'){
-      r.stage='hall';
-      r.doorSide = (r.home==='stage') ? (Math.random()<0.5?'left':'right') : (Math.random()<0.5?'left':'right');
-    } else if(r.stage==='hall'){
-      r.stage='door';
-      r.doorTimerLeft = cfg.doorGrace * (r.kind==='fred'?0.75:1);
-    }
-  }
-
-  function updateClock(){
-    const totalMin = S.inGameMinutes;
-    let hour = Math.floor(totalMin/60) + 12;
-    let min = Math.floor(totalMin%60);
-    let displayHour = hour>12 ? hour-12 : hour;
-    if(hour>=12 && hour<13) displayHour = 12;
-    if(hour>=24) hour-=24;
-    let ampm = (hour>=12 && hour<24) ? 'AM' : 'AM';
-    // simplified: always AM since 12am-6am range
-    document.getElementById('clock').innerHTML = `${displayHour}:${String(min).padStart(2,'0')}<span class="ampm"> AM</span>`;
-  }
-
-  function updateHud(){
-    document.getElementById('hudNight').textContent = S.night;
-    document.getElementById('hudScore').textContent = S.score;
-    document.getElementById('lives').textContent = '♥ '.repeat(Math.max(0,S.lives)).trim() || '—';
-  }
-
-  // ---------------- UI wiring ----------------
-  function show(id){
-    document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-  }
-  function hideAllOverlays(){
-    document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
-  }
-
-  function setViewing(v){
-    if(S.paused) return;
-    S.viewing = v;
-    clickSound();
-    document.querySelectorAll('.ctl-btn').forEach(b=>b.classList.remove('active'));
-    if(v==='left') document.getElementById('btnLeft').classList.add('active');
-    if(v==='right') document.getElementById('btnRight').classList.add('active');
-    if(v==='camera') document.getElementById('btnCam').classList.add('active');
-    if(v==='center') document.getElementById('btnCenter').classList.add('active');
-  }
-
-  function tryFlashlight(){
-    if(S.paused) return;
-    if(S.viewing!=='left' && S.viewing!=='right') { toast("Look down a hallway first."); return; }
-    if(S.flashlightCooldown>0) return;
-    S.flashlightActive = 0.5;
-    S.flashlightCooldown = 0.9;
-    clickSound();
-  }
-
-  let toastTimer=null;
-  function toast(msg){
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>el.classList.remove('show'), 1400);
-  }
-
-  document.getElementById('btnLeft').addEventListener('click', ()=>setViewing('left'));
-  document.getElementById('btnRight').addEventListener('click', ()=>setViewing('right'));
-  document.getElementById('btnCenter').addEventListener('click', ()=>setViewing('center'));
-  document.getElementById('btnCam').addEventListener('click', ()=>setViewing('camera'));
-  document.getElementById('btnLight').addEventListener('click', tryFlashlight);
-
-  window.addEventListener('keydown', (e)=>{
-    const k = e.key.toLowerCase();
-    if(k==='a' || k==='arrowleft') setViewing('left');
-    else if(k==='d' || k==='arrowright') setViewing('right');
-    else if(k==='s' || k==='arrowdown') setViewing('center');
-    else if(k==='c') setViewing(S.viewing==='camera' ? 'center' : 'camera');
-    else if(k==='f' || k===' ') tryFlashlight();
-  });
-
-  document.getElementById('btnPlay').addEventListener('click', ()=>{
-    ensureAudio();
-    startNight(1);
-  });
-  document.getElementById('btnHow').addEventListener('click', ()=> show('screenHow'));
-  document.getElementById('btnHowBack').addEventListener('click', ()=> show('screenTitle'));
-
-  document.getElementById('btnStartNight').addEventListener('click', ()=>{
-    hideAllOverlays();
-    S.paused = false;
-    updateHud();
-  });
-
-  document.getElementById('btnRestartWeek').addEventListener('click', ()=>{
-    S.bonusEarned = false;
-    startNight(1);
-  });
-
-  document.getElementById('btnNextNight').addEventListener('click', (e)=>{
-    if(e.target.dataset.toEscape==='1'){
-      e.target.dataset.toEscape='';
-      startBonusRound();
-      return;
-    }
-    startNight(S.night+1);
-  });
-
-  document.getElementById('btnTakeNight6').addEventListener('click', ()=>{
-    startNight(6);
-  });
-  document.getElementById('btnSkipToEscape').addEventListener('click', ()=>{
-    startBonusRound();
-  });
-
-  document.getElementById('btnPlayAgain').addEventListener('click', ()=>{
-    S.score = 0; S.bonusEarned = false;
-    show('screenTitle');
-  });
-
-  // ---------------- Bonus QTE round ----------------
-  const QTE_KEYS = ['W','A','S','D','F'];
-  let qteState = null;
-  function startBonusRound(){
-    hideAllOverlays();
-    const seqLen = 5;
-    const seq = [];
-    for(let i=0;i<seqLen;i++) seq.push(QTE_KEYS[Math.floor(Math.random()*QTE_KEYS.length)]);
-    qteState = { seq, idx:0, timeLeft:6.0, active:true };
-    renderQte();
-    document.getElementById('qte').classList.remove('hidden');
-    qteLoopT = performance.now();
-    requestAnimationFrame(qteLoop);
-  }
-  function renderQte(){
-    const wrap = document.getElementById('qteKeys');
-    wrap.innerHTML = '';
-    qteState.seq.forEach((k,i)=>{
-      const d = document.createElement('div');
-      d.className = 'qte-key' + (i<qteState.idx?' done':'') + (i===qteState.idx?' next':'');
-      d.textContent = k;
-      wrap.appendChild(d);
-    });
-  }
-  let qteLoopT = 0;
-  function qteLoop(t){
-    if(!qteState || !qteState.active){ return; }
-    const dt = Math.min(0.05,(t-qteLoopT)/1000);
-    qteLoopT = t;
-    qteState.timeLeft -= dt;
-    const bar = document.getElementById('qteBar');
-    bar.style.width = Math.max(0,(qteState.timeLeft/6.0)*100)+'%';
-    if(qteState.timeLeft<=0){
-      qteFinish(false);
-      return;
-    }
-    requestAnimationFrame(qteLoop);
-  }
-  window.addEventListener('keydown', (e)=>{
-    if(!qteState || !qteState.active) return;
-    const k = e.key.toUpperCase();
-    if(k === qteState.seq[qteState.idx]){
-      clickSound();
-      qteState.idx++;
-      renderQte();
-      if(qteState.idx >= qteState.seq.length){
-        qteFinish(true);
-      }
-    }
-  });
-  function qteFinish(success){
-    qteState.active = false;
-    document.getElementById('qte').classList.add('hidden');
-    if(success){
-      S.score += 1;
-      S.bonusEarned = true;
-      chime(true);
-    } else {
-      chime(false);
-    }
-    updateHud();
-    finishGame();
-  }
-
-  function finishGame(){
-    const txt = `Final score: ${S.score} point${S.score===1?'':'s'} ` +
-      `(${Math.min(S.night,TOTAL_NIGHTS)} night${TOTAL_NIGHTS===1?'':'s'} survived` +
-      (S.night===6?', plus Night 6':'') +
-      (S.bonusEarned?', plus the bonus escape':'') + ').';
-    document.getElementById('victoryText').textContent = txt;
-    show('screenVictory');
-  }
-
-  // ---------------- Touch support for hold-style buttons (none needed, click is fine) ----------------
-
-  updateHud();
-  requestAnimationFrame(loop);
-})();
+resetState();
 </script>
 </body>
 </html>
