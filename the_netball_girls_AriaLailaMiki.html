@@ -6,332 +6,191 @@
 <title>The Netball Girls</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1a1a2e; font-family:'Inter',sans-serif; color:#fff; min-height:100vh; overflow-x:hidden; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #1a1a2e;
-    font-family: 'Inter', sans-serif;
-    color: #fff;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── SCREENS ── */
-  .screen { display: none; width: 100%; min-height: 100vh; }
-  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .screen { display:none; width:100%; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; align-items:center; justify-content:center; }
 
   /* ── STADIUM BG ── */
   .stadium-bg {
-    position: fixed; inset: 0; z-index: 0; overflow: hidden;
-    background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 40%, #0f2027 100%);
+    position:fixed; inset:0; z-index:0; overflow:hidden;
+    background:linear-gradient(180deg,#0d0d1a 0%,#1a1a2e 40%,#0f2027 100%);
   }
   .stadium-lights {
-    position: absolute; top: 0; left: 0; right: 0; height: 200px;
-    background: radial-gradient(ellipse 60% 120px at 25% 0%, rgba(255,220,100,0.15) 0%, transparent 70%),
-                radial-gradient(ellipse 60% 120px at 75% 0%, rgba(255,220,100,0.15) 0%, transparent 70%);
+    position:absolute; top:0; left:0; right:0; height:200px;
+    background:radial-gradient(ellipse 60% 120px at 25% 0%,rgba(255,220,100,0.15) 0%,transparent 70%),
+               radial-gradient(ellipse 60% 120px at 75% 0%,rgba(255,220,100,0.15) 0%,transparent 70%);
   }
-  .court-lines {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 600px; height: 300px; opacity: 0.08;
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    background:linear-gradient(135deg,#e63946,#c1121f);
+    border:none; color:#fff; font-family:'Bebas Neue',sans-serif;
+    font-size:1.5rem; letter-spacing:3px; padding:1rem 3rem;
+    border-radius:4px; cursor:pointer;
+    box-shadow:0 4px 20px rgba(230,57,70,0.4);
+    transition:transform 0.15s,box-shadow 0.15s;
   }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 28px rgba(230,57,70,0.6); }
+  .btn-secondary {
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; font-family:'Bebas Neue',sans-serif;
+    font-size:1.2rem; letter-spacing:3px; padding:0.75rem 2rem;
+    border-radius:4px; cursor:pointer; transition:background 0.15s;
+  }
+  .btn-secondary:hover { background:rgba(255,255,255,0.15); }
 
   /* ── TITLE SCREEN ── */
-  #titleScreen {
-    position: relative; z-index: 1;
-    text-align: center; padding: 2rem;
-  }
+  #titleScreen { position:relative; z-index:1; text-align:center; padding:2rem; }
   .game-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(3rem, 10vw, 7rem);
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, #e63946, #457b9d);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    text-shadow: none;
-    line-height: 0.9;
-    margin-bottom: 0.5rem;
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,10vw,7rem); letter-spacing:4px;
+    background:linear-gradient(135deg,#e63946,#457b9d);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    line-height:0.9; margin-bottom:0.5rem;
   }
-  .game-subtitle {
-    font-size: 1rem; color: #a0aec0; letter-spacing: 6px; text-transform: uppercase;
-    margin-bottom: 3rem;
-  }
-  .team-preview {
-    display: flex; gap: 3rem; justify-content: center; align-items: center; margin-bottom: 3rem;
-  }
-  .team-badge {
-    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-  }
+  .game-subtitle { font-size:1rem; color:#a0aec0; letter-spacing:6px; text-transform:uppercase; margin-bottom:3rem; }
+  .team-preview { display:flex; gap:3rem; justify-content:center; align-items:center; margin-bottom:3rem; }
+  .team-badge { display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
   .badge-circle {
-    width: 80px; height: 80px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px;
-    border: 3px solid rgba(255,255,255,0.2);
-    box-shadow: 0 0 30px currentColor;
+    width:80px; height:80px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px;
+    border:3px solid rgba(255,255,255,0.2); box-shadow:0 0 30px currentColor;
   }
-  .red-badge { background: radial-gradient(circle, #e63946, #9b1c26); color: #e63946; }
-  .blue-badge { background: radial-gradient(circle, #457b9d, #1d4e6e); color: #457b9d; }
-  .vs-text {
-    font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: #ffd700;
-    text-shadow: 0 0 20px rgba(255,215,0,0.5);
-  }
-  .badge-label { font-size: 0.75rem; color: #a0aec0; letter-spacing: 3px; text-transform: uppercase; }
+  .red-badge { background:radial-gradient(circle,#e63946,#9b1c26); color:#e63946; }
+  .blue-badge { background:radial-gradient(circle,#457b9d,#1d4e6e); color:#457b9d; }
+  .vs-text { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; color:#ffd700; text-shadow:0 0 20px rgba(255,215,0,0.5); }
+  .badge-label { font-size:0.75rem; color:#a0aec0; letter-spacing:3px; text-transform:uppercase; }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #e63946, #c1121f);
-    border: none; color: #fff; font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.5rem; letter-spacing: 3px; padding: 1rem 3rem;
-    border-radius: 4px; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(230,57,70,0.4);
-    transition: transform 0.15s, box-shadow 0.15s;
+  /* ── SETUP SCREEN ── */
+  #setupScreen { padding:2rem; text-align:center; position:relative; z-index:1; }
+  .setup-title { font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:3px; margin-bottom:2rem; }
+  .setup-grid { display:grid; grid-template-columns:1fr; gap:1rem; max-width:400px; margin:0 auto 2rem; }
+  .setup-field { display:flex; flex-direction:column; gap:0.4rem; text-align:left; }
+  .setup-field label { font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color:#a0aec0; }
+  .setup-field input {
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; font-family:'Inter',sans-serif; font-size:1rem; padding:0.75rem 1rem; border-radius:6px; outline:none;
   }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(230,57,70,0.6); }
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-secondary {
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-    color: #fff; font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.2rem; letter-spacing: 3px; padding: 0.75rem 2rem;
-    border-radius: 4px; cursor: pointer; transition: background 0.15s;
-  }
-  .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+  .setup-field input:focus { border-color:#ffd700; }
+  .buttons-row { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:1.5rem; }
 
   /* ── GAME SCREEN ── */
-  #gameScreen {
-    position: relative; z-index: 1; padding: 1rem;
-    width: 100%; max-width: 900px; margin: 0 auto;
-  }
+  #gameScreen { position:relative; z-index:1; padding:0.75rem; width:100%; max-width:960px; margin:0 auto; }
 
   /* SCOREBOARD */
   .scoreboard {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 1rem; align-items: center;
-    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem;
-    backdrop-filter: blur(10px);
+    display:grid; grid-template-columns:1fr auto 1fr;
+    gap:1rem; align-items:center;
+    background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; padding:0.75rem 1.5rem; margin-bottom:0.75rem;
+    backdrop-filter:blur(10px);
   }
-  .team-score {
-    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-  }
-  .team-name-label {
-    font-size: 0.65rem; letter-spacing: 4px; text-transform: uppercase; color: #a0aec0;
-  }
-  .score-number {
-    font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1;
-  }
-  .red-score { color: #e63946; text-shadow: 0 0 20px rgba(230,57,70,0.5); }
-  .blue-score { color: #457b9d; text-shadow: 0 0 20px rgba(69,123,157,0.5); }
+  .team-score { display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
+  .team-name-label { font-size:0.65rem; letter-spacing:4px; text-transform:uppercase; color:#a0aec0; }
+  .score-number { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; line-height:1; }
+  .red-score { color:#e63946; text-shadow:0 0 20px rgba(230,57,70,0.5); }
+  .blue-score { color:#457b9d; text-shadow:0 0 20px rgba(69,123,157,0.5); }
   .streak-badge {
-    font-size: 0.65rem; letter-spacing: 1px; color: #ffd700;
-    background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
-    padding: 0.2rem 0.5rem; border-radius: 20px; min-height: 1.4rem;
+    font-size:0.6rem; letter-spacing:1px; color:#ffd700;
+    background:rgba(255,215,0,0.15); border:1px solid rgba(255,215,0,0.3);
+    padding:0.2rem 0.5rem; border-radius:20px; min-height:1.4rem;
   }
-  .center-info { text-align: center; }
-  .half-label {
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: #ffd700;
-    letter-spacing: 2px;
-  }
-  .timer {
-    font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 2px;
-    color: #fff;
-  }
-  .timer.warning { color: #e63946; animation: pulse 0.5s infinite alternate; }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
-  .possession-label {
-    font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: #a0aec0;
-    margin-top: 0.25rem;
-  }
+  .center-info { text-align:center; }
+  .half-label { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:#ffd700; letter-spacing:2px; }
+  .timer { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:2px; color:#fff; }
+  .timer.warning { color:#e63946; animation:pulse 0.5s infinite alternate; }
+  @keyframes pulse { from{opacity:1} to{opacity:0.5} }
+  .possession-label { font-size:0.6rem; letter-spacing:2px; text-transform:uppercase; color:#a0aec0; margin-top:0.2rem; }
 
-  /* COURT */
-  .court-area {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
-    position: relative; overflow: hidden;
-  }
-  .court-svg-bg {
-    position: absolute; inset: 0; opacity: 0.05;
-  }
+  /* ── LIVE COURT CANVAS ── */
+  #courtCanvas { display:block; width:100%; border-radius:12px; margin-bottom:0.75rem; cursor:default; }
 
-  .situation-text {
-    text-align: center; font-size: 1rem; color: #a0aec0; margin-bottom: 1rem; min-height: 1.5rem;
+  /* SPEED BOOST */
+  .boost-indicator {
+    display:none; text-align:center; margin-bottom:0.6rem;
+    padding:0.4rem; background:rgba(100,255,150,0.1); border:1px solid rgba(100,255,150,0.3);
+    border-radius:8px; font-size:0.8rem; color:#68d391; letter-spacing:1px;
   }
-  .situation-text strong { color: #ffd700; }
-
-  /* PLAYER POSITIONS */
-  .positions-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem;
-    margin-bottom: 1.5rem;
-  }
-  .pos-card {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 0.4rem 0.2rem; text-align: center;
-    transition: all 0.2s;
-  }
-  .pos-card.has-ball { 
-    border-color: #ffd700; 
-    background: rgba(255,215,0,0.1);
-    box-shadow: 0 0 12px rgba(255,215,0,0.3);
-  }
-  .pos-card.red-team { border-top: 3px solid #e63946; }
-  .pos-card.blue-team { border-top: 3px solid #457b9d; }
-  .pos-abbr {
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px;
-  }
-  .pos-full { font-size: 0.5rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.1rem; }
-  .ball-icon { font-size: 0.9rem; }
+  .boost-indicator.active { display:block; animation:glow 1s infinite alternate; }
+  @keyframes glow { from{box-shadow:0 0 5px rgba(100,255,150,0.2)} to{box-shadow:0 0 20px rgba(100,255,150,0.5)} }
 
   /* ACTION PANEL */
-  .action-panel { margin-bottom: 1.5rem; }
-  .action-label {
-    font-size: 0.65rem; letter-spacing: 4px; text-transform: uppercase; color: #a0aec0;
-    text-align: center; margin-bottom: 0.75rem;
-  }
-  .action-buttons {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;
-  }
+  .action-panel { margin-bottom:0.75rem; }
+  .action-label { font-size:0.6rem; letter-spacing:4px; text-transform:uppercase; color:#a0aec0; text-align:center; margin-bottom:0.6rem; }
+  .action-buttons { display:grid; grid-template-columns:repeat(2,1fr); gap:0.6rem; }
   .action-btn {
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-    color: #fff; font-family: 'Inter', sans-serif; font-weight: 600;
-    font-size: 0.85rem; padding: 0.9rem 1rem; border-radius: 8px;
-    cursor: pointer; transition: all 0.15s; text-align: left;
-    display: flex; flex-direction: column; gap: 0.2rem;
+    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
+    color:#fff; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:0.82rem; padding:0.75rem 0.8rem; border-radius:8px;
+    cursor:pointer; transition:all 0.15s; text-align:left;
+    display:flex; flex-direction:column; gap:0.15rem;
   }
-  .action-btn:hover { background: rgba(255,255,255,0.14); transform: translateY(-1px); }
-  .action-btn .action-icon { font-size: 1.2rem; }
-  .action-btn .action-desc { font-size: 0.7rem; color: #718096; font-weight: 400; }
-  .action-btn.shoot { border-color: rgba(255,215,0,0.4); }
-  .action-btn.shoot:hover { background: rgba(255,215,0,0.12); border-color: #ffd700; }
-  .action-btn.boost { border-color: rgba(100,255,150,0.3); }
-  .action-btn.boost:hover { background: rgba(100,255,150,0.08); }
-  .action-btn.turnover { border-color: rgba(230,57,70,0.3); }
-  .action-btn.turnover:hover { background: rgba(230,57,70,0.08); }
-
-  /* SPEED BOOST INDICATOR */
-  .boost-indicator {
-    display: none; text-align: center; margin-bottom: 0.75rem;
-    padding: 0.5rem; background: rgba(100,255,150,0.1); border: 1px solid rgba(100,255,150,0.3);
-    border-radius: 8px; font-size: 0.8rem; color: #68d391; letter-spacing: 1px;
-  }
-  .boost-indicator.active { display: block; animation: glow 1s infinite alternate; }
-  @keyframes glow { from { box-shadow: 0 0 5px rgba(100,255,150,0.2); } to { box-shadow: 0 0 20px rgba(100,255,150,0.5); } }
+  .action-btn:hover { background:rgba(255,255,255,0.14); transform:translateY(-1px); }
+  .action-btn .action-icon { font-size:1.1rem; }
+  .action-btn .action-desc { font-size:0.68rem; color:#718096; font-weight:400; }
+  .action-btn.shoot { border-color:rgba(255,215,0,0.4); }
+  .action-btn.shoot:hover { background:rgba(255,215,0,0.12); border-color:#ffd700; }
+  .action-btn.boost { border-color:rgba(100,255,150,0.3); }
+  .action-btn.boost:hover { background:rgba(100,255,150,0.08); }
+  .action-btn.turnover { border-color:rgba(230,57,70,0.3); }
+  .action-btn.turnover:hover { background:rgba(230,57,70,0.08); }
 
   /* LOG */
   .game-log {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px; padding: 0.75rem 1rem; max-height: 120px; overflow-y: auto;
+    background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; padding:0.6rem 0.8rem; max-height:90px; overflow-y:auto;
   }
-  .log-entry {
-    font-size: 0.75rem; color: #718096; padding: 0.2rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .log-entry:last-child { border: none; }
-  .log-entry.goal { color: #ffd700; }
-  .log-entry.red { color: #fc8080; }
-  .log-entry.blue { color: #76b4d4; }
-  .log-entry.event { color: #a0aec0; }
+  .log-entry { font-size:0.72rem; color:#718096; padding:0.18rem 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .log-entry:last-child { border:none; }
+  .log-entry.goal { color:#ffd700; }
+  .log-entry.red { color:#fc8080; }
+  .log-entry.blue { color:#76b4d4; }
+  .log-entry.event { color:#a0aec0; }
 
-  /* ── CONFETTI ── */
-  .confetti-container {
-    position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden;
-  }
-  .confetti-piece {
-    position: absolute; width: 10px; height: 10px; opacity: 0;
-    animation: confettiFall 2.5s ease-in forwards;
-  }
-  @keyframes confettiFall {
-    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-  }
+  /* CONFETTI */
+  .confetti-container { position:fixed; inset:0; pointer-events:none; z-index:999; overflow:hidden; }
+  .confetti-piece { position:absolute; width:10px; height:10px; opacity:0; animation:confettiFall 2.5s ease-in forwards; }
+  @keyframes confettiFall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
 
-  /* ── HALF TIME / END SCREENS ── */
-  #halfTimeScreen, #endScreen {
-    position: relative; z-index: 10; text-align: center; padding: 2rem;
-  }
-  .overlay-title {
-    font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 4px;
-    margin-bottom: 0.5rem;
-  }
-  .scores-display {
-    display: flex; gap: 4rem; justify-content: center; align-items: center;
-    margin: 2rem 0;
-  }
-  .final-score-card {
-    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-  }
-  .final-score-num {
-    font-family: 'Bebas Neue', sans-serif; font-size: 5rem; line-height: 1;
-  }
+  /* HALF TIME / END */
+  #halfTimeScreen, #endScreen { position:relative; z-index:10; text-align:center; padding:2rem; }
+  .overlay-title { font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:4px; margin-bottom:0.5rem; }
+  .scores-display { display:flex; gap:4rem; justify-content:center; align-items:center; margin:2rem 0; }
+  .final-score-card { display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
+  .final-score-num { font-family:'Bebas Neue',sans-serif; font-size:5rem; line-height:1; }
   .winner-banner {
-    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05));
-    border: 1px solid rgba(255,215,0,0.4); border-radius: 12px;
-    padding: 1rem 2rem; margin: 1rem 0;
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 3px;
-    color: #ffd700;
+    background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,215,0,0.05));
+    border:1px solid rgba(255,215,0,0.4); border-radius:12px; padding:1rem 2rem; margin:1rem 0;
+    font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; color:#ffd700;
   }
   .steal-panel {
-    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.3);
-    border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; max-width: 400px;
+    background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.3);
+    border-radius:12px; padding:1.5rem; margin:1.5rem 0; max-width:400px;
   }
-  .steal-title {
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: #ffd700;
-    letter-spacing: 2px; margin-bottom: 0.5rem;
-  }
-  .steal-desc { font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem; }
-  .steal-btns { display: flex; gap: 1rem; justify-content: center; }
+  .steal-title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:#ffd700; letter-spacing:2px; margin-bottom:0.5rem; }
+  .steal-desc { font-size:0.85rem; color:#a0aec0; margin-bottom:1rem; }
   .steal-btn {
-    padding: 0.75rem 1.5rem; border-radius: 6px; border: none; cursor: pointer;
-    font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px;
-    transition: transform 0.15s;
+    padding:0.75rem 1.5rem; border-radius:6px; border:none; cursor:pointer;
+    font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; transition:transform 0.15s;
   }
-  .steal-btn:hover { transform: scale(1.05); }
-  .steal-btn.red { background: #e63946; color: #fff; }
-  .steal-btn.blue { background: #457b9d; color: #fff; }
+  .steal-btn:hover { transform:scale(1.05); }
+  .steal-btn.red { background:#e63946; color:#fff; }
+  .steal-btn.blue { background:#457b9d; color:#fff; }
 
-  .buttons-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
-
-  /* ── SETUP SCREEN ── */
-  #setupScreen { padding: 2rem; text-align: center; position: relative; z-index: 1; }
-  .setup-title {
-    font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 3px; margin-bottom: 2rem;
-  }
-  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 500px; margin: 0 auto 2rem; }
-  .setup-field { display: flex; flex-direction: column; gap: 0.4rem; text-align: left; }
-  .setup-field label { font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: #a0aec0; }
-  .setup-field input {
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-    color: #fff; font-family: 'Inter', sans-serif; font-size: 1rem; padding: 0.75rem 1rem;
-    border-radius: 6px; outline: none;
-  }
-  .setup-field input:focus { border-color: #ffd700; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 600px) {
-    .positions-grid { grid-template-columns: repeat(4, 1fr); }
-    .action-buttons { grid-template-columns: 1fr; }
-    .scores-display { gap: 2rem; }
-    .steal-btns { flex-direction: column; }
+  @media (max-width:600px) {
+    .action-buttons { grid-template-columns:1fr; }
+    .scores-display { gap:2rem; }
   }
 </style>
 </head>
 <body>
 
-<!-- Stadium Background -->
-<div class="stadium-bg">
-  <div class="stadium-lights"></div>
-  <svg class="court-lines" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="10" y="10" width="580" height="280" stroke="white" stroke-width="3"/>
-    <line x1="300" y1="10" x2="300" y2="290" stroke="white" stroke-width="2"/>
-    <circle cx="300" cy="150" r="50" stroke="white" stroke-width="2"/>
-    <rect x="10" y="60" width="120" height="180" stroke="white" stroke-width="2"/>
-    <rect x="470" y="60" width="120" height="180" stroke="white" stroke-width="2"/>
-    <circle cx="60" cy="150" r="25" stroke="white" stroke-width="2"/>
-    <circle cx="540" cy="150" r="25" stroke="white" stroke-width="2"/>
-  </svg>
-</div>
-
-<!-- Confetti -->
+<div class="stadium-bg"><div class="stadium-lights"></div></div>
 <div class="confetti-container" id="confettiContainer"></div>
 
-<!-- ── TITLE SCREEN ── -->
+<!-- TITLE -->
 <div id="titleScreen" class="screen active">
   <div class="game-title">The Netball<br>Girls</div>
   <div class="game-subtitle">Official Match Simulator</div>
@@ -346,21 +205,21 @@
       <div class="badge-label">Team Blue</div>
     </div>
   </div>
-  <div style="display:flex; gap:1rem; flex-direction:column; align-items:center;">
+  <div style="display:flex;gap:1rem;flex-direction:column;align-items:center;">
     <button class="btn-primary" onclick="showSetup()">⚡ KICK OFF</button>
     <button class="btn-secondary" onclick="startQuickGame()">Quick Match</button>
   </div>
 </div>
 
-<!-- ── SETUP SCREEN ── -->
+<!-- SETUP -->
 <div id="setupScreen" class="screen">
   <div class="setup-title">Team Names</div>
   <div class="setup-grid">
-    <div class="setup-field" style="grid-column: span 2;">
+    <div class="setup-field">
       <label>🔴 Red Team Name</label>
       <input type="text" id="redTeamName" value="Red Rockets" maxlength="16">
     </div>
-    <div class="setup-field" style="grid-column: span 2;">
+    <div class="setup-field">
       <label>🔵 Blue Team Name</label>
       <input type="text" id="blueTeamName" value="Blue Bolts" maxlength="16">
     </div>
@@ -371,9 +230,8 @@
   </div>
 </div>
 
-<!-- ── GAME SCREEN ── -->
+<!-- GAME -->
 <div id="gameScreen" class="screen">
-  <!-- Scoreboard -->
   <div class="scoreboard">
     <div class="team-score">
       <div class="team-name-label" id="redLabel">RED ROCKETS</div>
@@ -392,16 +250,10 @@
     </div>
   </div>
 
-  <!-- Court -->
-  <div class="court-area">
-    <div class="situation-text" id="situationText">Match underway! <strong>Red</strong> have the ball.</div>
-    <div class="positions-grid" id="positionsGrid"></div>
-  </div>
+  <canvas id="courtCanvas" height="340"></canvas>
 
-  <!-- Boost Indicator -->
   <div class="boost-indicator" id="boostIndicator">⚡ SPEED BOOST ACTIVE — FASTER PLAY!</div>
 
-  <!-- Actions -->
   <div class="action-panel">
     <div class="action-label" id="actionLabel">What does the attacking team do?</div>
     <div class="action-buttons">
@@ -428,58 +280,52 @@
     </div>
   </div>
 
-  <!-- Game Log -->
   <div class="game-log" id="gameLog">
     <div class="log-entry event">⏱ Match started — Good luck to both teams!</div>
   </div>
 </div>
 
-<!-- ── HALF TIME SCREEN ── -->
+<!-- HALF TIME -->
 <div id="halfTimeScreen" class="screen">
   <div class="overlay-title">HALF TIME</div>
-  <div style="color: #a0aec0; letter-spacing: 3px; font-size: 0.8rem; margin-bottom: 1rem;">SCORES AT THE BREAK</div>
+  <div style="color:#a0aec0;letter-spacing:3px;font-size:0.8rem;margin-bottom:1rem;">SCORES AT THE BREAK</div>
   <div class="scores-display">
     <div class="final-score-card">
       <div class="team-name-label" id="htRedLabel">RED</div>
       <div class="final-score-num red-score" id="htRedScore">0</div>
     </div>
-    <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: #ffd700;">—</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#ffd700;">—</div>
     <div class="final-score-card">
       <div class="team-name-label" id="htBlueLabel">BLUE</div>
       <div class="final-score-num blue-score" id="htBlueScore">0</div>
     </div>
   </div>
-  <div id="htLeader" style="color: #a0aec0; margin-bottom: 2rem; font-size: 0.9rem;"></div>
+  <div id="htLeader" style="color:#a0aec0;margin-bottom:2rem;font-size:0.9rem;"></div>
   <div class="buttons-row">
     <button class="btn-primary" onclick="startSecondHalf()">2ND HALF →</button>
   </div>
 </div>
 
-<!-- ── END SCREEN ── -->
+<!-- END -->
 <div id="endScreen" class="screen">
-  <div class="overlay-title" id="endTitle">FULL TIME</div>
+  <div class="overlay-title">FULL TIME</div>
   <div class="scores-display">
     <div class="final-score-card">
       <div class="team-name-label" id="endRedLabel">RED</div>
       <div class="final-score-num red-score" id="endRedScore">0</div>
     </div>
-    <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: #ffd700;">—</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#ffd700;">—</div>
     <div class="final-score-card">
       <div class="team-name-label" id="endBlueLabel">BLUE</div>
       <div class="final-score-num blue-score" id="endBlueScore">0</div>
     </div>
   </div>
   <div id="winnerBanner"></div>
-
-  <!-- Steal the point -->
   <div class="steal-panel" id="stealPanel" style="display:none;">
     <div class="steal-title">🏆 WINNING TEAM STEALS A POINT!</div>
     <div class="steal-desc">The winning team can take 1 bonus point from the losers!</div>
-    <div class="steal-btns">
-      <button class="steal-btn red" id="stealBtn" onclick="applySteal()">STEAL A POINT!</button>
-    </div>
+    <button class="steal-btn red" id="stealBtn" onclick="applySteal()">STEAL A POINT!</button>
   </div>
-
   <div class="buttons-row">
     <button class="btn-primary" onclick="playAgain()">PLAY AGAIN</button>
     <button class="btn-secondary" onclick="showScreen('titleScreen')">MAIN MENU</button>
@@ -487,50 +333,518 @@
 </div>
 
 <script>
-// ── STATE ──
+// ═══════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════
 const POSITIONS = [
-  { abbr: 'GS', full: 'Goal Shooter' },
-  { abbr: 'GA', full: 'Goal Attack' },
-  { abbr: 'WA', full: 'Wing Attack' },
-  { abbr: 'C',  full: 'Centre' },
-  { abbr: 'WD', full: 'Wing Defence' },
-  { abbr: 'GD', full: 'Goal Defence' },
-  { abbr: 'GK', full: 'Goal Keeper' },
+  {abbr:'GS', full:'Goal Shooter'},
+  {abbr:'GA', full:'Goal Attack'},
+  {abbr:'WA', full:'Wing Attack'},
+  {abbr:'C',  full:'Centre'},
+  {abbr:'WD', full:'Wing Defence'},
+  {abbr:'GD', full:'Goal Defence'},
+  {abbr:'GK', full:'Goal Keeper'},
 ];
-const SHOOT_POSITIONS = ['GS', 'GA']; // only these can shoot
+const SHOOT_POSITIONS = ['GS','GA'];
 
 let state = {
-  redName: 'Red Rockets',
-  blueName: 'Blue Bolts',
-  redScore: 0,
-  blueScore: 0,
-  possession: 'red', // 'red' or 'blue'
-  half: 1,
-  timeLeft: 600, // 10 min in seconds
-  timerRunning: false,
-  timerInterval: null,
-  redStreak: 0,
-  blueStreak: 0,
-  boostActive: false,
-  boostPending: false, // player earned boost, waiting to use
-  ballPosition: 2, // index into POSITIONS for attacking team
-  roundsInHalf: 0,
-  stealDone: false,
+  redName:'Red Rockets', blueName:'Blue Bolts',
+  redScore:0, blueScore:0,
+  possession:'red',
+  half:1, timeLeft:600, timerRunning:false, timerInterval:null,
+  redStreak:0, blueStreak:0,
+  boostActive:false, boostPending:false,
+  ballPosition:3,
+  stealDone:false,
+  lastEvent:''
 };
 
-// ── HELPERS ──
+// ═══════════════════════════════════════════════════════
+//  CANVAS COURT
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('courtCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- PLAYER DOTS ---
+// 7 red players, 7 blue players
+// Each: { x, y, tx, ty, role } role = index into POSITIONS
+let redPlayers = [];
+let bluePlayers = [];
+let ballAnim = { x:0, y:0, tx:0, ty:0 };
+let goalFlash = { active:false, team:'', timer:0 };
+let celebrationParticles = [];
+
+function initPlayers() {
+  const W = canvas.width, H = canvas.height;
+  const cw = W - 80; // court width inside padding
+  const ch = H - 100; // court height (leaving room for stands)
+  const cx = 40; // court x start
+  const cy = 55; // court y start (stands above)
+
+  // Positions along court length (x) for each role
+  // Red attacks LEFT→RIGHT (goals on right), Blue attacks RIGHT→LEFT (goals on left)
+  const xSlots = [
+    cx + cw * 0.88,  // GS
+    cx + cw * 0.76,  // GA
+    cx + cw * 0.60,  // WA
+    cx + cw * 0.50,  // C
+    cx + cw * 0.40,  // WD
+    cx + cw * 0.24,  // GD
+    cx + cw * 0.12,  // GK
+  ];
+
+  redPlayers = POSITIONS.map((p,i) => ({
+    x: xSlots[i] + (Math.random()-0.5)*10,
+    y: cy + ch * (0.25 + Math.random()*0.5),
+    tx: xSlots[i],
+    ty: cy + ch * 0.5,
+    role: i, wobble: Math.random()*Math.PI*2, speed: 0.8+Math.random()*0.4,
+    hasBall: false
+  }));
+
+  // Blue mirror
+  bluePlayers = POSITIONS.map((p,i) => ({
+    x: xSlots[6-i] + (Math.random()-0.5)*10,
+    y: cy + ch * (0.25 + Math.random()*0.5),
+    tx: xSlots[6-i],
+    ty: cy + ch * 0.55,
+    role: i, wobble: Math.random()*Math.PI*2 + 1, speed: 0.8+Math.random()*0.4,
+    hasBall: false
+  }));
+
+  updatePlayerTargets();
+  const bh = getBallHolder();
+  ballAnim.x = bh.x; ballAnim.y = bh.y;
+  ballAnim.tx = bh.x; ballAnim.ty = bh.y;
+}
+
+function getBallHolder() {
+  const team = state.possession === 'red' ? redPlayers : bluePlayers;
+  return team[state.ballPosition];
+}
+
+function updatePlayerTargets() {
+  const W = canvas.width, H = canvas.height;
+  const cw = W - 80, ch = H - 100, cx = 40, cy = 55;
+
+  // Red attacks right → GS is rightmost
+  const xSlotsRed = [
+    cx + cw * 0.88,
+    cx + cw * 0.76,
+    cx + cw * 0.60,
+    cx + cw * 0.50,
+    cx + cw * 0.40,
+    cx + cw * 0.24,
+    cx + cw * 0.12,
+  ];
+  const xSlotsBlue = xSlotsRed.map(x => W - 80 - (x - cx) + cx).reverse();
+
+  const ballHolderIdx = state.ballPosition;
+
+  redPlayers.forEach((p, i) => {
+    const baseX = xSlotsRed[i];
+    let jitter = 0;
+    // Players near the ball drift around more
+    if (Math.abs(i - ballHolderIdx) <= 1 && state.possession === 'red') jitter = 18;
+    else jitter = 8;
+    p.tx = baseX + (Math.random()-0.5)*jitter;
+    p.ty = cy + ch * (0.2 + Math.random()*0.6);
+    p.hasBall = (state.possession === 'red' && i === state.ballPosition);
+  });
+
+  bluePlayers.forEach((p, i) => {
+    const baseX = xSlotsBlue[i];
+    let jitter = 0;
+    if (Math.abs(i - ballHolderIdx) <= 1 && state.possession === 'blue') jitter = 18;
+    else jitter = 8;
+    p.tx = baseX + (Math.random()-0.5)*jitter;
+    p.ty = cy + ch * (0.2 + Math.random()*0.6);
+    p.hasBall = (state.possession === 'blue' && i === state.ballPosition);
+  });
+
+  // Ball target = holder
+  const bh = getBallHolder();
+  ballAnim.tx = bh.x; ballAnim.ty = bh.y;
+}
+
+let animFrame;
+function drawCourt() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cw = W - 80, ch = H - 100, cx = 40, cy = 55;
+
+  // ── STANDS ──
+  drawStands(cx, cy, cw, ch, W, H);
+
+  // ── COURT SURFACE ──
+  // Main court
+  const courtGrad = ctx.createLinearGradient(cx, cy, cx, cy+ch);
+  courtGrad.addColorStop(0, '#2d6a2d');
+  courtGrad.addColorStop(0.5, '#3a7d3a');
+  courtGrad.addColorStop(1, '#2d6a2d');
+  ctx.fillStyle = courtGrad;
+  roundRect(ctx, cx, cy, cw, ch, 4);
+  ctx.fill();
+
+  // Court border
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, cx, cy, cw, ch, 4);
+  ctx.stroke();
+
+  // Centre line
+  ctx.beginPath();
+  ctx.moveTo(cx + cw/2, cy);
+  ctx.lineTo(cx + cw/2, cy+ch);
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Centre circle
+  ctx.beginPath();
+  ctx.arc(cx+cw/2, cy+ch/2, ch*0.18, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Goal circles (shooting circles at each end)
+  const gcR = ch * 0.42;
+  // Left goal circle
+  ctx.beginPath();
+  ctx.arc(cx, cy+ch/2, gcR, -Math.PI/2, Math.PI/2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Right goal circle
+  ctx.beginPath();
+  ctx.arc(cx+cw, cy+ch/2, gcR, Math.PI/2, -Math.PI/2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Zone dividers (thirds)
+  const third = cw/3;
+  ctx.beginPath();
+  ctx.moveTo(cx+third, cy); ctx.lineTo(cx+third, cy+ch);
+  ctx.moveTo(cx+third*2, cy); ctx.lineTo(cx+third*2, cy+ch);
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // ── GOALPOSTS ──
+  drawGoalpost(cx, cy+ch/2, W, H, goalFlash.active && goalFlash.team === 'blue');   // left post (blue scores here)
+  drawGoalpost(cx+cw, cy+ch/2, W, H, goalFlash.active && goalFlash.team === 'red'); // right post (red scores here)
+
+  // ── PLAYERS ──
+  const speed = state.boostActive ? 0.14 : 0.07;
+  [...redPlayers, ...bluePlayers].forEach(p => {
+    p.x += (p.tx - p.x) * speed;
+    p.y += (p.ty - p.y) * speed;
+    // subtle idle wobble
+    p.wobble += 0.04;
+  });
+
+  // Ball follows holder smoothly
+  const bh = getBallHolder();
+  ballAnim.tx = bh ? bh.x : ballAnim.tx;
+  ballAnim.ty = bh ? bh.y - 8 : ballAnim.ty;
+  ballAnim.x += (ballAnim.tx - ballAnim.x) * 0.12;
+  ballAnim.y += (ballAnim.ty - ballAnim.y) * 0.12;
+
+  // Draw players
+  redPlayers.forEach((p,i) => drawPlayer(p, '#e63946', '#ff6b78', POSITIONS[i].abbr, i === state.ballPosition && state.possession==='red'));
+  bluePlayers.forEach((p,i) => drawPlayer(p, '#1d4e6e', '#76b4d4', POSITIONS[i].abbr, i === state.ballPosition && state.possession==='blue'));
+
+  // Draw ball
+  drawBall(ballAnim.x, ballAnim.y);
+
+  // ── CELEBRATION PARTICLES ──
+  updateParticles();
+
+  // ── GOAL FLASH ──
+  if (goalFlash.active) {
+    goalFlash.timer--;
+    if (goalFlash.timer <= 0) goalFlash.active = false;
+    const alpha = Math.min(goalFlash.timer / 30, 0.35);
+    ctx.fillStyle = goalFlash.team === 'red' ? `rgba(230,57,70,${alpha})` : `rgba(69,123,157,${alpha})`;
+    roundRect(ctx, cx, cy, cw, ch, 4);
+    ctx.fill();
+    // GOAL text
+    ctx.save();
+    ctx.font = `bold ${Math.floor(ch*0.3)}px 'Bebas Neue', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = Math.min(goalFlash.timer/20, 1);
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 30;
+    ctx.fillText('GOAL!', cx+cw/2, cy+ch/2);
+    ctx.restore();
+  }
+
+  animFrame = requestAnimationFrame(drawCourt);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function drawGoalpost(x, y, W, H) {
+  const postH = 55, crossW = 18, postW = 5, ringR = 9;
+  // post
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(x - postW/2, y - postH, postW, postH);
+  // crossbar
+  ctx.fillRect(x - crossW, y - postH, crossW*2, postW);
+  // ring
+  ctx.beginPath();
+  ctx.arc(x, y - postH, ringR, 0, Math.PI*2);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  // Net lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x + i*4, y - postH + ringR);
+    ctx.lineTo(x + i*3, y - postH + ringR + 14);
+    ctx.stroke();
+  }
+}
+
+function drawPlayer(p, bodyColor, shirtColor, label, hasBall) {
+  const x = Math.round(p.x), y = Math.round(p.y);
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(x, y+12, 9, 4, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+
+  // Body (skirt/dress shape)
+  ctx.beginPath();
+  ctx.moveTo(x-7, y+2);
+  ctx.lineTo(x+7, y+2);
+  ctx.lineTo(x+9, y+12);
+  ctx.lineTo(x-9, y+12);
+  ctx.closePath();
+  ctx.fillStyle = shirtColor;
+  ctx.fill();
+
+  // Torso
+  ctx.beginPath();
+  ctx.rect(x-5, y-8, 10, 12);
+  ctx.fillStyle = bodyColor;
+  ctx.fill();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(x, y-13, 7, 0, Math.PI*2);
+  ctx.fillStyle = '#f5c5a3';
+  ctx.fill();
+  ctx.strokeStyle = bodyColor;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Hair (simple arc)
+  ctx.beginPath();
+  ctx.arc(x, y-13, 7, Math.PI*1.1, Math.PI*1.9, false);
+  ctx.fillStyle = '#5a3e28';
+  ctx.fill();
+
+  // Arms (running motion)
+  const armSwing = Math.sin(p.wobble * 2) * 0.3;
+  ctx.strokeStyle = '#f5c5a3';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x-5, y-4);
+  ctx.lineTo(x-12 + armSwing*6, y+4 + armSwing*3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x+5, y-4);
+  ctx.lineTo(x+12 - armSwing*6, y+4 - armSwing*3);
+  ctx.stroke();
+
+  // Legs
+  const legSwing = Math.sin(p.wobble * 2) * 4;
+  ctx.strokeStyle = '#f5c5a3';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x-3, y+12);
+  ctx.lineTo(x-3 + legSwing, y+20);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x+3, y+12);
+  ctx.lineTo(x+3 - legSwing, y+20);
+  ctx.stroke();
+
+  // Label (position abbr)
+  ctx.font = 'bold 8px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(label, x, y+1);
+
+  // Ball-holder glow ring
+  if (hasBall) {
+    ctx.beginPath();
+    ctx.arc(x, y-4, 14, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawBall(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#f5a623';
+  ctx.fill();
+  ctx.strokeStyle = '#c17d0f';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // seam
+  ctx.beginPath();
+  ctx.arc(x, y, 6, Math.PI*0.2, Math.PI*0.8);
+  ctx.strokeStyle = '#8b5a0a';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+// ── STANDS (rows of spectators) ──
+function drawStands(cx, cy, cw, ch, W, H) {
+  // Top stands
+  drawStandSection(cx, 0, cw, cy-2, 'top');
+  // Bottom stands
+  drawStandSection(cx, cy+ch+2, cw, H-(cy+ch+2), 'bottom');
+  // Left end stands (narrow)
+  drawStandSection(0, cy, cx-2, ch, 'left');
+  // Right end stands (narrow)
+  drawStandSection(cx+cw+2, cy, W-(cx+cw+2), ch, 'right');
+}
+
+function drawStandSection(x, y, w, h, side) {
+  if (w <= 0 || h <= 0) return;
+
+  // Stand background (tiered seating)
+  const grad = ctx.createLinearGradient(x, y, x, y+h);
+  grad.addColorStop(0, '#1a1a2e');
+  grad.addColorStop(1, '#2d2d4e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+
+  // Row lines
+  const rowH = 12;
+  const rows = Math.floor(h / rowH);
+  const cols = Math.floor(w / 11);
+
+  for (let r = 0; r < rows; r++) {
+    const rowY = y + r * rowH + 4;
+    // Seat row shade
+    ctx.fillStyle = r % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.1)';
+    ctx.fillRect(x, rowY-3, w, rowH);
+
+    for (let c = 0; c < cols; c++) {
+      const px = x + c * 11 + 5;
+      const py = rowY;
+      if (px > x+w-5) continue;
+
+      // Seat colour variety
+      const seed = (r*37 + c*13) % 7;
+      const colours = ['#e63946','#457b9d','#ffd700','#e63946','#457b9d','#fff','#e63946'];
+      const seatCol = colours[seed];
+
+      // Chair back
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(px-3, py-5, 6, 7);
+
+      // Spectator body
+      ctx.beginPath();
+      ctx.ellipse(px, py+1, 4, 5, 0, 0, Math.PI*2);
+      ctx.fillStyle = seatCol;
+      ctx.fill();
+
+      // Spectator head
+      ctx.beginPath();
+      ctx.arc(px, py-5, 3, 0, Math.PI*2);
+      ctx.fillStyle = '#f5c5a3';
+      ctx.fill();
+    }
+  }
+
+  // Rails / barriers
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  if (side === 'top') ctx.fillRect(x, y+h-2, w, 2);
+  if (side === 'bottom') ctx.fillRect(x, y, w, 2);
+  if (side === 'left') ctx.fillRect(x+w-2, y, 2, h);
+  if (side === 'right') ctx.fillRect(x, y, 2, h);
+}
+
+// ── CELEBRATION PARTICLES ──
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 30; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    celebrationParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      color,
+      life: 1, decay: 0.03 + Math.random()*0.02,
+      size: 3 + Math.random()*4,
+    });
+  }
+}
+
+function updateParticles() {
+  celebrationParticles = celebrationParticles.filter(p => p.life > 0);
+  celebrationParticles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.2;
+    p.life -= p.decay;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+// ── CANVAS SIZING ──
+function resizeCanvas() {
+  const container = document.getElementById('gameScreen');
+  const w = Math.min(container.clientWidth - 24, 960);
+  canvas.width = w;
+  canvas.height = Math.round(w * 0.36);
+  if (redPlayers.length) updatePlayerTargets();
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'gameScreen') { resizeCanvas(); }
 }
 
 function showSetup() { showScreen('setupScreen'); }
-
 function startQuickGame() {
-  state.redName = 'Red Rockets';
-  state.blueName = 'Blue Bolts';
-  document.getElementById('redTeamName').value = state.redName;
-  document.getElementById('blueTeamName').value = state.blueName;
+  document.getElementById('redTeamName').value = 'Red Rockets';
+  document.getElementById('blueTeamName').value = 'Blue Bolts';
   startGame();
 }
 
@@ -539,25 +853,22 @@ function startGame() {
   state.blueName = document.getElementById('blueTeamName').value.trim() || 'Blue Bolts';
   resetGameState();
   updateLabels();
-  renderPositions();
   updateScoreboard();
   showScreen('gameScreen');
+  resizeCanvas();
+  initPlayers();
+  cancelAnimationFrame(animFrame);
+  drawCourt();
   startTimer();
 }
 
 function resetGameState() {
-  state.redScore = 0;
-  state.blueScore = 0;
+  state.redScore = 0; state.blueScore = 0;
   state.possession = Math.random() < 0.5 ? 'red' : 'blue';
-  state.half = 1;
-  state.timeLeft = 600;
-  state.timerRunning = true;
-  state.redStreak = 0;
-  state.blueStreak = 0;
-  state.boostActive = false;
-  state.boostPending = false;
-  state.ballPosition = 2;
-  state.stealDone = false;
+  state.half = 1; state.timeLeft = 600; state.timerRunning = true;
+  state.redStreak = 0; state.blueStreak = 0;
+  state.boostActive = false; state.boostPending = false;
+  state.ballPosition = 3; state.stealDone = false;
   clearLog();
 }
 
@@ -570,7 +881,7 @@ function clearLog() {
   document.getElementById('gameLog').innerHTML = '<div class="log-entry event">⏱ Match started — Good luck!</div>';
 }
 
-function addLog(msg, type = '') {
+function addLog(msg, type='') {
   const log = document.getElementById('gameLog');
   const div = document.createElement('div');
   div.className = 'log-entry ' + type;
@@ -578,12 +889,11 @@ function addLog(msg, type = '') {
   log.insertBefore(div, log.firstChild);
 }
 
-// ── TIMER ──
+// TIMER
 function startTimer() {
   clearInterval(state.timerInterval);
   state.timerInterval = setInterval(tickTimer, 1000);
 }
-
 function tickTimer() {
   if (!state.timerRunning) return;
   state.timeLeft--;
@@ -591,283 +901,194 @@ function tickTimer() {
   if (state.timeLeft <= 0) {
     clearInterval(state.timerInterval);
     state.timerRunning = false;
-    if (state.half === 1) {
-      showHalfTime();
-    } else {
-      showEndGame();
-    }
+    state.half === 1 ? showHalfTime() : showEndGame();
   }
 }
-
 function updateTimerDisplay() {
-  const m = Math.floor(state.timeLeft / 60);
-  const s = state.timeLeft % 60;
-  const display = `${m}:${s.toString().padStart(2,'0')}`;
+  const m = Math.floor(state.timeLeft/60);
+  const s = state.timeLeft%60;
   const el = document.getElementById('timer');
-  el.textContent = display;
-  el.className = 'timer' + (state.timeLeft <= 60 ? ' warning' : '');
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  el.className = 'timer' + (state.timeLeft<=60 ? ' warning' : '');
 }
 
-// ── SCOREBOARD ──
+// SCOREBOARD
 function updateScoreboard() {
   document.getElementById('redScore').textContent = state.redScore;
   document.getElementById('blueScore').textContent = state.blueScore;
-  const poss = state.possession === 'red' ? state.redName : state.blueName;
+  const poss = state.possession==='red' ? state.redName : state.blueName;
   document.getElementById('possLabel').textContent = `POSSESSION: ${poss.toUpperCase()}`;
-  document.getElementById('halfLabel').textContent = state.half === 1 ? '1ST HALF' : '2ND HALF';
-  updateStreakBadges();
-  updateBoostUI();
-}
-
-function updateStreakBadges() {
-  document.getElementById('redStreak').textContent = state.redStreak >= 2 ? `🔥 ${state.redStreak} IN A ROW` : '';
-  document.getElementById('blueStreak').textContent = state.blueStreak >= 2 ? `🔥 ${state.blueStreak} IN A ROW` : '';
-}
-
-function updateBoostUI() {
+  document.getElementById('halfLabel').textContent = state.half===1 ? '1ST HALF' : '2ND HALF';
+  document.getElementById('redStreak').textContent = state.redStreak>=2 ? `🔥 ${state.redStreak} IN A ROW` : '';
+  document.getElementById('blueStreak').textContent = state.blueStreak>=2 ? `🔥 ${state.blueStreak} IN A ROW` : '';
   const ind = document.getElementById('boostIndicator');
   const btn = document.getElementById('boostBtn');
-  if (state.boostPending) {
-    btn.style.display = 'flex';
-    ind.classList.remove('active');
-  } else {
-    btn.style.display = 'none';
-  }
-  if (state.boostActive) {
-    ind.classList.add('active');
-  } else {
-    ind.classList.remove('active');
-  }
+  btn.style.display = state.boostPending ? 'flex' : 'none';
+  state.boostActive ? ind.classList.add('active') : ind.classList.remove('active');
 }
 
-// ── POSITIONS ──
-function renderPositions() {
-  const grid = document.getElementById('positionsGrid');
-  grid.innerHTML = '';
-  POSITIONS.forEach((pos, i) => {
-    const card = document.createElement('div');
-    const team = state.possession === 'red' ? 'red-team' : 'blue-team';
-    const hasBall = i === state.ballPosition;
-    card.className = `pos-card ${team}${hasBall ? ' has-ball' : ''}`;
-    card.innerHTML = `
-      <div class="pos-abbr" style="color:${state.possession === 'red' ? '#e63946' : '#457b9d'}">${pos.abbr}</div>
-      <div class="pos-full">${pos.full.split(' ').join('<br>')}</div>
-      ${hasBall ? '<div class="ball-icon">🏐</div>' : ''}
-    `;
-    grid.appendChild(card);
-  });
-  updateSituationText();
-}
-
-function updateSituationText() {
-  const pos = POSITIONS[state.ballPosition];
-  const teamName = state.possession === 'red' ? state.redName : state.blueName;
-  const teamColor = state.possession === 'red' ? '#e63946' : '#457b9d';
-  const canShoot = SHOOT_POSITIONS.includes(pos.abbr);
-  let text = `<strong style="color:${teamColor}">${teamName}</strong> — ball with <strong>${pos.full}</strong>`;
-  if (canShoot) text += ` — in <strong style="color:#ffd700">shooting range!</strong>`;
-  document.getElementById('situationText').innerHTML = text;
-}
-
-// ── ACTIONS ──
+// ACTIONS
 function doAction(type) {
-  if (!state.timerRunning && state.timeLeft > 0) return;
-
+  if (!state.timerRunning && state.timeLeft>0) return;
   const attacker = state.possession;
-  const defender = attacker === 'red' ? 'blue' : 'red';
+  const defender = attacker==='red' ? 'blue' : 'red';
 
-  if (type === 'shoot') {
-    // Success chance: 60% base, +15% if boost active, reduced if not in shooting range
+  if (type==='shoot') {
     const canShoot = SHOOT_POSITIONS.includes(POSITIONS[state.ballPosition].abbr);
     const base = canShoot ? 0.65 : 0.30;
-    const chance = state.boostActive ? Math.min(base + 0.15, 0.85) : base;
-    if (Math.random() < chance) {
-      // GOAL!
-      if (attacker === 'red') state.redScore += 2;
-      else state.blueScore += 2;
-
-      if (attacker === 'red') { state.redStreak++; state.blueStreak = 0; }
-      else { state.blueStreak++; state.redStreak = 0; }
-
-      const teamName = attacker === 'red' ? state.redName : state.blueName;
+    const chance = state.boostActive ? Math.min(base+0.15,0.85) : base;
+    if (Math.random()<chance) {
+      if (attacker==='red') state.redScore+=2; else state.blueScore+=2;
+      if (attacker==='red') { state.redStreak++; state.blueStreak=0; }
+      else { state.blueStreak++; state.redStreak=0; }
+      const teamName = attacker==='red' ? state.redName : state.blueName;
       addLog(`🎯 GOAL! ${teamName} score! +2 points`, 'goal');
-      launchConfetti(attacker === 'red' ? '#e63946' : '#457b9d');
+      launchConfetti(attacker==='red' ? '#e63946' : '#457b9d');
+      // Court flash + particles
+      goalFlash.active = true; goalFlash.team = attacker; goalFlash.timer = 60;
+      const W=canvas.width, H=canvas.height;
+      const cw=W-80, ch=H-100, cx=40, cy=55;
+      const goalX = attacker==='red' ? cx+cw : cx;
+      spawnParticles(goalX, cy+ch/2, attacker==='red' ? '#e63946' : '#457b9d');
 
-      // Check for 3-in-a-row boost
-      const streak = attacker === 'red' ? state.redStreak : state.blueStreak;
-      if (streak === 3) {
-        state.boostPending = true;
-        addLog(`⚡ 3 GOALS IN A ROW! ${teamName} earned a SPEED BOOST!`, 'event');
-      }
-
-      state.boostActive = false; // boost consumed on use
-
-      // After goal — opposition gets it from centre
-      state.possession = defender;
-      state.ballPosition = 3; // Centre
+      const streak = attacker==='red' ? state.redStreak : state.blueStreak;
+      if (streak===3) { state.boostPending=true; addLog(`⚡ 3 GOALS IN A ROW! ${teamName} earned a SPEED BOOST!`,'event'); }
+      state.boostActive=false;
+      state.possession=defender;
+      state.ballPosition=3;
     } else {
-      // Miss
-      state.possession = defender;
-      if (attacker === 'red') state.redStreak = 0; else state.blueStreak = 0;
-      state.boostActive = false;
-      const teamName = defender === 'red' ? state.redName : state.blueName;
-      addLog(`❌ Shot missed — ${teamName} win the ball!`, defender === 'red' ? 'red' : 'blue');
-      state.ballPosition = POSITIONS.length - 1 - Math.floor(Math.random() * 2);
+      state.possession=defender;
+      if (attacker==='red') state.redStreak=0; else state.blueStreak=0;
+      state.boostActive=false;
+      const teamName = defender==='red' ? state.redName : state.blueName;
+      addLog(`❌ Shot missed — ${teamName} win the ball!`, defender==='red' ? 'red' : 'blue');
+      state.ballPosition = POSITIONS.length-1-Math.floor(Math.random()*2);
     }
   }
-
-  else if (type === 'pass') {
-    // Move ball up court
-    const newPos = Math.max(0, state.ballPosition - 1);
+  else if (type==='pass') {
+    const newPos = Math.max(0, state.ballPosition-1);
     state.ballPosition = newPos;
-    const pos = POSITIONS[newPos];
-    const teamName = attacker === 'red' ? state.redName : state.blueName;
-    addLog(`🏐 ${teamName} pass to ${pos.full}`, attacker === 'red' ? 'red' : 'blue');
-    // Small chance of interception (10%)
-    if (Math.random() < 0.10) {
-      state.possession = defender;
-      state.ballPosition = POSITIONS.length - 1 - newPos;
-      if (attacker === 'red') state.redStreak = 0; else state.blueStreak = 0;
-      const defName = defender === 'red' ? state.redName : state.blueName;
-      addLog(`🤚 INTERCEPTION! ${defName} steal the ball!`, defender === 'red' ? 'red' : 'blue');
+    const teamName = attacker==='red' ? state.redName : state.blueName;
+    addLog(`🏐 ${teamName} pass to ${POSITIONS[newPos].full}`, attacker==='red' ? 'red' : 'blue');
+    if (Math.random()<0.10) {
+      state.possession=defender;
+      state.ballPosition = POSITIONS.length-1-newPos;
+      if (attacker==='red') state.redStreak=0; else state.blueStreak=0;
+      const defName = defender==='red' ? state.redName : state.blueName;
+      addLog(`🤚 INTERCEPTION! ${defName} steal the ball!`, defender==='red' ? 'red' : 'blue');
     }
   }
-
-  else if (type === 'turnover') {
-    state.possession = defender;
-    if (attacker === 'red') state.redStreak = 0; else state.blueStreak = 0;
-    state.boostActive = false;
-    state.ballPosition = Math.floor(Math.random() * 3) + 4;
-    const defName = defender === 'red' ? state.redName : state.blueName;
-    addLog(`🔄 Turnover — ${defName} take possession`, defender === 'red' ? 'red' : 'blue');
+  else if (type==='turnover') {
+    state.possession=defender;
+    if (attacker==='red') state.redStreak=0; else state.blueStreak=0;
+    state.boostActive=false;
+    state.ballPosition = Math.floor(Math.random()*3)+4;
+    const defName = defender==='red' ? state.redName : state.blueName;
+    addLog(`🔄 Turnover — ${defName} take possession`, defender==='red' ? 'red' : 'blue');
+  }
+  else if (type==='useBoost') {
+    state.boostActive=true; state.boostPending=false;
+    const teamName = attacker==='red' ? state.redName : state.blueName;
+    addLog(`⚡ SPEED BOOST! ${teamName} are flying!`,'event');
   }
 
-  else if (type === 'useBoost') {
-    state.boostActive = true;
-    state.boostPending = false;
-    const teamName = attacker === 'red' ? state.redName : state.blueName;
-    addLog(`⚡ SPEED BOOST! ${teamName} are flying!`, 'event');
-  }
-
+  updatePlayerTargets();
   updateScoreboard();
-  renderPositions();
 }
 
-// ── HALF TIME ──
+// HALF TIME
 function showHalfTime() {
-  state.timerRunning = false;
+  state.timerRunning=false;
   document.getElementById('htRedLabel').textContent = state.redName.toUpperCase();
   document.getElementById('htBlueLabel').textContent = state.blueName.toUpperCase();
   document.getElementById('htRedScore').textContent = state.redScore;
   document.getElementById('htBlueScore').textContent = state.blueScore;
-  let leader = state.redScore > state.blueScore
+  document.getElementById('htLeader').textContent = state.redScore>state.blueScore
     ? `${state.redName} lead at the break!`
-    : state.blueScore > state.redScore
+    : state.blueScore>state.redScore
     ? `${state.blueName} lead at the break!`
-    : 'It\'s all square at half time!';
-  document.getElementById('htLeader').textContent = leader;
+    : "It's all square at half time!";
   showScreen('halfTimeScreen');
 }
 
 function startSecondHalf() {
-  state.half = 2;
-  state.timeLeft = 600;
-  state.timerRunning = true;
-  state.boostActive = false;
-  state.boostPending = false;
-  state.redStreak = 0;
-  state.blueStreak = 0;
-  state.possession = state.redScore > state.blueScore ? 'blue' : 'red'; // losing team starts 2nd half
-  state.ballPosition = 3;
-  updateLabels();
-  renderPositions();
-  updateScoreboard();
-  updateTimerDisplay();
+  state.half=2; state.timeLeft=600; state.timerRunning=true;
+  state.boostActive=false; state.boostPending=false;
+  state.redStreak=0; state.blueStreak=0;
+  state.possession = state.redScore>state.blueScore ? 'blue' : 'red';
+  state.ballPosition=3;
+  updateLabels(); updateScoreboard(); updateTimerDisplay();
   showScreen('gameScreen');
+  resizeCanvas();
+  initPlayers();
+  cancelAnimationFrame(animFrame);
+  drawCourt();
   startTimer();
-  addLog('🏐 2nd half underway!', 'event');
+  addLog('🏐 2nd half underway!','event');
 }
 
-// ── END GAME ──
+// END GAME
 function showEndGame() {
-  state.timerRunning = false;
+  state.timerRunning=false;
   document.getElementById('endRedLabel').textContent = state.redName.toUpperCase();
   document.getElementById('endBlueLabel').textContent = state.blueName.toUpperCase();
   document.getElementById('endRedScore').textContent = state.redScore;
   document.getElementById('endBlueScore').textContent = state.blueScore;
-
-  const winnerBanner = document.getElementById('winnerBanner');
-  const stealPanel = document.getElementById('stealPanel');
-
-  if (state.redScore > state.blueScore) {
-    winnerBanner.innerHTML = `<div class="winner-banner">🏆 ${state.redName.toUpperCase()} WIN!</div>`;
-    stealPanel.style.display = 'block';
-    document.getElementById('stealBtn').className = 'steal-btn red';
-    document.getElementById('stealBtn').dataset.winner = 'red';
+  const wb = document.getElementById('winnerBanner');
+  const sp = document.getElementById('stealPanel');
+  if (state.redScore>state.blueScore) {
+    wb.innerHTML = `<div class="winner-banner">🏆 ${state.redName.toUpperCase()} WIN!</div>`;
+    sp.style.display='block';
+    document.getElementById('stealBtn').className='steal-btn red';
+    document.getElementById('stealBtn').dataset.winner='red';
     launchConfetti('#e63946');
-  } else if (state.blueScore > state.redScore) {
-    winnerBanner.innerHTML = `<div class="winner-banner">🏆 ${state.blueName.toUpperCase()} WIN!</div>`;
-    stealPanel.style.display = 'block';
-    document.getElementById('stealBtn').className = 'steal-btn blue';
-    document.getElementById('stealBtn').dataset.winner = 'blue';
+  } else if (state.blueScore>state.redScore) {
+    wb.innerHTML = `<div class="winner-banner">🏆 ${state.blueName.toUpperCase()} WIN!</div>`;
+    sp.style.display='block';
+    document.getElementById('stealBtn').className='steal-btn blue';
+    document.getElementById('stealBtn').dataset.winner='blue';
     launchConfetti('#457b9d');
   } else {
-    winnerBanner.innerHTML = `<div class="winner-banner" style="color:#ffd700">🤝 IT'S A DRAW!</div>`;
-    stealPanel.style.display = 'none';
+    wb.innerHTML = `<div class="winner-banner" style="color:#ffd700">🤝 IT'S A DRAW!</div>`;
+    sp.style.display='none';
   }
-
   showScreen('endScreen');
 }
 
 function applySteal() {
   const winner = document.getElementById('stealBtn').dataset.winner;
-  if (winner === 'red') { state.redScore += 1; }
-  else { state.blueScore += 1; }
+  if (winner==='red') state.redScore+=1; else state.blueScore+=1;
   document.getElementById('endRedScore').textContent = state.redScore;
   document.getElementById('endBlueScore').textContent = state.blueScore;
-  document.getElementById('stealPanel').style.display = 'none';
-  // Update winner banner
-  const banner = document.getElementById('winnerBanner');
-  const name = winner === 'red' ? state.redName : state.blueName;
-  banner.innerHTML += `<div style="color:#ffd700; font-size:0.85rem; margin-top:0.5rem;">+1 STEAL POINT → Final: ${state.redScore} – ${state.blueScore}</div>`;
+  document.getElementById('stealPanel').style.display='none';
+  document.getElementById('winnerBanner').innerHTML +=
+    `<div style="color:#ffd700;font-size:0.85rem;margin-top:0.5rem;">+1 STEAL POINT → Final: ${state.redScore} – ${state.blueScore}</div>`;
 }
 
 function playAgain() {
-  resetGameState();
-  updateLabels();
-  clearLog();
-  renderPositions();
-  updateScoreboard();
-  updateTimerDisplay();
+  resetGameState(); updateLabels(); updateScoreboard(); updateTimerDisplay();
   showScreen('gameScreen');
-  startTimer();
+  resizeCanvas(); initPlayers(); cancelAnimationFrame(animFrame); drawCourt(); startTimer();
 }
 
-// ── CONFETTI ──
+// CONFETTI
 function launchConfetti(color) {
-  const container = document.getElementById('confettiContainer');
-  const colors = [color, '#ffd700', '#ffffff', color + 'aa'];
-  for (let i = 0; i < 60; i++) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    const c = colors[Math.floor(Math.random() * colors.length)];
-    const shape = Math.random() < 0.5 ? '50%' : '0%';
-    piece.style.cssText = `
-      left: ${Math.random() * 100}%;
-      top: -20px;
-      background: ${c};
-      border-radius: ${shape};
-      width: ${6 + Math.random() * 10}px;
-      height: ${6 + Math.random() * 10}px;
-      animation-delay: ${Math.random() * 1.2}s;
-      animation-duration: ${2 + Math.random() * 1.5}s;
-    `;
-    container.appendChild(piece);
-    setTimeout(() => piece.remove(), 4000);
+  const c = document.getElementById('confettiContainer');
+  const cols = [color,'#ffd700','#ffffff',color+'aa'];
+  for (let i=0;i<60;i++) {
+    const p = document.createElement('div');
+    p.className='confetti-piece';
+    const col = cols[Math.floor(Math.random()*cols.length)];
+    p.style.cssText=`left:${Math.random()*100}%;top:-20px;background:${col};border-radius:${Math.random()<0.5?'50%':'0%'};width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*1.5}s;`;
+    c.appendChild(p);
+    setTimeout(()=>p.remove(),4000);
   }
 }
 
-// Init
+// RESIZE
+window.addEventListener('resize', () => { if (document.getElementById('gameScreen').classList.contains('active')) resizeCanvas(); });
+
+// INIT
 updateTimerDisplay();
 </script>
 </body>
