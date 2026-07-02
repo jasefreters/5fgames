@@ -7,118 +7,90 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#000; font-family:'Courier New',monospace; color:#fff; overflow:hidden; height:100vh; width:100vw; user-select:none; }
-
 .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; z-index:10; }
 .screen.active { display:flex; }
-
-/* TITLE */
-#title-screen { background:#111; }
-#title-screen h1 { font-size:5rem; letter-spacing:1rem; color:#ff2200; text-shadow:0 0 40px #ff220088; animation:flicker 3s infinite; margin-bottom:0.3rem; }
-.subtitle { color:#555; font-size:0.8rem; letter-spacing:0.4rem; margin-bottom:2rem; }
-.story { max-width:400px; text-align:center; color:#888; font-size:0.8rem; line-height:1.9; margin-bottom:2rem; border:1px solid #333; padding:1.2rem 1.5rem; background:#0a0a0a; }
-.start-btn { background:none; border:2px solid #ff2200; color:#ff2200; font-family:'Courier New',monospace; font-size:1rem; letter-spacing:0.3rem; padding:0.8rem 2.5rem; cursor:pointer; }
+#title-screen { background:radial-gradient(ellipse at center, #1a0800 0%, #000 70%); }
+#title-screen h1 { font-size:5rem; letter-spacing:1rem; color:#ff2200; text-shadow:0 0 60px #ff220099,0 0 120px #ff220044; animation:flicker 3s infinite; margin-bottom:0.3rem; }
+.subtitle { color:#554433; font-size:0.8rem; letter-spacing:0.4rem; margin-bottom:2rem; }
+.story { max-width:420px; text-align:center; color:#887766; font-size:0.8rem; line-height:1.9; margin-bottom:2rem; border:1px solid #2a1a0a; padding:1.2rem 1.5rem; background:#080400; }
+.start-btn { background:none; border:2px solid #ff2200; color:#ff2200; font-family:'Courier New',monospace; font-size:1rem; letter-spacing:0.3rem; padding:0.8rem 2.5rem; cursor:pointer; animation:pulse-red 2s infinite; }
 .start-btn:hover { background:#ff220022; }
-
-/* NIGHT INTRO */
 #night-intro { background:#000; }
 #night-intro h2 { font-size:3.5rem; color:#ff2200; letter-spacing:0.5rem; text-shadow:0 0 30px #ff2200; }
 #night-intro p { color:#555; font-size:0.8rem; letter-spacing:0.2rem; margin-top:0.5rem; }
-
-/* PLAY SCREEN */
 #play-screen { background:#000; flex-direction:column; display:none; }
 #play-screen.active { display:flex; }
-
-/* CANVAS */
-#game-canvas { display:block; flex:1; }
-
-/* HUD */
-#hud { height:64px; background:#0d0d0d; border-top:2px solid #222; display:flex; align-items:center; justify-content:space-between; padding:0 1.5rem; flex-shrink:0; }
+#game-canvas { display:block; flex:1; cursor:pointer; }
+#hud { height:62px; background:#080502; border-top:2px solid #1a1005; display:flex; align-items:center; justify-content:space-between; padding:0 1.5rem; flex-shrink:0; }
 .hud-block { display:flex; flex-direction:column; align-items:center; gap:3px; }
-.hud-label { font-size:0.5rem; letter-spacing:0.2rem; color:#444; }
-.hud-value { font-size:1rem; color:#ccc; letter-spacing:0.1rem; }
+.hud-label { font-size:0.5rem; letter-spacing:0.2rem; color:#443322; }
+.hud-value { font-size:1rem; color:#cc9966; letter-spacing:0.1rem; }
 .lives-row { display:flex; gap:5px; }
 .life { font-size:1rem; transition:opacity 0.3s; }
 .life.lost { opacity:0.15; filter:grayscale(1); }
 #action-btns { display:flex; gap:0.6rem; }
-.abtn { background:none; border:1px solid #444; color:#888; font-family:'Courier New',monospace; font-size:0.6rem; letter-spacing:0.15rem; padding:0.45rem 0.8rem; cursor:pointer; }
+.abtn { background:none; border:1px solid #332211; color:#665544; font-family:'Courier New',monospace; font-size:0.6rem; letter-spacing:0.15rem; padding:0.45rem 0.8rem; cursor:pointer; }
 .abtn:hover { border-color:#ffcc44; color:#ffcc44; }
 .abtn.on { border-color:#ff4400; color:#ff4400; background:#ff440018; }
-
-/* CAMERA OVERLAY */
 #cam-overlay { position:absolute; inset:0; background:#000; z-index:20; display:none; flex-direction:column; }
 #cam-overlay.open { display:flex; }
 #cam-canvas { flex:1; display:block; }
-#cam-bar { height:70px; background:#030a03; border-top:1px solid #0a2a0a; display:flex; align-items:center; justify-content:space-between; padding:0 1.2rem; }
-.cbtn { background:none; border:1px solid #0a3a0a; color:#0a9a0a; font-family:'Courier New',monospace; font-size:0.55rem; letter-spacing:0.1rem; padding:0.4rem 0.7rem; cursor:pointer; line-height:1.4; }
+#cam-bar { height:70px; background:#020a02; border-top:1px solid #0a2a0a; display:flex; align-items:center; justify-content:space-between; padding:0 1.2rem; }
+.cbtn { background:none; border:1px solid #0a2a0a; color:#0a7a0a; font-family:'Courier New',monospace; font-size:0.55rem; letter-spacing:0.1rem; padding:0.4rem 0.7rem; cursor:pointer; line-height:1.5; }
 .cbtn:hover,.cbtn.on { background:#00aa0022; border-color:#00cc00; color:#00cc00; }
 #close-cam-btn { border-color:#aa0000; color:#cc0000; }
 #close-cam-btn:hover { background:#aa000022; }
-
-/* JUMPSCARE */
 #jumpscare { position:absolute; inset:0; z-index:100; background:#000; display:none; align-items:center; justify-content:center; flex-direction:column; }
 #jumpscare.active { display:flex; }
-.scare-face { font-size:14rem; animation:scare-zoom 0.25s ease-out; }
-.scare-text { font-size:2.5rem; color:#ff0000; letter-spacing:0.5rem; margin-top:0.5rem; animation:flicker 0.15s infinite; }
-
-/* NIGHT COMPLETE */
-#night-complete { background:#050505; }
+#scare-canvas { display:block; }
+#night-complete { background:#040201; }
 #night-complete h2 { font-size:2.5rem; color:#00dd00; letter-spacing:0.4rem; margin-bottom:1rem; }
-.nc-stats { color:#777; font-size:0.8rem; letter-spacing:0.1rem; line-height:2.2; text-align:center; margin-bottom:2rem; }
+.nc-stats { color:#665544; font-size:0.8rem; letter-spacing:0.1rem; line-height:2.2; text-align:center; margin-bottom:2rem; }
 .nc-stats span { color:#ffcc44; }
 .bigbtn { background:none; border:1px solid currentColor; font-family:'Courier New',monospace; font-size:0.85rem; letter-spacing:0.3rem; padding:0.7rem 2rem; cursor:pointer; margin:0.3rem; }
-.bigbtn.green { color:#00dd00; }
-.bigbtn.red { color:#ff2200; }
-.bigbtn.gold { color:#ffcc44; }
+.bigbtn.green { color:#00dd00; } .bigbtn.red { color:#ff2200; } .bigbtn.gold { color:#ffcc44; }
 .bigbtn:hover { opacity:0.7; }
-
-/* GAMEOVER */
-#game-over-screen { background:#050505; }
+#game-over-screen { background:#040201; }
 #game-over-screen h2 { font-size:3rem; color:#ff2200; letter-spacing:0.5rem; text-shadow:0 0 20px #ff2200; margin-bottom:0.5rem; }
-.go-sub { color:#555; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
-.go-stats { color:#666; font-size:0.8rem; line-height:2.2; margin-bottom:2rem; text-align:center; }
+.go-sub { color:#554433; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
+.go-stats { color:#665544; font-size:0.8rem; line-height:2.2; margin-bottom:2rem; text-align:center; }
 .go-stats span { color:#ffcc44; }
-
-/* WIN */
-#win-screen { background:#050505; }
+#win-screen { background:#040201; }
 #win-screen h2 { font-size:2.5rem; color:#ffcc44; letter-spacing:0.4rem; text-shadow:0 0 20px #ffcc44; margin-bottom:0.5rem; }
-.win-sub { color:#666; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
-.win-score { font-size:4rem; color:#fff; }
-.win-label { color:#444; font-size:0.65rem; letter-spacing:0.2rem; margin-bottom:2rem; }
-
-/* HUD alerts */
-#stomp-alert { position:absolute; top:10px; right:12px; font-size:0.6rem; color:#ff4400; letter-spacing:0.15rem; opacity:0; transition:opacity 0.3s; z-index:5; }
+.win-sub { color:#665544; font-size:0.75rem; letter-spacing:0.2rem; margin-bottom:1.5rem; }
+.win-score { font-size:4rem; color:#fff; } .win-label { color:#443322; font-size:0.65rem; letter-spacing:0.2rem; margin-bottom:2rem; }
+#overlay-labels { position:absolute; top:0; left:0; right:0; pointer-events:none; z-index:5; padding:10px 14px; display:flex; justify-content:space-between; align-items:flex-start; }
+#stomp-alert { font-size:0.6rem; color:#ff4400; letter-spacing:0.15rem; opacity:0; transition:opacity 0.3s; }
 #stomp-alert.on { opacity:1; animation:flicker 0.4s infinite; }
-#view-lbl { position:absolute; top:10px; left:50%; transform:translateX(-50%); font-size:0.55rem; color:#444; letter-spacing:0.25rem; z-index:5; }
-#bonus-lbl { position:absolute; top:36px; left:50%; transform:translateX(-50%); font-size:0.6rem; color:#ffcc44; letter-spacing:0.15rem; opacity:0; z-index:5; }
+#view-lbl { font-size:0.55rem; color:#443322; letter-spacing:0.25rem; }
+#bonus-lbl { font-size:0.6rem; color:#ffcc44; letter-spacing:0.15rem; opacity:0; }
 #bonus-lbl.on { opacity:1; animation:flicker 2s infinite; }
-
 @keyframes flicker { 0%,94%,100%{opacity:1} 95%{opacity:0.3} 97%{opacity:0.8} }
-@keyframes scare-zoom { 0%{transform:scale(0.2);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes pulse-red { 0%,100%{box-shadow:0 0 5px #ff220040} 50%{box-shadow:0 0 25px #ff220088} }
 </style>
 </head>
 <body>
 <div id="game" style="position:relative;width:100vw;height:100vh;overflow:hidden;">
 
-<!-- TITLE -->
 <div class="screen active" id="title-screen">
   <h1>SURVIVE</h1>
-  <div class="subtitle">SURVIVE THE ANIMATRONICS</div>
-  <div class="story">You took a minimum-wage security job at an abandoned pizzeria.<br><br>Your only task: keep the thieves out.<br><br>Nobody mentioned the robots.</div>
-  <button class="start-btn" onclick="startGame()">[ BEGIN ]</button>
+  <div class="subtitle">FREDDY FAZBEAR'S PIZZA</div>
+  <div class="story">You took a minimum-wage security job at an abandoned pizzeria.<br><br>Your only task: keep the place safe overnight.<br><br>Nobody mentioned the robots still move.</div>
+  <button class="start-btn" onclick="startGame()">[ BEGIN SHIFT ]</button>
 </div>
 
-<!-- NIGHT INTRO -->
 <div class="screen" id="night-intro">
   <h2 id="ni-title">NIGHT 1</h2>
   <p id="ni-sub">12:00 AM — 6:00 AM</p>
 </div>
 
-<!-- PLAY SCREEN -->
 <div class="screen" id="play-screen">
   <canvas id="game-canvas"></canvas>
-  <div id="stomp-alert">⚠ STOMPING NEARBY</div>
-  <div id="view-lbl">LOOKING AHEAD</div>
-  <div id="bonus-lbl">★ BONUS NIGHT ★</div>
+  <div id="overlay-labels">
+    <div id="stomp-alert">⚠ STOMPING NEARBY</div>
+    <div id="view-lbl">OFFICE</div>
+    <div id="bonus-lbl">★ BONUS NIGHT ★</div>
+  </div>
   <div id="hud">
     <div class="hud-block"><div class="hud-label">NIGHT</div><div class="hud-value" id="hud-night">1</div></div>
     <div class="hud-block"><div class="hud-label">TIME</div><div class="hud-value" id="hud-time">12:00</div></div>
@@ -131,43 +103,36 @@ body { background:#000; font-family:'Courier New',monospace; color:#fff; overflo
   </div>
 </div>
 
-<!-- CAMERAS -->
 <div id="cam-overlay">
   <canvas id="cam-canvas"></canvas>
   <div id="cam-bar">
-    <div style="display:flex;gap:0.5rem;">
-      <button class="cbtn on" id="cb1" onclick="setCam(1)">CAM 1<br>STAGE</button>
-      <button class="cbtn" id="cb2" onclick="setCam(2)">CAM 2<br>BACKSTAGE</button>
-      <button class="cbtn" id="cb3" onclick="setCam(3)">CAM 3<br>LEFT HALL</button>
-      <button class="cbtn" id="cb4" onclick="setCam(4)">CAM 4<br>RIGHT HALL</button>
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+      <button class="cbtn on" id="cb1" onclick="setCam(1)">CAM 1<br>PARTY RM A</button>
+      <button class="cbtn" id="cb2" onclick="setCam(2)">CAM 2<br>PARTY RM B</button>
+      <button class="cbtn" id="cb3" onclick="setCam(3)">CAM 3<br>BACKSTAGE</button>
+      <button class="cbtn" id="cb4" onclick="setCam(4)">CAM 4<br>LEFT HALL</button>
+      <button class="cbtn" id="cb5" onclick="setCam(5)">CAM 5<br>RIGHT HALL</button>
     </div>
-    <button class="cbtn" id="close-cam-btn" onclick="closeCams()">✕ CLOSE CAMERAS</button>
+    <button class="cbtn" id="close-cam-btn" onclick="closeCams()">✕ CLOSE</button>
   </div>
 </div>
 
-<!-- JUMPSCARE -->
 <div id="jumpscare">
-  <div class="scare-face" id="scare-face">🐻</div>
-  <div class="scare-text">IT'S ME</div>
+  <canvas id="scare-canvas"></canvas>
 </div>
 
-<!-- NIGHT COMPLETE -->
 <div class="screen" id="night-complete">
   <h2 id="nc-h">NIGHT 1 COMPLETE</h2>
   <div class="nc-stats" id="nc-stats"></div>
   <button class="bigbtn green" id="nc-btn" onclick="nextNight()">NEXT NIGHT ▶</button>
 </div>
-
-<!-- GAME OVER -->
 <div class="screen" id="game-over-screen">
   <h2>GAME OVER</h2>
   <div class="go-sub" id="go-sub">YOU WERE CAUGHT</div>
   <div class="go-stats" id="go-stats"></div>
-  <button class="bigbtn red" onclick="restartWeek()">↺ RESTART THIS WEEK</button>
+  <button class="bigbtn red" onclick="restartWeek()">↺ RESTART WEEK</button>
   <button class="bigbtn gold" onclick="startGame()">↺ START OVER</button>
 </div>
-
-<!-- WIN -->
 <div class="screen" id="win-screen">
   <h2>YOU SURVIVED</h2>
   <div class="win-sub" id="win-sub">ALL NIGHTS COMPLETE</div>
@@ -175,745 +140,1296 @@ body { background:#000; font-family:'Courier New',monospace; color:#fff; overflo
   <div class="win-label">POINTS</div>
   <button class="bigbtn gold" onclick="startGame()">PLAY AGAIN</button>
 </div>
+</div>
 
-</div><!-- end game -->
 <script>
-// ─── CONSTANTS ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// ROOMS & PATHS
+// ═══════════════════════════════════════════════════════════
+const R = {
+  PARTY_A:'partyA', PARTY_B:'partyB', BACKSTAGE:'backstage',
+  LHALL:'lhall', RHALL:'rhall', LDOOR:'ldoor', RDOOR:'rdoor'
+};
+// Springbonnie roams left side
+const SB_PATH = [R.PARTY_A, R.LHALL, R.LDOOR];
+// Chica roams right side
+const CH_PATH = [R.PARTY_B, R.RHALL, R.RDOOR];
+// Fredbear can roam both sides — picks randomly
+const FB_ROOMS = [R.PARTY_A, R.PARTY_B, R.BACKSTAGE, R.LHALL, R.RHALL, R.LDOOR, R.RDOOR];
+
 const MAX_NIGHTS = 6;
-const NIGHT_MS   = 50000; // 50s per night
-const HOURS      = ['12:00','1:00','2:00','3:00','4:00','5:00','6:00'];
-const R = { STAGE:'stage', PARTS:'parts', LHALL:'lhall', LDOOR:'ldoor', RDOOR:'rdoor', RHALL:'rhall' };
-const BONNIE_PATH = [R.STAGE, R.LHALL, R.LDOOR];
-const CHICA_PATH  = [R.STAGE, R.RHALL, R.RDOOR];
-const FRED_PATH   = [R.STAGE, R.LHALL, R.LDOOR, R.RDOOR];
+const NIGHT_MS   = 50000;
+const HOURS = ['12:00','1:00','2:00','3:00','4:00','5:00','6:00'];
 
-// ─── STATE ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
 let G = {};
-
 function resetState() {
   G = {
-    phase: 'title',
-    night: 1,
-    lives: 3,
-    score: 0,
-    viewPos: 0,      // -1 left | 0 center | 1 right
-    flashOn: false,
-    camsOpen: false,
-    currentCam: 1,
-    nightElapsed: 0,
-    nightTick: null,
-    moveTick: null,
-    bonnie:   { room: R.STAGE, agr: 0.18 },
-    chica:    { room: R.STAGE, agr: 0.14 },
-    fredbear: { room: R.PARTS, agr: 0.28 },
-    flashTimer: null,
+    phase:'title', night:1, lives:3, score:0,
+    viewPos:0, // 0=office, -1=left hall, 1=right hall
+    flashOn:false, camsOpen:false, currentCam:1,
+    nightElapsed:0, nightTick:null, moveTick:null, flashTimer:null,
+    springbonnie:{ room:R.PARTY_A, agr:0.18 },
+    chica:       { room:R.PARTY_B, agr:0.14 },
+    fredbear:    { room:R.BACKSTAGE, agr:0.28 },
+    renderFrame:null, scareAnimId:null,
+    // For Fredbear's random roam direction
+    fbDir: 'left'
   };
 }
 
-// ─── AUDIO ───────────────────────────────────────────────────
-let _ctx = null;
-function ac() { if(!_ctx) _ctx = new (window.AudioContext||window.webkitAudioContext)(); return _ctx; }
+// ═══════════════════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════════════════
+let _ctx=null;
+function ac(){if(!_ctx)_ctx=new(window.AudioContext||window.webkitAudioContext)();return _ctx;}
+function thump(hz=55,vol=0.35,dur=0.35){try{const c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.setValueAtTime(hz,c.currentTime);o.frequency.exponentialRampToValueAtTime(hz*0.25,c.currentTime+dur);g.gain.setValueAtTime(vol,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);o.start();o.stop(c.currentTime+dur);}catch(e){}}
+function screech(){try{const c=ac(),n=c.sampleRate*1.5,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.max(0,1-i/n)*0.9;const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.setValueAtTime(0.9,c.currentTime);s.connect(g);g.connect(c.destination);s.start();}catch(e){}}
+function ding(){try{const c=ac(),o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(880,c.currentTime);g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.8);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.8);}catch(e){}}
 
-function thump(hz=55, vol=0.35, dur=0.35) {
-  try { const c=ac(),o=c.createOscillator(),g=c.createGain();
-    o.connect(g); g.connect(c.destination);
-    o.frequency.setValueAtTime(hz,c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(hz*0.25,c.currentTime+dur);
-    g.gain.setValueAtTime(vol,c.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
-    o.start(); o.stop(c.currentTime+dur); } catch(e){}
+// ═══════════════════════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════════════════════
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════════════════════════
+const canvas=document.getElementById('game-canvas');
+const cx=canvas.getContext('2d');
+const camCv=document.getElementById('cam-canvas');
+const camX=camCv.getContext('2d');
+const scareCv=document.getElementById('scare-canvas');
+const scX=scareCv.getContext('2d');
+
+function resizeAll(){
+  const ps=document.getElementById('play-screen');
+  canvas.width=ps.clientWidth||window.innerWidth;
+  canvas.height=ps.clientHeight||(window.innerHeight-62);
+  camCv.width=window.innerWidth;
+  camCv.height=window.innerHeight-70;
+  scareCv.width=window.innerWidth;
+  scareCv.height=window.innerHeight;
 }
-function screech() {
-  try { const c=ac(), n=c.sampleRate*1.5, b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
-    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.max(0,1-i/n);
-    const s=c.createBufferSource(), g=c.createGain();
-    s.buffer=b; g.gain.setValueAtTime(0.9,c.currentTime);
-    s.connect(g); g.connect(c.destination); s.start(); } catch(e){}
+window.addEventListener('resize',()=>{resizeAll();});
+resizeAll();
+
+// ═══════════════════════════════════════════════════════════
+// DRAWING HELPERS
+// ═══════════════════════════════════════════════════════════
+
+// Draw a scary animatronic on any canvas context
+function drawAnimatronic(ctx, type, x, y, size, alpha=1, glowCol='#ff2200') {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  const s = size;
+  // Body
+  const bodyGrad = ctx.createRadialGradient(x, y-s*0.1, s*0.05, x, y, s*0.55);
+  if(type==='fredbear') {
+    bodyGrad.addColorStop(0,'#c8820a');
+    bodyGrad.addColorStop(0.5,'#7a4f05');
+    bodyGrad.addColorStop(1,'#3a2200');
+  } else if(type==='springbonnie') {
+    bodyGrad.addColorStop(0,'#c8a00a');
+    bodyGrad.addColorStop(0.5,'#7a6005');
+    bodyGrad.addColorStop(1,'#3a2d00');
+  } else { // chica
+    bodyGrad.addColorStop(0,'#d4a010');
+    bodyGrad.addColorStop(0.5,'#8a6008');
+    bodyGrad.addColorStop(1,'#3a2800');
+  }
+
+  // Shadow
+  ctx.shadowColor=glowCol;
+  ctx.shadowBlur=s*0.4;
+
+  // BODY (torso)
+  ctx.fillStyle=bodyGrad;
+  ctx.beginPath();
+  ctx.ellipse(x, y+s*0.15, s*0.32, s*0.38, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // HEAD
+  const headY = y - s*0.38;
+  ctx.beginPath();
+  ctx.ellipse(x, headY, s*0.28, s*0.26, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ears / hat features
+  if(type==='fredbear' || type==='chica') {
+    // Bear ears
+    ctx.beginPath();
+    ctx.ellipse(x-s*0.2, headY-s*0.2, s*0.1, s*0.1, 0, 0, Math.PI*2);
+    ctx.ellipse(x+s*0.2, headY-s*0.2, s*0.1, s*0.1, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Inner ears
+    ctx.fillStyle='#4a2200';
+    ctx.beginPath();
+    ctx.ellipse(x-s*0.2, headY-s*0.2, s*0.055, s*0.055, 0, 0, Math.PI*2);
+    ctx.ellipse(x+s*0.2, headY-s*0.2, s*0.055, s*0.055, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Top hat (Fredbear)
+    if(type==='fredbear') {
+      ctx.fillStyle='#1a0a00';
+      ctx.fillRect(x-s*0.17, headY-s*0.35, s*0.34, s*0.18);
+      ctx.fillRect(x-s*0.22, headY-s*0.17, s*0.44, s*0.05);
+      // Hat band
+      ctx.fillStyle='#4a1a88';
+      ctx.fillRect(x-s*0.17, headY-s*0.19, s*0.34, s*0.04);
+    }
+    // Bowtie
+    ctx.fillStyle = type==='fredbear'?'#4a1a88':'#cc4400';
+    ctx.beginPath();
+    ctx.moveTo(x-s*0.12, y-s*0.05);
+    ctx.lineTo(x, y+s*0.02);
+    ctx.lineTo(x-s*0.12, y+s*0.09);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x+s*0.12, y-s*0.05);
+    ctx.lineTo(x, y+s*0.02);
+    ctx.lineTo(x+s*0.12, y+s*0.09);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if(type==='springbonnie') {
+    // Bunny ears (tall)
+    ctx.fillStyle=type==='springbonnie'?'#c8a00a':'#999';
+    ctx.beginPath();
+    ctx.ellipse(x-s*0.12, headY-s*0.4, s*0.07, s*0.22, -0.15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x+s*0.12, headY-s*0.4, s*0.07, s*0.22, 0.15, 0, Math.PI*2);
+    ctx.fill();
+    // Inner ear
+    ctx.fillStyle='#5a3a00';
+    ctx.beginPath();
+    ctx.ellipse(x-s*0.12, headY-s*0.4, s*0.035, s*0.14, -0.15, 0, Math.PI*2);
+    ctx.ellipse(x+s*0.12, headY-s*0.4, s*0.035, s*0.14, 0.15, 0, Math.PI*2);
+    ctx.fill();
+    // Bowtie purple
+    ctx.fillStyle='#4a1a88';
+    ctx.beginPath();
+    ctx.moveTo(x-s*0.12,y-s*0.05); ctx.lineTo(x,y+s*0.02); ctx.lineTo(x-s*0.12,y+s*0.09); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x+s*0.12,y-s*0.05); ctx.lineTo(x,y+s*0.02); ctx.lineTo(x+s*0.12,y+s*0.09); ctx.closePath(); ctx.fill();
+  }
+
+  // ARMS
+  ctx.fillStyle=bodyGrad;
+  ctx.shadowBlur=0;
+  // Left arm
+  ctx.beginPath();
+  ctx.ellipse(x-s*0.38, y+s*0.1, s*0.1, s*0.28, 0.3, 0, Math.PI*2);
+  ctx.fill();
+  // Right arm
+  ctx.beginPath();
+  ctx.ellipse(x+s*0.38, y+s*0.1, s*0.1, s*0.28, -0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // LEGS
+  ctx.beginPath();
+  ctx.ellipse(x-s*0.14, y+s*0.55, s*0.09, s*0.2, 0.1, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x+s*0.14, y+s*0.55, s*0.09, s*0.2, -0.1, 0, Math.PI*2);
+  ctx.fill();
+
+  // FACE
+  ctx.shadowColor=glowCol;
+  ctx.shadowBlur=s*0.25;
+
+  // Eyes — glowing hollow
+  const eyeY = headY - s*0.04;
+  // Eye sockets (dark)
+  ctx.fillStyle='#000';
+  ctx.beginPath();
+  ctx.ellipse(x-s*0.1, eyeY, s*0.075, s*0.065, 0, 0, Math.PI*2);
+  ctx.ellipse(x+s*0.1, eyeY, s*0.075, s*0.065, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Glowing pupils
+  ctx.fillStyle=glowCol;
+  ctx.shadowBlur=s*0.3;
+  ctx.beginPath();
+  ctx.arc(x-s*0.1, eyeY, s*0.035, 0, Math.PI*2);
+  ctx.arc(x+s*0.1, eyeY, s*0.035, 0, Math.PI*2);
+  ctx.fill();
+
+  // Teeth / mouth
+  ctx.fillStyle='#1a0800';
+  ctx.shadowBlur=0;
+  ctx.beginPath();
+  ctx.ellipse(x, headY+s*0.1, s*0.14, s*0.08, 0, 0, Math.PI);
+  ctx.fill();
+  // Teeth
+  ctx.fillStyle='#ffffee';
+  const teethCount=4;
+  for(let t=0;t<teethCount;t++){
+    const tx=x-s*0.11+(t*s*0.074);
+    ctx.fillRect(tx, headY+s*0.1, s*0.055, s*0.06);
+  }
+
+  // Exoskeleton joints (creepy robot look)
+  ctx.fillStyle='#2a1800';
+  ctx.shadowBlur=0;
+  // Knee joints
+  ctx.beginPath();
+  ctx.arc(x-s*0.14,y+s*0.45,s*0.055,0,Math.PI*2);
+  ctx.arc(x+s*0.14,y+s*0.45,s*0.055,0,Math.PI*2);
+  ctx.fill();
+  // Elbow joints
+  ctx.beginPath();
+  ctx.arc(x-s*0.38,y+s*0.2,s*0.05,0,Math.PI*2);
+  ctx.arc(x+s*0.38,y+s*0.2,s*0.05,0,Math.PI*2);
+  ctx.fill();
+  // Metal bolts
+  ctx.fillStyle='#554422';
+  [[-0.14,0.45],[0.14,0.45],[-0.38,0.2],[0.38,0.2]].forEach(([dx,dy])=>{
+    ctx.beginPath();
+    ctx.arc(x+dx*s,y+dy*s,s*0.025,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.shadowBlur=0;
+  ctx.globalAlpha=1;
+  ctx.restore();
 }
-function ding() {
-  try { const c=ac(),o=c.createOscillator(),g=c.createGain();
-    o.type='sine'; o.frequency.setValueAtTime(880,c.currentTime);
-    g.gain.setValueAtTime(0.3,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.8);
-    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.8); } catch(e){}
+
+// ═══════════════════════════════════════════════════════════
+// OFFICE VIEW
+// ═══════════════════════════════════════════════════════════
+function drawOffice(){
+  const W=canvas.width, H=canvas.height;
+  cx.clearRect(0,0,W,H);
+  if(G.viewPos===0) drawOfficeCenter(W,H);
+  else if(G.viewPos===-1) drawOfficeLeftHall(W,H);
+  else drawOfficeRightHall(W,H);
+  if(G.flashOn) drawFlashlight(cx,W,H);
 }
 
-// ─── SCREENS ─────────────────────────────────────────────────
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);
-  if(el) el.classList.add('active');
-}
+function drawOfficeCenter(W,H){
+  // ── CHECKERED FLOOR ──
+  const tileW=W/12, tileH=H*0.38/6;
+  for(let row=0;row<8;row++){
+    for(let col=0;col<14;col++){
+      const dark=(row+col)%2===0;
+      cx.fillStyle=dark?'#1a1208':'#211808';
+      // Perspective squish
+      const py=H*0.62+row*tileH*(1+row*0.08);
+      const px=col*tileW - row*tileW*0.15;
+      cx.fillRect(px,py,tileW+1,tileH*(1+row*0.05)+1);
+    }
+  }
+  // Floor shine
+  const floorShine=cx.createLinearGradient(0,H*0.62,0,H);
+  floorShine.addColorStop(0,'rgba(80,50,10,0.15)');
+  floorShine.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=floorShine;
+  cx.fillRect(0,H*0.62,W,H*0.38);
 
-// ─── CANVAS SETUP ────────────────────────────────────────────
-const canvas = document.getElementById('game-canvas');
-const ctx2   = canvas.getContext('2d');
-const camCv  = document.getElementById('cam-canvas');
-const camCtx = camCv.getContext('2d');
+  // ── WALLS ──
+  const wallG=cx.createLinearGradient(0,0,0,H*0.65);
+  wallG.addColorStop(0,'#221508');
+  wallG.addColorStop(0.4,'#1a1005');
+  wallG.addColorStop(1,'#120c03');
+  cx.fillStyle=wallG;
+  cx.fillRect(0,0,W,H*0.65);
 
-function resizeCanvases() {
-  const ps = document.getElementById('play-screen');
-  canvas.width  = ps.clientWidth  || window.innerWidth;
-  canvas.height = ps.clientHeight || (window.innerHeight - 64);
-  camCv.width   = window.innerWidth;
-  camCv.height  = window.innerHeight - 70;
-}
-window.addEventListener('resize', () => { resizeCanvases(); });
-resizeCanvases();
+  // Baseboard
+  cx.fillStyle='#2a1a08';
+  cx.fillRect(0,H*0.60,W,H*0.04);
+  cx.fillStyle='#1a1005';
+  cx.fillRect(0,H*0.62,W,H*0.02);
 
-// ─── DRAWING: OFFICE ─────────────────────────────────────────
-let animFrame = null;
+  // Side walls
+  cx.fillStyle='#180f04';
+  cx.fillRect(0,0,W*0.08,H*0.65);
+  cx.fillRect(W*0.92,0,W*0.08,H*0.65);
 
-function drawOffice() {
-  const W = canvas.width, H = canvas.height;
-  ctx2.clearRect(0,0,W,H);
+  // ── CEILING ──
+  cx.fillStyle='#0d0800';
+  cx.fillRect(0,0,W,H*0.08);
+  // Ceiling strip lights
+  const stripG=cx.createLinearGradient(0,H*0.06,0,H*0.1);
+  stripG.addColorStop(0,'rgba(220,180,80,0.12)');
+  stripG.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=stripG;
+  cx.fillRect(W*0.2,H*0.06,W*0.6,H*0.12);
+  cx.fillStyle='#5a4010';
+  cx.fillRect(W*0.2,H*0.06,W*0.6,H*0.012);
 
-  const vp = G.viewPos; // -1=left, 0=center, 1=right
+  // Ambient ceiling glow
+  const ceilGlow=cx.createRadialGradient(W/2,0,0,W/2,0,W*0.6);
+  ceilGlow.addColorStop(0,'rgba(200,140,40,0.1)');
+  ceilGlow.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=ceilGlow;
+  cx.fillRect(0,0,W,H*0.7);
 
-  if (vp === 0) drawCenter(W, H);
-  else if (vp === -1) drawLeftHall(W, H);
-  else if (vp === 1) drawRightHall(W, H);
+  // ── LEFT DOOR FRAME ──
+  const ldx=W*0.05, ldy=H*0.08, ldw=W*0.19, ldh=H*0.56;
+  drawDoorFrame(cx, ldx, ldy, ldw, ldh, G.springbonnie.room===R.LDOOR||G.fredbear.room===R.LDOOR);
+  // Door signage
+  cx.fillStyle='#2a1808'; cx.font=`${H*0.018}px 'Courier New'`; cx.textAlign='center';
+  cx.fillText('LEFT HALL', ldx+ldw/2, ldy-6);
 
-  // Flashlight overlay
-  if (G.flashOn) {
-    const grd = ctx2.createRadialGradient(W/2, H*1.1, 0, W/2, H*0.5, W*0.55);
-    grd.addColorStop(0, 'rgba(255,240,180,0.18)');
-    grd.addColorStop(0.5, 'rgba(255,220,100,0.07)');
-    grd.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx2.fillStyle = grd;
-    ctx2.fillRect(0,0,W,H);
+  // ── RIGHT DOOR FRAME ──
+  const rdx=W*0.76, rdy=H*0.08, rdw=W*0.19, rdh=H*0.56;
+  drawDoorFrame(cx, rdx, rdy, rdw, rdh, G.chica.room===R.RDOOR||G.fredbear.room===R.RDOOR);
+  cx.fillStyle='#2a1808'; cx.font=`${H*0.018}px 'Courier New'`; cx.textAlign='center';
+  cx.fillText('RIGHT HALL', rdx+rdw/2, rdy-6);
+
+  // ── DESK ──
+  drawDesk(cx, W, H);
+
+  // ── DIRECTION ARROWS ON FLOOR ──
+  drawFloorArrows(cx, W, H);
+
+  // ── ANIMATRONICS IN DOORWAYS ──
+  if(G.springbonnie.room===R.LDOOR || G.fredbear.room===R.LDOOR){
+    const isFB=G.fredbear.room===R.LDOOR;
+    drawAnimatronic(cx, isFB?'fredbear':'springbonnie', ldx+ldw/2, ldy+ldh*0.5, ldh*0.55, 1, isFB?'#ff2200':'#ccaa00');
+  }
+  if(G.chica.room===R.RDOOR || G.fredbear.room===R.RDOOR){
+    const isFB=G.fredbear.room===R.RDOOR;
+    drawAnimatronic(cx, isFB?'fredbear':'chica', rdx+rdw/2, rdy+rdh*0.5, rdh*0.55, 1, isFB?'#ff2200':'#ff6600');
   }
 }
 
-function drawCenter(W, H) {
-  // Background wall — warm amber/brown
-  const bg = ctx2.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#2a1a08');
-  bg.addColorStop(0.5,'#1e1205');
-  bg.addColorStop(1,'#100900');
-  ctx2.fillStyle = bg;
-  ctx2.fillRect(0,0,W,H);
-
-  // Ceiling band
-  ctx2.fillStyle = '#1a1005';
-  ctx2.fillRect(0,0,W,H*0.15);
-
-  // Floor
-  const floor = ctx2.createLinearGradient(0,H*0.7,0,H);
-  floor.addColorStop(0,'#1a1005');
-  floor.addColorStop(1,'#0d0800');
-  ctx2.fillStyle = floor;
-  ctx2.fillRect(0,H*0.7,W,H*0.3);
-  ctx2.strokeStyle='#2a1a08';
-  ctx2.lineWidth=2;
-  ctx2.beginPath(); ctx2.moveTo(0,H*0.7); ctx2.lineTo(W,H*0.7); ctx2.stroke();
-
-  // Side walls with door frames
-  ctx2.fillStyle='#1a1005';
-  ctx2.fillRect(0,0,W*0.12,H);
-  ctx2.fillRect(W*0.88,0,W*0.12,H);
-
-  // Left door frame
-  const ldx = W*0.13, ldy = H*0.1, ldw = W*0.18, ldh = H*0.62;
-  ctx2.fillStyle='#0a0800'; ctx2.fillRect(ldx, ldy, ldw, ldh);
-  ctx2.strokeStyle='#3a2a10'; ctx2.lineWidth=4;
-  ctx2.strokeRect(ldx, ldy, ldw, ldh);
-  // door top arch
-  ctx2.fillStyle='#3a2a10';
-  ctx2.fillRect(ldx-4, ldy-4, ldw+8, 8);
-
-  // Right door frame
-  const rdx = W*0.69, rdy = H*0.1, rdw = W*0.18, rdh = H*0.62;
-  ctx2.fillStyle='#0a0800'; ctx2.fillRect(rdx, rdy, rdw, rdh);
-  ctx2.strokeStyle='#3a2a10'; ctx2.lineWidth=4;
-  ctx2.strokeRect(rdx, rdy, rdw, rdh);
-  ctx2.fillStyle='#3a2a10';
-  ctx2.fillRect(rdx-4, rdy-4, rdw+8, 8);
-
-  // Desk
-  const deskY = H*0.68, deskH = H*0.32;
-  ctx2.fillStyle='#2a1a08';
-  ctx2.fillRect(W*0.2, deskY, W*0.6, deskH);
-  ctx2.fillStyle='#1a1005';
-  ctx2.fillRect(W*0.22, deskY+8, W*0.56, deskH-8);
-  ctx2.strokeStyle='#4a3a18'; ctx2.lineWidth=3;
-  ctx2.strokeRect(W*0.2, deskY, W*0.6, deskH);
-
-  // Overhead light
-  ctx2.fillStyle='#4a3a18';
-  ctx2.fillRect(W*0.4, 0, W*0.2, 12);
-  const lg = ctx2.createRadialGradient(W/2, 12, 0, W/2, 12, W*0.35);
-  lg.addColorStop(0,'rgba(255,220,120,0.12)');
-  lg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx2.fillStyle=lg;
-  ctx2.fillRect(W*0.1, 0, W*0.8, H*0.6);
-
-  // Pizza poster on wall
-  ctx2.fillStyle='#2a1808';
-  ctx2.fillRect(W*0.44, H*0.18, W*0.12, H*0.2);
-  ctx2.strokeStyle='#5a3a18'; ctx2.lineWidth=2;
-  ctx2.strokeRect(W*0.44, H*0.18, W*0.12, H*0.2);
-  ctx2.fillStyle='#6a3010'; ctx2.font=`${H*0.06}px Arial`;
-  ctx2.textAlign='center'; ctx2.fillText('🍕',W/2, H*0.31);
-
-  // Left door darkness — animatronic in doorway?
-  if (G.bonnie.room === R.LDOOR || G.fredbear.room === R.LDOOR) {
-    const isFredbear = G.fredbear.room === R.LDOOR;
-    drawRobotInDoor(ldx, ldy, ldw, ldh, isFredbear ? '🐻' : '🐰', isFredbear ? 1.3 : 1.0, isFredbear ? '#ff2200' : '#ccaa00');
-  } else {
-    // Dark hallway glimpse
-    drawDarkHall(ldx+4, ldy+4, ldw-8, ldh-8, -1);
+function drawDoorFrame(ctx, x, y, w, h, hasAnimate){
+  // Outer frame
+  ctx.fillStyle='#0a0600';
+  ctx.fillRect(x,y,w,h);
+  // Frame border
+  ctx.strokeStyle='#3a2510';
+  ctx.lineWidth=5;
+  ctx.strokeRect(x,y,w,h);
+  // Inner door darkness / hallway
+  if(!hasAnimate){
+    const dg=ctx.createLinearGradient(x,y,x,y+h);
+    dg.addColorStop(0,'#060400');
+    dg.addColorStop(1,'#030200');
+    ctx.fillStyle=dg;
+    ctx.fillRect(x+3,y+3,w-6,h-6);
+    // Floor line in hall
+    ctx.strokeStyle='#1a1005'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x+3,y+h*0.82);
+    ctx.lineTo(x+w-3,y+h*0.82);
+    ctx.stroke();
+    // Perspective lines
+    ctx.strokeStyle='#0f0a02'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x+w*0.25,y+3); ctx.lineTo(x+w*0.1,y+h-3);
+    ctx.moveTo(x+w*0.75,y+3); ctx.lineTo(x+w*0.9,y+h-3);
+    ctx.stroke();
   }
-
-  // Right door
-  if (G.chica.room === R.RDOOR || G.fredbear.room === R.RDOOR) {
-    const isFredbear = G.fredbear.room === R.RDOOR;
-    drawRobotInDoor(rdx, rdy, rdw, rdh, isFredbear ? '🐻' : '🐻', isFredbear ? 1.2 : 1.0, isFredbear ? '#ff2200' : '#ff6600');
-  } else {
-    drawDarkHall(rdx+4, rdy+4, rdw-8, rdh-8, 1);
-  }
-
-  // Direction arrows
-  ctx2.fillStyle='rgba(255,255,255,0.06)';
-  ctx2.fillRect(0, H*0.4, W*0.1, H*0.25);
-  ctx2.fillRect(W*0.9, H*0.4, W*0.1, H*0.25);
-  ctx2.fillStyle='rgba(255,255,255,0.3)'; ctx2.font=`${H*0.07}px Arial`;
-  ctx2.textAlign='center';
-  ctx2.fillText('◀', W*0.05, H*0.555);
-  ctx2.fillText('▶', W*0.95, H*0.555);
-  ctx2.fillStyle='rgba(255,255,255,0.15)'; ctx2.font=`${H*0.022}px 'Courier New'`;
-  ctx2.fillText('LEFT', W*0.05, H*0.595);
-  ctx2.fillText('RIGHT', W*0.95, H*0.595);
+  // Door frame bolts
+  ctx.fillStyle='#4a3015';
+  [[x+6,y+6],[x+w-6,y+6],[x+6,y+h-6],[x+w-6,y+h-6]].forEach(([bx,by])=>{
+    ctx.beginPath(); ctx.arc(bx,by,3,0,Math.PI*2); ctx.fill();
+  });
 }
 
-function drawDarkHall(x, y, w, h, side) {
-  // Hallway perspective inside door
-  const grd = ctx2.createLinearGradient(side<0 ? x+w : x, y, side<0 ? x : x+w, y+h);
-  grd.addColorStop(0,'#0d0800');
-  grd.addColorStop(1,'#050400');
-  ctx2.fillStyle = grd;
-  ctx2.fillRect(x, y, w, h);
-  // floor line
-  ctx2.strokeStyle='#1a1005'; ctx2.lineWidth=1;
-  ctx2.beginPath(); ctx2.moveTo(x,y+h*0.75); ctx2.lineTo(x+w,y+h*0.75); ctx2.stroke();
-  // subtle depth lines
-  ctx2.strokeStyle='#1a1008'; ctx2.lineWidth=1;
-  for(let i=1;i<=3;i++) {
-    const px = side<0 ? x+w - (w*i/4) : x + (w*i/4);
-    ctx2.beginPath(); ctx2.moveTo(px,y); ctx2.lineTo(px,y+h); ctx2.stroke();
+function drawDesk(ctx, W, H){
+  const deskY=H*0.62, deskH=H*0.4;
+  const deskX=W*0.22, deskW=W*0.56;
+
+  // Desk surface (dark wood)
+  const dg=ctx.createLinearGradient(deskX,deskY,deskX,deskY+deskH*0.25);
+  dg.addColorStop(0,'#3a2408');
+  dg.addColorStop(1,'#2a1805');
+  ctx.fillStyle=dg;
+  ctx.fillRect(deskX,deskY,deskW,deskH*0.25);
+  ctx.strokeStyle='#5a3a12'; ctx.lineWidth=2;
+  ctx.strokeRect(deskX,deskY,deskW,deskH*0.25);
+
+  // Desk front panel
+  const fpG=ctx.createLinearGradient(deskX,deskY+deskH*0.22,deskX,deskY+deskH*0.7);
+  fpG.addColorStop(0,'#2a1a06'); fpG.addColorStop(1,'#1a1003');
+  ctx.fillStyle=fpG;
+  ctx.fillRect(deskX-W*0.02,deskY+deskH*0.22,deskW+W*0.04,deskH*0.78);
+
+  // ── MONITOR ──
+  const monX=W*0.42, monY=deskY-H*0.28, monW=W*0.16, monH=H*0.22;
+  // Monitor stand
+  ctx.fillStyle='#1a1005';
+  ctx.fillRect(W*0.495,monY+monH,W*0.01,H*0.06);
+  ctx.fillRect(W*0.475,monY+monH+H*0.055,W*0.05,H*0.015);
+  // Monitor body
+  ctx.fillStyle='#0d0d0d';
+  ctx.fillRect(monX-4,monY-4,monW+8,monH+8);
+  ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=3;
+  ctx.strokeRect(monX-4,monY-4,monW+8,monH+8);
+  // Screen glow
+  const scrG=ctx.createRadialGradient(monX+monW/2,monY+monH/2,0,monX+monW/2,monY+monH/2,monW*0.6);
+  scrG.addColorStop(0,'#0a1a0a'); scrG.addColorStop(1,'#020502');
+  ctx.fillStyle=scrG; ctx.fillRect(monX,monY,monW,monH);
+  // Screen content — camera static
+  ctx.fillStyle='#001a00';
+  ctx.font=`${monH*0.12}px 'Courier New'`; ctx.textAlign='center';
+  ctx.fillText('CAMERAS',monX+monW/2,monY+monH*0.38);
+  ctx.font=`${monH*0.09}px 'Courier New'`; ctx.fillStyle='#004400';
+  ctx.fillText('CLICK TO VIEW',monX+monW/2,monY+monH*0.6);
+  // Blinking cursor
+  if(Math.floor(Date.now()/500)%2===0){
+    ctx.fillStyle='#00aa00';
+    ctx.fillRect(monX+monW*0.42,monY+monH*0.65,monW*0.06,monH*0.1);
   }
+  // Monitor glare
+  ctx.fillStyle='rgba(255,255,255,0.03)';
+  ctx.beginPath(); ctx.ellipse(monX+monW*0.3,monY+monH*0.25,monW*0.15,monH*0.1,-0.3,0,Math.PI*2); ctx.fill();
+  // Store monitor bounds for click detection
+  G.monitorBounds={x:monX,y:monY,w:monW,h:monH};
+
+  // ── BURGER WRAPPERS ──
+  drawBurgerWrapper(ctx, deskX+deskW*0.06, deskY-H*0.04, H*0.06);
+  drawBurgerWrapper(ctx, deskX+deskW*0.13, deskY-H*0.02, H*0.05);
+
+  // ── PIZZA BOX ──
+  drawPizzaBox(ctx, deskX+deskW*0.74, deskY-H*0.05, W*0.08, H*0.06);
+
+  // ── COLA DRINK ──
+  drawCola(ctx, deskX+deskW*0.86, deskY-H*0.12, W*0.025, H*0.12);
+
+  // ── FAN ──
+  drawFan(ctx, deskX+deskW*0.64, deskY-H*0.15, W*0.05, H*0.14);
 }
 
-function drawRobotInDoor(x, y, w, h, emoji, scale, glowColor) {
-  // Dark red glow from door
-  const grd = ctx2.createRadialGradient(x+w/2, y+h*0.4, 0, x+w/2, y+h*0.4, w);
-  grd.addColorStop(0, glowColor+'44');
-  grd.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx2.fillStyle = grd;
-  ctx2.fillRect(x-w*0.5, y-h*0.2, w*2, h*1.4);
-
-  // Draw robot emoji large
-  const sz = Math.min(w,h) * 0.9 * scale;
-  ctx2.font = `${sz}px Arial`;
-  ctx2.textAlign = 'center';
-  ctx2.textBaseline = 'middle';
-  // shadow
-  ctx2.shadowColor = glowColor;
-  ctx2.shadowBlur = 30;
-  ctx2.fillText(emoji, x + w/2, y + h*0.45);
-  ctx2.shadowBlur = 0;
-  ctx2.textBaseline = 'alphabetic';
-
-  // Eye glow
-  ctx2.fillStyle = glowColor + 'cc';
-  ctx2.shadowColor = glowColor;
-  ctx2.shadowBlur = 15;
-  ctx2.beginPath();
-  ctx2.arc(x+w*0.38, y+h*0.28, sz*0.05, 0, Math.PI*2);
-  ctx2.arc(x+w*0.62, y+h*0.28, sz*0.05, 0, Math.PI*2);
-  ctx2.fill();
-  ctx2.shadowBlur = 0;
+function drawBurgerWrapper(ctx, x, y, size){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate((Math.random()*0.4-0.2));
+  // Wrapper paper
+  ctx.fillStyle='#c8b870'; ctx.strokeStyle='#8a7a30'; ctx.lineWidth=1;
+  ctx.fillRect(-size*0.5,-size*0.3,size,size*0.5);
+  ctx.strokeRect(-size*0.5,-size*0.3,size,size*0.5);
+  // Stripes
+  ctx.strokeStyle='#aaa050'; ctx.lineWidth=1;
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.moveTo(-size*0.5+i*size*0.3,-size*0.3);
+    ctx.lineTo(-size*0.5+i*size*0.3+size*0.1,size*0.2);
+    ctx.stroke();
+  }
+  // Crumple
+  ctx.strokeStyle='#9a8a40'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(-size*0.3,-size*0.1); ctx.lineTo(-size*0.1,size*0.15); ctx.stroke();
+  ctx.restore();
 }
 
-function drawLeftHall(W, H) {
-  // Left hallway view
-  const bg = ctx2.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#1a1005');
-  bg.addColorStop(0.6,'#150d03');
-  bg.addColorStop(1,'#0a0800');
-  ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
+function drawPizzaBox(ctx, x, y, w, h){
+  // Box body
+  ctx.fillStyle='#8a3a08'; ctx.fillRect(x,y,w,h);
+  ctx.fillStyle='#6a2a05'; ctx.fillRect(x,y+h*0.5,w,h*0.5);
+  ctx.strokeStyle='#4a1a03'; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h);
+  // Lid
+  ctx.fillStyle='#9a4a10';
+  ctx.fillRect(x-2,y-h*0.08,w+4,h*0.12);
+  ctx.strokeStyle='#5a2a08'; ctx.lineWidth=1; ctx.strokeRect(x-2,y-h*0.08,w+4,h*0.12);
+  // Label
+  ctx.fillStyle='#ff3a00'; ctx.font=`bold ${h*0.22}px Arial`; ctx.textAlign='center';
+  ctx.fillText('PIZZA',x+w/2,y+h*0.38);
+  ctx.fillStyle='#cc2200'; ctx.font=`${h*0.14}px Arial`;
+  ctx.fillText("FREDDY'S",x+w/2,y+h*0.58);
+  // Grease stain
+  ctx.fillStyle='rgba(200,100,0,0.15)';
+  ctx.beginPath(); ctx.ellipse(x+w*0.3,y+h*0.3,w*0.2,h*0.12,0,0,Math.PI*2); ctx.fill();
+}
+
+function drawCola(ctx, x, y, w, h){
+  // Can body
+  const cg=ctx.createLinearGradient(x,y,x+w,y);
+  cg.addColorStop(0,'#cc0000'); cg.addColorStop(0.3,'#ff2200'); cg.addColorStop(0.7,'#cc0000'); cg.addColorStop(1,'#880000');
+  ctx.fillStyle=cg;
+  ctx.beginPath(); ctx.roundRect(x,y+h*0.05,w,h*0.88,3); ctx.fill();
+  // Top/bottom rims
+  ctx.fillStyle='#aaaaaa';
+  ctx.beginPath(); ctx.ellipse(x+w/2,y+h*0.05,w/2,h*0.04,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+w/2,y+h*0.93,w/2,h*0.04,0,0,Math.PI*2); ctx.fill();
+  // Pull tab
+  ctx.fillStyle='#cccccc'; ctx.strokeStyle='#888'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(x+w*0.55,y+h*0.03,w*0.15,h*0.025,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  // Label
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font=`bold ${w*0.7}px Arial`; ctx.textAlign='center';
+  ctx.fillText('COLA',x+w/2,y+h*0.55);
+  ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font=`${w*0.4}px Arial`;
+  ctx.fillText('ICE COLD',x+w/2,y+h*0.72);
+  // Shine
+  ctx.fillStyle='rgba(255,255,255,0.12)';
+  ctx.fillRect(x+w*0.12,y+h*0.1,w*0.15,h*0.7);
+}
+
+function drawFan(ctx, x, y, w, h){
+  const cx2=x+w/2, cy=y+h*0.45;
+  // Base
+  ctx.fillStyle='#333'; ctx.fillRect(x+w*0.35,y+h*0.75,w*0.3,h*0.25);
+  ctx.fillStyle='#444'; ctx.fillRect(x+w*0.2,y+h*0.95,w*0.6,h*0.05);
+  // Pole
+  ctx.fillStyle='#3a3a3a'; ctx.fillRect(cx2-w*0.04,y+h*0.5,w*0.08,h*0.28);
+  // Guard ring
+  ctx.strokeStyle='#555'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(cx2,cy,w*0.45,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx2,cy,w*0.35,0,Math.PI*2); ctx.stroke();
+  // Spokes
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4+Date.now()/200;
+    ctx.beginPath();
+    ctx.moveTo(cx2,cy);
+    ctx.lineTo(cx2+Math.cos(a)*w*0.43,cy+Math.sin(a)*w*0.43);
+    ctx.stroke();
+  }
+  // Fan blades
+  ctx.fillStyle='rgba(180,180,200,0.55)';
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/2+Date.now()/200;
+    ctx.save();
+    ctx.translate(cx2,cy);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.ellipse(w*0.18,0,w*0.2,w*0.08,0.4,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // Hub
+  ctx.fillStyle='#666';
+  ctx.beginPath(); ctx.arc(cx2,cy,w*0.07,0,Math.PI*2); ctx.fill();
+}
+
+function drawFloorArrows(ctx, W, H){
+  const floorY=H*0.72;
+  // LEFT arrow
+  ctx.save();
+  ctx.globalAlpha=0.55;
+  ctx.fillStyle='#ffdd44';
+  ctx.shadowColor='#ffdd44'; ctx.shadowBlur=8;
+  // Left arrow
+  const lax=W*0.14, lay=floorY;
+  ctx.beginPath();
+  ctx.moveTo(lax,lay); ctx.lineTo(lax+W*0.06,lay-H*0.04);
+  ctx.lineTo(lax+W*0.06,lay-H*0.015); ctx.lineTo(lax+W*0.1,lay-H*0.015);
+  ctx.lineTo(lax+W*0.1,lay+H*0.015); ctx.lineTo(lax+W*0.06,lay+H*0.015);
+  ctx.lineTo(lax+W*0.06,lay+H*0.04); ctx.closePath();
+  ctx.scale(-1,1); ctx.translate(-W*0.28-lax*2+W*0.28,0);
+  ctx.fill();
+  ctx.restore();
+
+  // RIGHT arrow
+  ctx.save();
+  ctx.globalAlpha=0.55;
+  ctx.fillStyle='#ffdd44';
+  ctx.shadowColor='#ffdd44'; ctx.shadowBlur=8;
+  const rax=W*0.76, ray=floorY;
+  ctx.beginPath();
+  ctx.moveTo(rax+W*0.1,ray); ctx.lineTo(rax+W*0.04,ray-H*0.04);
+  ctx.lineTo(rax+W*0.04,ray-H*0.015); ctx.lineTo(rax,ray-H*0.015);
+  ctx.lineTo(rax,ray+H*0.015); ctx.lineTo(rax+W*0.04,ray+H*0.015);
+  ctx.lineTo(rax+W*0.04,ray+H*0.04); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Labels
+  ctx.fillStyle='rgba(255,220,50,0.6)'; ctx.font=`${H*0.022}px 'Courier New'`;
+  ctx.textAlign='center';
+  ctx.fillText('◀ LEFT', W*0.19, floorY+H*0.06);
+  ctx.fillText('RIGHT ▶', W*0.85, floorY+H*0.06);
+}
+
+// ═══════════════════════════════════════════════════════════
+// HALL VIEWS
+// ═══════════════════════════════════════════════════════════
+function drawHallBase(ctx, W, H, tint){
+  // Checkered dirty floor
+  const tW=W/10, tH=H*0.38/5;
+  for(let r=0;r<7;r++){
+    for(let c=0;c<12;c++){
+      const dark=(r+c)%2===0;
+      ctx.fillStyle=dark?'#141008':'#1a1408';
+      const py=H*0.62+r*tH*(1+r*0.06);
+      const px=c*tW-r*tW*0.1;
+      ctx.fillRect(px,py,tW+1,tH+1);
+    }
+  }
+  // Grime overlay
+  ctx.fillStyle='rgba(20,12,0,0.35)';
+  for(let i=0;i<8;i++){
+    const gx=Math.sin(i*2.3)*W*0.4+W*0.3;
+    const gy=H*0.65+i*H*0.04;
+    ctx.beginPath(); ctx.ellipse(gx,gy,W*0.08,H*0.025,Math.sin(i)*0.5,0,Math.PI*2); ctx.fill();
+  }
+
+  // Walls
+  const wg=ctx.createLinearGradient(0,0,0,H*0.65);
+  wg.addColorStop(0,tint+'22');
+  wg.addColorStop(0.3,'#1a1005');
+  wg.addColorStop(1,'#100c03');
+  ctx.fillStyle=wg; ctx.fillRect(0,0,W,H*0.65);
+
+  // Ceiling
+  ctx.fillStyle='#080500'; ctx.fillRect(0,0,W,H*0.1);
+  // Fluorescent light (flickering)
+  const flick=Math.random()>0.02;
+  if(flick){
+    ctx.fillStyle='#3a2a08'; ctx.fillRect(W*0.35,H*0.07,W*0.3,H*0.01);
+    const lg=ctx.createRadialGradient(W/2,H*0.07,0,W/2,H*0.1,W*0.4);
+    lg.addColorStop(0,'rgba(180,140,60,0.14)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=lg; ctx.fillRect(0,0,W,H*0.6);
+  }
+
+  // Baseboard
+  ctx.fillStyle='#251505'; ctx.fillRect(0,H*0.60,W,H*0.04);
 
   // Perspective walls
-  ctx2.fillStyle='#120e04';
-  // left wall
-  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W*0.25,H*0.15); ctx2.lineTo(W*0.25,H*0.85); ctx2.lineTo(0,H); ctx2.closePath(); ctx2.fill();
-  // right wall
-  ctx2.fillStyle='#1a1408';
-  ctx2.beginPath(); ctx2.moveTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W,H); ctx2.closePath(); ctx2.fill();
-  // ceiling
-  ctx2.fillStyle='#100c03';
-  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.25,H*0.15); ctx2.closePath(); ctx2.fill();
-  // floor
-  ctx2.fillStyle='#0d0a02';
-  ctx2.beginPath(); ctx2.moveTo(0,H); ctx2.lineTo(W,H); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W*0.25,H*0.85); ctx2.closePath(); ctx2.fill();
-  // tunnel
-  ctx2.fillStyle='#060400';
-  ctx2.fillRect(W*0.25, H*0.15, W*0.5, H*0.7);
+  ctx.fillStyle='#120d04';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(W*0.2,H*0.12); ctx.lineTo(W*0.2,H*0.62); ctx.lineTo(0,H*0.64); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W,0); ctx.lineTo(W*0.8,H*0.12); ctx.lineTo(W*0.8,H*0.62); ctx.lineTo(W,H*0.64); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#0d0800';
+  ctx.beginPath(); ctx.moveTo(W*0.2,H*0.12); ctx.lineTo(W*0.8,H*0.12); ctx.lineTo(W*0.8,H*0.62); ctx.lineTo(W*0.2,H*0.62); ctx.closePath(); ctx.fill();
+}
 
-  // depth lines
-  ctx2.strokeStyle='#2a1a08'; ctx2.lineWidth=2;
-  ctx2.strokeRect(W*0.25, H*0.15, W*0.5, H*0.7);
+function drawHallDecor(ctx, W, H, side){
+  // Children's drawings on wall
+  const drawings=[
+    {x:0.12,y:0.25,label:'🎈',sub:'MY BIRTHDAY'},
+    {x:0.25,y:0.32,label:'🌟',sub:'FREDDY!'},
+    {x:W>500?0.72:0.68,y:0.28,label:'🎉',sub:'FUN PLACE'},
+    {x:W>500?0.84:0.8,y:0.22,label:'🐻',sub:'MY FRIEND'},
+  ];
+  drawings.forEach(d=>{
+    const px=d.x*W, py=d.y*H, pw=W*0.07, ph=H*0.14;
+    // Paper
+    ctx.fillStyle='#e8d898';
+    ctx.fillRect(px-pw/2,py-ph/2,pw,ph);
+    ctx.strokeStyle='#a09050'; ctx.lineWidth=1;
+    ctx.strokeRect(px-pw/2,py-ph/2,pw,ph);
+    // Tape
+    ctx.fillStyle='rgba(220,210,180,0.6)';
+    ctx.fillRect(px-pw*0.15,py-ph/2-3,pw*0.3,7);
+    // Drawing content
+    ctx.font=`${ph*0.35}px Arial`; ctx.textAlign='center';
+    ctx.fillText(d.label,px,py+ph*0.08);
+    ctx.fillStyle='#3a2a10'; ctx.font=`bold ${ph*0.12}px Arial`;
+    ctx.fillText(d.sub,px,py+ph*0.38);
+  });
 
-  // Animatronic if in left hall
-  if (G.bonnie.room === R.LHALL || G.fredbear.room === R.LHALL) {
-    const isF = G.fredbear.room === R.LHALL;
-    const sz = H * (isF ? 0.65 : 0.55);
-    ctx2.font=`${sz}px Arial`; ctx2.textAlign='center'; ctx2.textBaseline='middle';
-    const color = isF ? '#ff2200' : '#ffaa00';
-    ctx2.shadowColor=color; ctx2.shadowBlur=40;
-    ctx2.fillText(isF ? '🐻':'🐰', W/2, H*0.5);
-    ctx2.shadowBlur=0; ctx2.textBaseline='alphabetic';
-    // Eyes
-    ctx2.fillStyle=color+'cc'; ctx2.shadowColor=color; ctx2.shadowBlur=20;
-    ctx2.beginPath();
-    ctx2.arc(W*0.44, H*0.38, sz*0.04, 0, Math.PI*2);
-    ctx2.arc(W*0.56, H*0.38, sz*0.04, 0, Math.PI*2);
-    ctx2.fill(); ctx2.shadowBlur=0;
+  // Speakers on floor
+  [[W*0.08,H*0.78],[W*0.88,H*0.82]].forEach(([sx,sy])=>{
+    ctx.fillStyle='#1a1a1a'; ctx.fillRect(sx-W*0.035,sy-H*0.08,W*0.07,H*0.1);
+    ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.strokeRect(sx-W*0.035,sy-H*0.08,W*0.07,H*0.1);
+    // Speaker grille
+    ctx.fillStyle='#111';
+    ctx.beginPath(); ctx.arc(sx,sy-H*0.03,W*0.022,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=0.5;
+    for(let r=1;r<=3;r++){
+      ctx.beginPath(); ctx.arc(sx,sy-H*0.03,W*0.022*r/3,0,Math.PI*2); ctx.stroke();
+    }
+    // Dust
+    ctx.fillStyle='rgba(60,40,10,0.4)';
+    ctx.fillRect(sx-W*0.035,sy+H*0.015,W*0.07,H*0.005);
+  });
+
+  // Old televisions on floor
+  [[W*0.18,H*0.85],[W*0.76,H*0.82]].forEach(([tx,ty])=>{
+    const tw=W*0.09, th=H*0.1;
+    ctx.fillStyle='#1a1510'; ctx.fillRect(tx-tw/2,ty-th,tw,th);
+    ctx.strokeStyle='#2a2010'; ctx.lineWidth=2; ctx.strokeRect(tx-tw/2,ty-th,tw,th);
+    // Screen static
+    ctx.fillStyle='#0a0a06';
+    ctx.fillRect(tx-tw*0.35,ty-th*0.85,tw*0.7,th*0.65);
+    // Static dots
+    ctx.fillStyle='rgba(200,200,180,0.15)';
+    for(let i=0;i<20;i++){
+      ctx.fillRect(
+        tx-tw*0.35+Math.random()*tw*0.7,
+        ty-th*0.85+Math.random()*th*0.65,
+        1,1
+      );
+    }
+    // Antenna
+    ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(tx-tw*0.08,ty-th); ctx.lineTo(tx-tw*0.18,ty-th*1.22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx+tw*0.08,ty-th); ctx.lineTo(tx+tw*0.18,ty-th*1.22); ctx.stroke();
+    // Knobs
+    ctx.fillStyle='#333';
+    ctx.beginPath(); ctx.arc(tx+tw*0.35,ty-th*0.7,tw*0.04,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx+tw*0.35,ty-th*0.45,tw*0.04,0,Math.PI*2); ctx.fill();
+    // TV base
+    ctx.fillStyle='#141008'; ctx.fillRect(tx-tw*0.3,ty-th*0.05,tw*0.6,th*0.08);
+    // Dust/dirt on floor around TV
+    ctx.fillStyle='rgba(40,25,5,0.5)';
+    ctx.beginPath(); ctx.ellipse(tx,ty+H*0.005,tw*0.5,H*0.012,0,0,Math.PI*2); ctx.fill();
+  });
+
+  // Dirt/grime on walls
+  ctx.fillStyle='rgba(30,15,0,0.3)';
+  for(let i=0;i<5;i++){
+    const gx=W*(0.1+i*0.18), gy=H*(0.45+Math.sin(i*1.7)*0.08);
+    ctx.beginPath();
+    ctx.ellipse(gx,gy,W*0.03,H*0.06,Math.sin(i)*0.8,0,Math.PI*2);
+    ctx.fill();
   }
-
-  drawNavButtons(W, H, 'center');
 }
 
-function drawRightHall(W, H) {
-  const bg = ctx2.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#1a1005'); bg.addColorStop(0.6,'#150d03'); bg.addColorStop(1,'#0a0800');
-  ctx2.fillStyle=bg; ctx2.fillRect(0,0,W,H);
-
-  ctx2.fillStyle='#1a1408';
-  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W*0.25,H*0.15); ctx2.lineTo(W*0.25,H*0.85); ctx2.lineTo(0,H); ctx2.closePath(); ctx2.fill();
-  ctx2.fillStyle='#120e04';
-  ctx2.beginPath(); ctx2.moveTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W,H); ctx2.closePath(); ctx2.fill();
-  ctx2.fillStyle='#100c03';
-  ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(W,0); ctx2.lineTo(W*0.75,H*0.15); ctx2.lineTo(W*0.25,H*0.15); ctx2.closePath(); ctx2.fill();
-  ctx2.fillStyle='#0d0a02';
-  ctx2.beginPath(); ctx2.moveTo(0,H); ctx2.lineTo(W,H); ctx2.lineTo(W*0.75,H*0.85); ctx2.lineTo(W*0.25,H*0.85); ctx2.closePath(); ctx2.fill();
-  ctx2.fillStyle='#060400';
-  ctx2.fillRect(W*0.25, H*0.15, W*0.5, H*0.7);
-  ctx2.strokeStyle='#2a1a08'; ctx2.lineWidth=2;
-  ctx2.strokeRect(W*0.25, H*0.15, W*0.5, H*0.7);
-
-  if (G.chica.room === R.RHALL || G.fredbear.room === R.RHALL) {
-    const isF = G.fredbear.room === R.RHALL;
-    const sz = H * (isF ? 0.65 : 0.55);
-    ctx2.font=`${sz}px Arial`; ctx2.textAlign='center'; ctx2.textBaseline='middle';
-    const color = isF ? '#ff2200' : '#ff6600';
-    ctx2.shadowColor=color; ctx2.shadowBlur=40;
-    ctx2.fillText('🐻', W/2, H*0.5);
-    ctx2.shadowBlur=0; ctx2.textBaseline='alphabetic';
-    ctx2.fillStyle=color+'cc'; ctx2.shadowColor=color; ctx2.shadowBlur=20;
-    ctx2.beginPath();
-    ctx2.arc(W*0.44, H*0.38, sz*0.04, 0, Math.PI*2);
-    ctx2.arc(W*0.56, H*0.38, sz*0.04, 0, Math.PI*2);
-    ctx2.fill(); ctx2.shadowBlur=0;
+function drawOfficeLeftHall(W,H){
+  drawHallBase(cx,W,H,'#442200');
+  drawHallDecor(cx,W,H,-1);
+  // Animatronic
+  if(G.springbonnie.room===R.LHALL||G.fredbear.room===R.LHALL){
+    const isFB=G.fredbear.room===R.LHALL;
+    drawAnimatronic(cx,isFB?'fredbear':'springbonnie',W/2,H*0.45,H*0.62,1,isFB?'#ff2200':'#ccaa00');
   }
-
-  drawNavButtons(W, H, 'center');
+  drawFlashlight(cx,W,H);
+  // Back button
+  drawBackBtn(cx,W,H);
 }
 
-function drawNavButtons(W, H, backDir) {
-  ctx2.fillStyle='rgba(255,255,255,0.05)';
-  ctx2.fillRect(0, H*0.4, W*0.1, H*0.25);
-  ctx2.fillRect(W*0.9, H*0.4, W*0.1, H*0.25);
-  ctx2.fillStyle='rgba(255,255,255,0.3)'; ctx2.font=`${H*0.07}px Arial`; ctx2.textAlign='center';
-  ctx2.fillText('◀', W*0.05, H*0.555);
-  ctx2.fillText('▶', W*0.95, H*0.555);
+function drawOfficeRightHall(W,H){
+  drawHallBase(cx,W,H,'#220044');
+  drawHallDecor(cx,W,H,1);
+  if(G.chica.room===R.RHALL||G.fredbear.room===R.RHALL){
+    const isFB=G.fredbear.room===R.RHALL;
+    drawAnimatronic(cx,isFB?'fredbear':'chica',W/2,H*0.45,H*0.62,1,isFB?'#ff2200':'#ff6600');
+  }
+  drawFlashlight(cx,W,H);
+  drawBackBtn(cx,W,H);
 }
 
-// ─── DRAW: CAMERA ─────────────────────────────────────────────
-function drawCamera() {
-  const W = camCv.width, H = camCv.height;
-  camCtx.clearRect(0,0,W,H);
+function drawBackBtn(ctx,W,H){
+  ctx.fillStyle='rgba(40,25,5,0.7)';
+  ctx.fillRect(W*0.35,H*0.88,W*0.3,H*0.08);
+  ctx.strokeStyle='#3a2510'; ctx.lineWidth=1;
+  ctx.strokeRect(W*0.35,H*0.88,W*0.3,H*0.08);
+  ctx.fillStyle='rgba(180,140,60,0.6)'; ctx.font=`${H*0.028}px 'Courier New'`;
+  ctx.textAlign='center'; ctx.fillText('◀ BACK TO OFFICE',W/2,H*0.933);
+}
 
-  // Green night-vision bg
-  camCtx.fillStyle='#010a01'; camCtx.fillRect(0,0,W,H);
+function drawFlashlight(ctx,W,H){
+  if(!G.flashOn) return;
+  const fg=ctx.createRadialGradient(W/2,H,0,W/2,H*0.5,W*0.6);
+  fg.addColorStop(0,'rgba(255,240,160,0.2)');
+  fg.addColorStop(0.4,'rgba(255,210,100,0.08)');
+  fg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=fg; ctx.fillRect(0,0,W,H);
+}
 
-  const cam = G.currentCam;
+// ═══════════════════════════════════════════════════════════
+// CAMERA VIEWS
+// ═══════════════════════════════════════════════════════════
+function drawCamera(){
+  const W=camCv.width, H=camCv.height;
+  camX.clearRect(0,0,W,H);
+  camX.fillStyle='#010601'; camX.fillRect(0,0,W,H);
 
-  if (cam === 1) drawCamStage(W,H);
-  else if (cam === 2) drawCamParts(W,H);
-  else if (cam === 3) drawCamLHall(W,H);
-  else if (cam === 4) drawCamRHall(W,H);
+  switch(G.currentCam){
+    case 1: drawCamPartyA(W,H); break;
+    case 2: drawCamPartyB(W,H); break;
+    case 3: drawCamBackstage(W,H); break;
+    case 4: drawCamLHall(W,H); break;
+    case 5: drawCamRHall(W,H); break;
+  }
 
   // Scanlines
-  for(let y=0; y<H; y+=4) {
-    camCtx.fillStyle='rgba(0,0,0,0.35)';
-    camCtx.fillRect(0,y,W,2);
-  }
-
+  for(let y=0;y<H;y+=3){ camX.fillStyle='rgba(0,0,0,0.28)'; camX.fillRect(0,y,W,1); }
   // Vignette
-  const vig = camCtx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.8);
-  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.6)');
-  camCtx.fillStyle=vig; camCtx.fillRect(0,0,W,H);
-
-  // REC label
-  camCtx.fillStyle='#cc0000'; camCtx.font=`${H*0.035}px 'Courier New'`;
-  camCtx.textAlign='left'; camCtx.textBaseline='top';
-  camCtx.fillText('● REC', 16, 14);
-  const labels=['CAM 1 — SHOW STAGE','CAM 2 — BACKSTAGE','CAM 3 — LEFT HALL','CAM 4 — RIGHT HALL'];
-  camCtx.fillStyle='#00aa00'; camCtx.font=`${H*0.03}px 'Courier New'`;
-  camCtx.fillText(labels[cam-1], 16, 14+H*0.04);
-  camCtx.textBaseline='alphabetic';
+  const vig=camX.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.75);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.65)');
+  camX.fillStyle=vig; camX.fillRect(0,0,W,H);
+  // REC
+  camX.fillStyle='#cc0000'; camX.font=`${H*0.032}px 'Courier New'`; camX.textAlign='left'; camX.textBaseline='top';
+  camX.fillText('● REC',14,12);
+  const labels=['CAM 1 — PARTY ROOM A','CAM 2 — PARTY ROOM B','CAM 3 — BACKSTAGE','CAM 4 — LEFT HALL','CAM 5 — RIGHT HALL'];
+  camX.fillStyle='#00aa00'; camX.font=`${H*0.028}px 'Courier New'`;
+  camX.fillText(labels[G.currentCam-1],14,12+H*0.04);
+  camX.textBaseline='alphabetic';
 }
 
-function camRoom(x,y,w,h) {
-  // Room background
-  const bg=camCtx.createLinearGradient(x,y,x,y+h);
-  bg.addColorStop(0,'#020802'); bg.addColorStop(1,'#010501');
-  camCtx.fillStyle=bg; camCtx.fillRect(x,y,w,h);
-  camCtx.strokeStyle='#0a2a0a'; camCtx.lineWidth=2; camCtx.strokeRect(x,y,w,h);
+function camNV(ctx){ // night vision tint
+  const nv=ctx.createRadialGradient(camCv.width/2,camCv.height/2,0,camCv.width/2,camCv.height/2,camCv.width*0.6);
+  nv.addColorStop(0,'rgba(0,20,0,0.3)'); nv.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=nv; ctx.fillRect(0,0,camCv.width,camCv.height);
 }
 
-function camAnim(emoji, cx, cy, sz, color='#00aa00') {
-  camCtx.font=`${sz}px Arial`; camCtx.textAlign='center'; camCtx.textBaseline='middle';
-  camCtx.shadowColor=color; camCtx.shadowBlur=25;
-  // green-tint filter trick via globalCompositeOperation
-  camCtx.fillText(emoji, cx, cy);
-  camCtx.shadowBlur=0; camCtx.textBaseline='alphabetic';
-  // Eye glow
-  camCtx.fillStyle=color+'dd'; camCtx.shadowColor=color; camCtx.shadowBlur=12;
-  camCtx.beginPath();
-  camCtx.arc(cx-sz*0.12, cy-sz*0.1, sz*0.05, 0, Math.PI*2);
-  camCtx.arc(cx+sz*0.12, cy-sz*0.1, sz*0.05, 0, Math.PI*2);
-  camCtx.fill(); camCtx.shadowBlur=0;
-}
-
-function drawCamStage(W,H) {
-  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
-  camRoom(rx,ry,rw,rh);
-  // Stage platform
-  camCtx.fillStyle='#030e03';
-  camCtx.fillRect(rx+rw*0.1, ry+rh*0.55, rw*0.8, rh*0.15);
-  camCtx.strokeStyle='#0a3a0a'; camCtx.lineWidth=1;
-  camCtx.strokeRect(rx+rw*0.1, ry+rh*0.55, rw*0.8, rh*0.15);
-  // "FREDDY FAZBEAR'S PIZZA" sign
-  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
-  camCtx.textAlign='center';
-  camCtx.fillText("FREDDY FAZBEAR'S PIZZA", W/2, ry+rh*0.15);
-
-  // Robots
-  const bOn = G.bonnie.room === R.STAGE;
-  const cOn = G.chica.room === R.STAGE;
-  if(bOn) {
-    camAnim('🐰', rx+rw*0.25, ry+rh*0.55, rh*0.42, '#ccaa00');
-    camCtx.fillStyle='#ccaa00'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
-    camCtx.fillText('SPRINGBONNIE', rx+rw*0.25, ry+rh*0.72);
+function drawPartyRoom(W,H,label,sbRoom,chRoom,fbRoom){
+  // Floor - checkered with party colours
+  for(let r=0;r<6;r++) for(let c=0;c<10;c++){
+    const dark=(r+c)%2===0;
+    camX.fillStyle=dark?'#051405':'#061806';
+    camX.fillRect(c*(W/10),H*0.6+r*(H*0.4/6),W/10+1,(H*0.4/6)+1);
   }
-  if(cOn) {
-    camAnim('🐻', rx+rw*0.75, ry+rh*0.55, rh*0.42, '#00cc44');
-    camCtx.fillStyle='#00cc44'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
-    camCtx.fillText('CHICA', rx+rw*0.75, ry+rh*0.72);
-  }
+  // Back wall
+  const wg=camX.createLinearGradient(0,0,0,H*0.62);
+  wg.addColorStop(0,'#061406'); wg.addColorStop(1,'#040e04');
+  camX.fillStyle=wg; camX.fillRect(0,0,W,H*0.62);
+  // Ceiling
+  camX.fillStyle='#030803'; camX.fillRect(0,0,W,H*0.1);
+  // Ceiling light
+  camX.fillStyle='rgba(0,80,0,0.12)';
+  const lg=camX.createRadialGradient(W/2,0,0,W/2,0,W*0.6);
+  lg.addColorStop(0,'rgba(0,60,0,0.2)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+  camX.fillStyle=lg; camX.fillRect(0,0,W,H*0.6);
 
-  if(!bOn && !cOn) {
-    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
-    camCtx.textAlign='center'; camCtx.fillText('EMPTY', W/2, H/2);
-  }
+  // ── TABLES ──
+  const tables=[[W*0.18,H*0.52],[W*0.5,H*0.48],[W*0.78,H*0.52]];
+  tables.forEach(([tx,ty])=>{
+    const tw=W*0.14, th=H*0.04;
+    // Tablecloth
+    camX.fillStyle='#082a08'; camX.fillRect(tx-tw/2,ty,tw,th);
+    camX.strokeStyle='#0a3a0a'; camX.lineWidth=1; camX.strokeRect(tx-tw/2,ty,tw,th);
+    // Table legs
+    camX.fillStyle='#041504';
+    [[tx-tw*0.4,ty+th],[tx+tw*0.4,ty+th]].forEach(([lx,ly])=>{
+      camX.fillRect(lx-W*0.008,ly,W*0.016,H*0.08);
+    });
+    // CHAIRS around table
+    [[-tw*0.55,th*0.5],[tw*0.55,th*0.5],[0,-H*0.04],[0,th+H*0.02]].forEach(([dx,dy])=>{
+      drawCamChair(camX,tx+dx,ty+dy,W*0.04,H*0.06);
+    });
+    // Party hats on table
+    [[-tw*0.25,0],[tw*0.1,0],[tw*0.25,-H*0.01]].forEach(([hx,hy])=>{
+      drawPartyHat(camX,tx+hx,ty+hy-H*0.03,W*0.025,H*0.04);
+    });
+    // Plates
+    camX.fillStyle='#0a2a0a';
+    camX.beginPath(); camX.ellipse(tx-tw*0.2,ty+th*0.5,W*0.025,H*0.012,0,0,Math.PI*2); camX.fill();
+    camX.beginPath(); camX.ellipse(tx+tw*0.2,ty+th*0.5,W*0.025,H*0.012,0,0,Math.PI*2); camX.fill();
+    // Balloons above table
+    [[tx-tw*0.3,ty-H*0.18],[tx,ty-H*0.2],[tx+tw*0.3,ty-H*0.16]].forEach(([bx,by],i)=>{
+      const bc=['#1a4a00','#002a1a','#1a001a','#2a1a00'];
+      camX.fillStyle=bc[i%bc.length];
+      camX.shadowColor='#00aa00'; camX.shadowBlur=6;
+      camX.beginPath(); camX.ellipse(bx,by,W*0.022,H*0.035,0,0,Math.PI*2); camX.fill();
+      camX.shadowBlur=0;
+      camX.strokeStyle='#0a2a0a'; camX.lineWidth=0.5;
+      camX.beginPath(); camX.moveTo(bx,by+H*0.035); camX.lineTo(bx+(i-1)*W*0.01,ty-H*0.02); camX.stroke();
+    });
+  });
+
+  // ── ENTRANCE DOORS ──
+  // Left door
+  const ldx=W*0.04, ldy=H*0.2;
+  camX.fillStyle='#020a02'; camX.fillRect(ldx,ldy,W*0.1,H*0.35);
+  camX.strokeStyle='#0a2a0a'; camX.lineWidth=2; camX.strokeRect(ldx,ldy,W*0.1,H*0.35);
+  camX.fillStyle='#051505'; camX.font=`${H*0.025}px 'Courier New'`; camX.textAlign='center';
+  camX.fillText('ENTRANCE',ldx+W*0.05,ldy-5);
+  // Door knob
+  camX.fillStyle='#1a3a1a';
+  camX.beginPath(); camX.arc(ldx+W*0.085,ldy+H*0.18,W*0.007,0,Math.PI*2); camX.fill();
+  // Right door
+  const rdx=W*0.86;
+  camX.fillStyle='#020a02'; camX.fillRect(rdx,ldy,W*0.1,H*0.35);
+  camX.strokeStyle='#0a2a0a'; camX.lineWidth=2; camX.strokeRect(rdx,ldy,W*0.1,H*0.35);
+  camX.fillStyle='#1a3a1a';
+  camX.beginPath(); camX.arc(rdx+W*0.015,ldy+H*0.18,W*0.007,0,Math.PI*2); camX.fill();
+
+  // Banner
+  camX.fillStyle='#0a2a0a';
+  camX.font=`bold ${H*0.045}px 'Courier New'`; camX.textAlign='center';
+  camX.fillText("FREDDY FAZBEAR'S PIZZA",W/2,H*0.14);
+
+  // Animatronics in room
+  let drawn=[];
+  if(sbRoom){ drawAnimatronic(camX,'springbonnie',W*0.25,H*0.5,H*0.42,1,'#ccaa00'); drawn.push('SB'); }
+  if(chRoom){ drawAnimatronic(camX,'chica',W*0.68,H*0.5,H*0.42,1,'#ff6600'); drawn.push('CH'); }
+  if(fbRoom){ drawAnimatronic(camX,'fredbear',W*0.5,H*0.45,H*0.5,1,'#ff2200'); drawn.push('FB'); }
+  camNV(camX);
 }
 
-function drawCamParts(W,H) {
-  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
-  camRoom(rx,ry,rw,rh);
-  camCtx.fillStyle='#030803';
-  camCtx.fillRect(rx+rw*0.05, ry+rh*0.6, rw*0.9, rh*0.1);
-  // Spare parts vibe
-  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
-  camCtx.textAlign='center'; camCtx.fillText('BACKSTAGE', W/2, ry+rh*0.15);
+function drawCamChair(ctx,x,y,w,h){
+  ctx.fillStyle='#062006';
+  ctx.fillRect(x-w/2,y,w,h*0.5);
+  ctx.fillRect(x-w/2,y-h*0.4,w*0.1,h*0.5);
+  ctx.fillRect(x-w/2,y,w*0.1,h*0.5);
+  ctx.fillRect(x+w*0.4,y,w*0.1,h*0.5);
+}
 
-  if(G.fredbear.room === R.STAGE) {
-    camAnim('🐻', W/2, ry+rh*0.52, rh*0.5, '#cc3300');
-    camCtx.fillStyle='#cc3300'; camCtx.font=`${H*0.028}px 'Courier New'`; camCtx.textAlign='center';
-    camCtx.fillText('FREDBEAR', W/2, ry+rh*0.72);
+function drawPartyHat(ctx,x,y,w,h){
+  const cols=['#2a0a2a','#0a2a0a','#2a1a00','#1a0a2a'];
+  ctx.fillStyle=cols[Math.floor(x*3)%cols.length];
+  ctx.beginPath();
+  ctx.moveTo(x,y); ctx.lineTo(x-w/2,y+h); ctx.lineTo(x+w/2,y+h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,100,0,0.4)'; ctx.lineWidth=0.5; ctx.stroke();
+  // Stripes
+  ctx.strokeStyle='rgba(0,80,0,0.5)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(x-w*0.25,y+h*0.3); ctx.lineTo(x+w*0.25,y+h*0.3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-w*0.4,y+h*0.65); ctx.lineTo(x+w*0.4,y+h*0.65); ctx.stroke();
+  // Pompom
+  ctx.fillStyle='rgba(0,120,0,0.5)';
+  ctx.beginPath(); ctx.arc(x,y,w*0.2,0,Math.PI*2); ctx.fill();
+}
+
+function drawCamPartyA(W,H){
+  const sb=G.springbonnie.room===R.PARTY_A;
+  const fb=G.fredbear.room===R.PARTY_A;
+  drawPartyRoom(W,H,'PARTY ROOM A',sb,false,fb);
+}
+
+function drawCamPartyB(W,H){
+  const ch=G.chica.room===R.PARTY_B;
+  const fb=G.fredbear.room===R.PARTY_B;
+  drawPartyRoom(W,H,'PARTY ROOM B',false,ch,fb);
+}
+
+function drawCamBackstage(W,H){
+  // Dark room with random stuff
+  for(let r=0;r<6;r++) for(let c=0;c<10;c++){
+    camX.fillStyle=(r+c)%2===0?'#050805':'#060a06';
+    camX.fillRect(c*(W/10),H*0.62+r*(H*0.38/6),W/10+1,(H*0.38/6)+1);
+  }
+  const wg=camX.createLinearGradient(0,0,0,H*0.62);
+  wg.addColorStop(0,'#040804'); wg.addColorStop(1,'#020602');
+  camX.fillStyle=wg; camX.fillRect(0,0,W,H*0.62);
+  camX.fillStyle='#020602'; camX.fillRect(0,0,W,H*0.08);
+
+  // Shelves
+  camX.fillStyle='#030d03'; camX.fillRect(W*0.05,H*0.22,W*0.35,H*0.03);
+  camX.fillRect(W*0.55,H*0.28,W*0.4,H*0.03);
+  // Spare parts on shelves
+  camX.fillStyle='#051005';
+  camX.font=`${H*0.06}px Arial`; camX.textAlign='center';
+  camX.fillText('🔧',W*0.12,H*0.22);
+  camX.fillText('⚙️',W*0.22,H*0.22);
+  camX.fillText('🔩',W*0.32,H*0.22);
+  camX.fillText('🔋',W*0.66,H*0.28);
+  camX.fillText('🪛',W*0.76,H*0.28);
+  // Parts boxes
+  [[W*0.1,H*0.5],[W*0.3,H*0.48],[W*0.7,H*0.52],[W*0.88,H*0.49]].forEach(([bx,by])=>{
+    const bw=W*0.08,bh=H*0.1;
+    camX.fillStyle='#030d03'; camX.fillRect(bx-bw/2,by,bw,bh);
+    camX.strokeStyle='#051505'; camX.lineWidth=1; camX.strokeRect(bx-bw/2,by,bw,bh);
+    camX.fillStyle='#082008'; camX.font=`${H*0.03}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText('PARTS',bx,by+bh*0.55);
+  });
+
+  // Label on wall
+  camX.fillStyle='#062006'; camX.font=`bold ${H*0.04}px 'Courier New'`; camX.textAlign='center';
+  camX.fillText('BACKSTAGE',W/2,H*0.14);
+
+  // Fredbear
+  if(G.fredbear.room===R.BACKSTAGE){
+    drawAnimatronic(camX,'fredbear',W/2,H*0.48,H*0.5,1,'#ff2200');
   } else {
-    camCtx.fillStyle='#cc330066'; camCtx.font=`${H*0.04}px 'Courier New'`;
-    camCtx.textAlign='center'; camCtx.fillText('ROAMING...', W/2, H/2);
-    camCtx.fillStyle='#cc330044'; camCtx.font=`${H*0.025}px 'Courier New'`;
-    camCtx.fillText('CHECK OTHER CAMS', W/2, H/2+H*0.05);
+    camX.fillStyle='#062006'; camX.font=`${H*0.04}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText('ROAMING',W/2,H*0.5);
+  }
+  camNV(camX);
+}
+
+function drawCamHallView(W,H,side){
+  // Draw hall on cam
+  for(let r=0;r<6;r++) for(let c=0;c<10;c++){
+    camX.fillStyle=(r+c)%2===0?'#050805':'#060a06';
+    camX.fillRect(c*(W/10),H*0.62+r*(H*0.38/6),W/10+1,(H*0.38/6)+1);
+  }
+  const wg=camX.createLinearGradient(0,0,0,H*0.62);
+  wg.addColorStop(0,'#040804'); wg.addColorStop(1,'#020602');
+  camX.fillStyle=wg; camX.fillRect(0,0,W,H*0.62);
+  camX.fillStyle='#020602'; camX.fillRect(0,0,W,H*0.08);
+  // Perspective walls
+  camX.fillStyle='#030803';
+  camX.beginPath(); camX.moveTo(0,0); camX.lineTo(W*0.2,H*0.1); camX.lineTo(W*0.2,H*0.62); camX.lineTo(0,H*0.65); camX.closePath(); camX.fill();
+  camX.beginPath(); camX.moveTo(W,0); camX.lineTo(W*0.8,H*0.1); camX.lineTo(W*0.8,H*0.62); camX.lineTo(W,H*0.65); camX.closePath(); camX.fill();
+  camX.fillStyle='#020602';
+  camX.beginPath(); camX.moveTo(W*0.2,H*0.1); camX.lineTo(W*0.8,H*0.1); camX.lineTo(W*0.8,H*0.62); camX.lineTo(W*0.2,H*0.62); camX.closePath(); camX.fill();
+  // Pictures and decor
+  drawHallDecorCam(camX,W,H);
+}
+
+function drawHallDecorCam(ctx,W,H){
+  // Mini children drawings
+  [[W*0.15,H*0.25],[W*0.35,H*0.3],[W*0.65,H*0.28],[W*0.82,H*0.22]].forEach(([px,py],i)=>{
+    ctx.fillStyle='#0d1a06';
+    ctx.fillRect(px-W*0.04,py-H*0.07,W*0.08,H*0.14);
+    ctx.strokeStyle='#1a3008'; ctx.lineWidth=1; ctx.strokeRect(px-W*0.04,py-H*0.07,W*0.08,H*0.14);
+    ctx.font=`${H*0.07}px Arial`; ctx.textAlign='center';
+    ctx.fillText(['🎈','🌟','🎉','🐻'][i],px,py+H*0.03);
+  });
+  // Speaker
+  ctx.fillStyle='#0a1a0a'; ctx.fillRect(W*0.08,H*0.72,W*0.06,H*0.1);
+  ctx.beginPath(); ctx.arc(W*0.11,H*0.76,W*0.018,0,Math.PI*2); ctx.fillStyle='#050a05'; ctx.fill();
+  // TV
+  ctx.fillStyle='#0a120a'; ctx.fillRect(W*0.82,H*0.74,W*0.09,H*0.09);
+  ctx.fillStyle='#040804'; ctx.fillRect(W*0.84,H*0.75,W*0.065,H*0.06);
+  // Dirt smears
+  ctx.fillStyle='rgba(0,20,0,0.4)';
+  for(let i=0;i<4;i++){
+    ctx.beginPath(); ctx.ellipse(W*(0.15+i*0.22),H*0.5,W*0.04,H*0.06,Math.sin(i)*0.7,0,Math.PI*2); ctx.fill();
   }
 }
 
-function drawCamHall(W, H, side) {
-  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
-  camRoom(rx,ry,rw,rh);
-  // Perspective lines
-  camCtx.strokeStyle='#0a2a0a'; camCtx.lineWidth=1;
-  const cx=rx+rw/2, cy=ry+rh*0.5;
-  camCtx.beginPath();
-  camCtx.moveTo(rx,ry); camCtx.lineTo(rx+rw*0.3, ry+rh*0.15);
-  camCtx.moveTo(rx,ry+rh); camCtx.lineTo(rx+rw*0.3, ry+rh*0.85);
-  camCtx.moveTo(rx+rw,ry); camCtx.lineTo(rx+rw*0.7, ry+rh*0.15);
-  camCtx.moveTo(rx+rw,ry+rh); camCtx.lineTo(rx+rw*0.7, ry+rh*0.85);
-  camCtx.stroke();
-  camCtx.strokeRect(rx+rw*0.3, ry+rh*0.15, rw*0.4, rh*0.7);
-}
-
-function drawCamLHall(W,H) {
-  drawCamHall(W,H,-1);
-  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
-  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
-  camCtx.textAlign='center'; camCtx.fillText('LEFT HALL', W/2, ry+rh*0.12);
-
-  const inHall = G.bonnie.room===R.LHALL || G.fredbear.room===R.LHALL;
-  if(inHall) {
-    const isF=G.fredbear.room===R.LHALL;
-    camAnim(isF?'🐻':'🐰', W/2, ry+rh*0.52, rh*0.5, isF?'#cc3300':'#ccaa00');
-    camCtx.fillStyle=isF?'#cc3300':'#ccaa00'; camCtx.font=`${H*0.025}px 'Courier New'`; camCtx.textAlign='center';
-    camCtx.fillText(isF?'FREDBEAR':'SPRINGBONNIE', W/2, ry+rh*0.72);
+function drawCamLHall(W,H){
+  drawCamHallView(W,H,-1);
+  const sb=G.springbonnie.room===R.LHALL||G.fredbear.room===R.LHALL;
+  if(sb){
+    const isFB=G.fredbear.room===R.LHALL;
+    drawAnimatronic(camX,isFB?'fredbear':'springbonnie',W/2,H*0.44,H*0.52,1,isFB?'#ff2200':'#ccaa00');
+    camX.fillStyle=isFB?'#cc3300':'#ccaa00'; camX.font=`${H*0.03}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText(isFB?'FREDBEAR':'SPRINGBONNIE',W/2,H*0.72);
   } else {
-    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
-    camCtx.textAlign='center'; camCtx.fillText('CLEAR', W/2, H/2);
+    camX.fillStyle='#062006'; camX.font=`${H*0.04}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText('CLEAR',W/2,H*0.5);
   }
+  camNV(camX);
 }
 
-function drawCamRHall(W,H) {
-  drawCamHall(W,H,1);
-  const rx=W*0.1,ry=H*0.08,rw=W*0.8,rh=H*0.82;
-  camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.025}px 'Courier New'`;
-  camCtx.textAlign='center'; camCtx.fillText('RIGHT HALL', W/2, ry+rh*0.12);
-
-  const inHall = G.chica.room===R.RHALL || G.fredbear.room===R.RHALL;
-  if(inHall) {
-    const isF=G.fredbear.room===R.RHALL;
-    camAnim(isF?'🐻':'🐻', W/2, ry+rh*0.55, rh*0.5, isF?'#cc3300':'#00cc44');
+function drawCamRHall(W,H){
+  drawCamHallView(W,H,1);
+  const ch=G.chica.room===R.RHALL||G.fredbear.room===R.RHALL;
+  if(ch){
+    const isFB=G.fredbear.room===R.RHALL;
+    drawAnimatronic(camX,isFB?'fredbear':'chica',W/2,H*0.44,H*0.52,1,isFB?'#ff2200':'#ff6600');
+    camX.fillStyle=isFB?'#cc3300':'#ff6600'; camX.font=`${H*0.03}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText(isFB?'FREDBEAR':'CHICA',W/2,H*0.72);
   } else {
-    camCtx.fillStyle='#0a2a0a'; camCtx.font=`${H*0.04}px 'Courier New'`;
-    camCtx.textAlign='center'; camCtx.fillText('CLEAR', W/2, H/2);
+    camX.fillStyle='#062006'; camX.font=`${H*0.04}px 'Courier New'`; camX.textAlign='center';
+    camX.fillText('CLEAR',W/2,H*0.5);
+  }
+  camNV(camX);
+}
+
+// ═══════════════════════════════════════════════════════════
+// JUMPSCARE
+// ═══════════════════════════════════════════════════════════
+let scarePhase=0, scareType='fredbear', scareStart=0;
+function startScare(type){
+  scareType=type; scarePhase=0; scareStart=Date.now();
+  document.getElementById('jumpscare').style.display='flex';
+  animateScare();
+}
+function animateScare(){
+  const W=scareCv.width, H=scareCv.height;
+  const t=(Date.now()-scareStart)/1000;
+  scX.fillStyle=`rgba(0,0,0,${Math.max(0,0.8-t*2)})`;
+  scX.fillRect(0,0,W,H);
+  // Flash
+  if(Math.floor(t*20)%2===0){ scX.fillStyle='rgba(255,0,0,0.15)'; scX.fillRect(0,0,W,H); }
+  // Grow in
+  const scale=Math.min(1,t*4);
+  const sz=Math.min(W,H)*0.7*scale;
+  const x=W/2, y=H*0.48;
+  drawAnimatronic(scX,scareType,x,y,sz,1,'#ff0000');
+  // Shaking
+  if(t<1.5){
+    scX.save();
+    scX.translate((Math.random()-0.5)*10,(Math.random()-0.5)*10);
+    scX.restore();
+    G.scareAnimId=requestAnimationFrame(animateScare);
+  } else {
+    document.getElementById('jumpscare').style.display='none';
+    onScareEnd();
   }
 }
 
-// ─── RENDER LOOP ─────────────────────────────────────────────
-function renderLoop() {
-  if(G.phase==='playing') drawOffice();
-  if(G.camsOpen) drawCamera();
-  animFrame = requestAnimationFrame(renderLoop);
-}
+// ═══════════════════════════════════════════════════════════
+// GAME FLOW
+// ═══════════════════════════════════════════════════════════
+function startGame(){ ac(); resetState(); beginNight(); }
 
-// ─── GAME FLOW ───────────────────────────────────────────────
-function startGame() {
-  ac();
-  resetState();
-  beginNight();
-}
-
-function beginNight() {
-  G.bonnie.room=R.STAGE; G.chica.room=R.STAGE; G.fredbear.room=R.STAGE;
-  const m = 0.8 + (G.night-1)*0.22;
-  G.bonnie.agr   = Math.min(0.88, 0.18*m);
-  G.chica.agr    = Math.min(0.82, 0.14*m);
-  G.fredbear.agr = Math.min(0.94, 0.28*m*1.4);
-  G.flashOn=false; G.viewPos=0; G.camsOpen=false;
-  G.nightElapsed=0;
-
-  document.getElementById('ni-title').textContent = G.night===MAX_NIGHTS ? '★ BONUS NIGHT ★' : `NIGHT ${G.night}`;
-  document.getElementById('ni-sub').textContent   = G.night===MAX_NIGHTS ? 'SURVIVE FOR AN EXTRA POINT' : '12:00 AM — 6:00 AM';
+function beginNight(){
+  G.springbonnie.room=R.PARTY_A; G.chica.room=R.PARTY_B; G.fredbear.room=R.BACKSTAGE;
+  const m=0.8+(G.night-1)*0.22;
+  G.springbonnie.agr=Math.min(0.88,0.18*m);
+  G.chica.agr=Math.min(0.82,0.14*m);
+  G.fredbear.agr=Math.min(0.95,0.30*m*1.3);
+  G.flashOn=false; G.viewPos=0; G.camsOpen=false; G.nightElapsed=0;
+  document.getElementById('ni-title').textContent=G.night===MAX_NIGHTS?'★ BONUS NIGHT ★':`NIGHT ${G.night}`;
+  document.getElementById('ni-sub').textContent=G.night===MAX_NIGHTS?'SURVIVE FOR AN EXTRA POINT':'12:00 AM — 6:00 AM';
+  document.getElementById('bonus-lbl').classList.toggle('on',G.night===MAX_NIGHTS);
   show('night-intro');
-
-  document.getElementById('bonus-lbl').classList.toggle('on', G.night===MAX_NIGHTS);
-
   setTimeout(()=>{
     show('play-screen');
     G.phase='playing';
     document.getElementById('cam-overlay').classList.remove('open');
-    resizeCanvases();
+    resizeAll();
     updateViewLabel();
     updateHUD();
     startTimers();
-    if(!animFrame) renderLoop();
-  }, 2400);
+    if(!G.renderFrame) renderLoop();
+  },2400);
 }
 
-function startTimers() {
+function startTimers(){
   clearInterval(G.nightTick); clearInterval(G.moveTick);
-  G.nightTick = setInterval(()=>{
+  G.nightTick=setInterval(()=>{
     if(G.phase!=='playing') return;
-    G.nightElapsed += 100;
-    const idx = Math.min(6, Math.floor((G.nightElapsed/NIGHT_MS)*6));
-    document.getElementById('hud-time').textContent = HOURS[idx];
-    if(G.nightElapsed >= NIGHT_MS) nightComplete();
-  }, 100);
-  G.moveTick = setInterval(()=>{
+    G.nightElapsed+=100;
+    const idx=Math.min(6,Math.floor((G.nightElapsed/NIGHT_MS)*6));
+    document.getElementById('hud-time').textContent=HOURS[idx];
+    if(G.nightElapsed>=NIGHT_MS) nightComplete();
+  },100);
+  const interval=Math.max(1400,2200-G.night*150);
+  G.moveTick=setInterval(()=>{
     if(G.phase!=='playing') return;
-    moveRobots();
-    checkAttack();
-    updateStompAlert();
+    moveRobots(); checkAttack(); updateStompAlert();
     if(G.camsOpen) drawCamera();
-  }, 2200 - G.night*120);
+  },interval);
 }
 
-function moveRobots() {
-  tryMove(G.bonnie, BONNIE_PATH, 1);
-  tryMove(G.chica,  CHICA_PATH,  1);
-  tryMove(G.fredbear, FRED_PATH, 1.6);
+function moveRobots(){
+  // Springbonnie: linear path left side
+  tryMove(G.springbonnie, SB_PATH, 1);
+  // Chica: linear path right side
+  tryMove(G.chica, CH_PATH, 1);
+  // Fredbear: ROAMS RANDOMLY
+  roamFredbear();
 }
 
-function tryMove(bot, path, speedMult) {
-  if(Math.random() < bot.agr * speedMult) {
-    const i = path.indexOf(bot.room);
-    if(i >= 0 && i < path.length-1) {
-      bot.room = path[i+1];
+function tryMove(bot, path, mult){
+  if(Math.random()<bot.agr*mult){
+    const i=path.indexOf(bot.room);
+    if(i>=0 && i<path.length-1){
+      bot.room=path[i+1];
       if(bot.room===R.LHALL||bot.room===R.RHALL) thump(50,0.3,0.4);
       if(bot.room===R.LDOOR||bot.room===R.RDOOR) thump(35,0.5,0.55);
     }
   }
 }
 
-function checkAttack() {
+function roamFredbear(){
+  if(Math.random()>G.fredbear.agr) return;
+  const cur=G.fredbear.room;
+  // Build possible next rooms based on adjacency
+  const adjacency={
+    [R.BACKSTAGE]:[R.PARTY_A,R.PARTY_B,R.LHALL,R.RHALL],
+    [R.PARTY_A]:[R.BACKSTAGE,R.LHALL,R.PARTY_B],
+    [R.PARTY_B]:[R.BACKSTAGE,R.RHALL,R.PARTY_A],
+    [R.LHALL]:[R.PARTY_A,R.BACKSTAGE,R.LDOOR],
+    [R.RHALL]:[R.PARTY_B,R.BACKSTAGE,R.RDOOR],
+    [R.LDOOR]:[R.LHALL],
+    [R.RDOOR]:[R.RHALL],
+  };
+  const options=adjacency[cur]||[R.BACKSTAGE];
+  G.fredbear.room=options[Math.floor(Math.random()*options.length)];
+  if(G.fredbear.room===R.LHALL||G.fredbear.room===R.RHALL) thump(40,0.45,0.5);
+  if(G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR) thump(28,0.6,0.6);
+}
+
+function checkAttack(){
   if(G.phase!=='playing') return;
-  // Flashlight scares bots at doors
-  if(G.flashOn) {
-    if(G.bonnie.room===R.LDOOR)   G.bonnie.room=R.LHALL;
-    if(G.chica.room===R.RDOOR)    G.chica.room=R.RHALL;
+  if(G.flashOn){
+    if(G.springbonnie.room===R.LDOOR) G.springbonnie.room=R.LHALL;
+    if(G.chica.room===R.RDOOR) G.chica.room=R.RHALL;
     if(G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR) G.fredbear.room=R.LHALL;
     return;
   }
-  if(G.bonnie.room===R.LDOOR && G.viewPos!==-1) { jumpscare('🐰', G.bonnie, R.STAGE); return; }
-  if(G.chica.room===R.RDOOR  && G.viewPos!==1)  { jumpscare('🐻', G.chica,  R.STAGE); return; }
-  if((G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR) && Math.random()<0.65) {
-    jumpscare('🐻', G.fredbear, R.STAGE, true);
+  if(G.springbonnie.room===R.LDOOR && G.viewPos!==-1){ triggerScare('springbonnie',G.springbonnie,R.PARTY_A); return; }
+  if(G.chica.room===R.RDOOR && G.viewPos!==1){ triggerScare('chica',G.chica,R.PARTY_B); return; }
+  if((G.fredbear.room===R.LDOOR||G.fredbear.room===R.RDOOR)&&Math.random()<0.65){
+    triggerScare('fredbear',G.fredbear,R.BACKSTAGE);
   }
 }
 
-function updateStompAlert() {
-  const near=[R.LHALL,R.RHALL,R.LDOOR,R.RDOOR];
-  const on = near.includes(G.bonnie.room)||near.includes(G.chica.room)||near.includes(G.fredbear.room);
-  document.getElementById('stomp-alert').classList.toggle('on',on);
-}
-
-function jumpscare(emoji, bot, resetRoom, isFred=false) {
+function triggerScare(type, bot, resetRoom){
   if(G.phase!=='playing') return;
   G.phase='scare';
   clearInterval(G.nightTick); clearInterval(G.moveTick);
   screech();
-  bot.room = resetRoom;
-  const js=document.getElementById('jumpscare');
-  document.getElementById('scare-face').textContent=emoji;
-  js.style.display='flex';
-  setTimeout(()=>{
-    js.style.display='';
-    G.lives--;
-    updateHUD();
-    if(G.lives<=0) gameOverFn();
-    else { G.phase='playing'; startTimers(); }
-  }, 1800);
+  bot.room=resetRoom;
+  startScare(type);
 }
 
-function nightComplete() {
+function onScareEnd(){
+  G.lives--;
+  updateHUD();
+  if(G.lives<=0) gameOverFn();
+  else { G.phase='playing'; startTimers(); }
+}
+
+function updateStompAlert(){
+  const near=[R.LHALL,R.RHALL,R.LDOOR,R.RDOOR];
+  const on=near.includes(G.springbonnie.room)||near.includes(G.chica.room)||near.includes(G.fredbear.room);
+  document.getElementById('stomp-alert').classList.toggle('on',on);
+}
+
+function nightComplete(){
   if(G.phase!=='playing') return;
   G.phase='nightend';
   clearInterval(G.nightTick); clearInterval(G.moveTick);
   ding();
   G.score++;
   const bonus=G.night===MAX_NIGHTS;
-  document.getElementById('nc-h').textContent = bonus ? '★ BONUS NIGHT COMPLETE!' : `NIGHT ${G.night} COMPLETE`;
-  document.getElementById('nc-stats').innerHTML =
-    `Score: <span>${G.score} point${G.score!==1?'s':''}</span><br>Lives remaining: <span>${G.lives}</span>${bonus?'<br><span>★ Bonus point earned!</span>':''}`;
-  document.getElementById('nc-btn').textContent = G.night>=MAX_NIGHTS ? 'SEE RESULTS ▶' : `NIGHT ${G.night+1} ▶`;
+  document.getElementById('nc-h').textContent=bonus?'★ BONUS NIGHT COMPLETE!':`NIGHT ${G.night} COMPLETE`;
+  document.getElementById('nc-stats').innerHTML=`Score: <span>${G.score} pt${G.score!==1?'s':''}</span><br>Lives remaining: <span>${G.lives}</span>${bonus?'<br><span>★ Bonus point earned!</span>':''}`;
+  document.getElementById('nc-btn').textContent=G.night>=MAX_NIGHTS?'SEE RESULTS ▶':`NIGHT ${G.night+1} ▶`;
   show('night-complete');
 }
 
-function nextNight() {
-  if(G.night>=MAX_NIGHTS) { winFn(); return; }
-  G.night++;
-  beginNight();
+function nextNight(){ if(G.night>=MAX_NIGHTS){winFn();return;} G.night++; beginNight(); }
+function gameOverFn(){ G.phase='gameover'; document.getElementById('go-sub').textContent=`CAUGHT ON NIGHT ${G.night}`; document.getElementById('go-stats').innerHTML=`Nights survived: <span>${G.score}</span>`; show('game-over-screen'); }
+function restartWeek(){ G.lives=3; beginNight(); }
+function winFn(){ G.phase='win'; document.getElementById('win-sub').textContent=`ALL ${MAX_NIGHTS} NIGHTS SURVIVED`; document.getElementById('win-score').textContent=G.score; show('win-screen'); }
+
+// ═══════════════════════════════════════════════════════════
+// RENDER LOOP
+// ═══════════════════════════════════════════════════════════
+function renderLoop(){
+  if(G.phase==='playing') drawOffice();
+  if(G.camsOpen) drawCamera();
+  G.renderFrame=requestAnimationFrame(renderLoop);
 }
 
-function gameOverFn() {
-  G.phase='gameover';
-  document.getElementById('go-sub').textContent=`CAUGHT ON NIGHT ${G.night}`;
-  document.getElementById('go-stats').innerHTML=`Nights survived: <span>${G.score}</span><br>Night reached: <span>${G.night}</span>`;
-  show('game-over-screen');
+// ═══════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════
+function lookLeft(){ if(G.phase!=='playing') return; G.viewPos=G.viewPos===-1?0:-1; updateViewLabel(); }
+function lookRight(){ if(G.phase!=='playing') return; G.viewPos=G.viewPos===1?0:1; updateViewLabel(); }
+function updateViewLabel(){
+  const labels=['LEFT HALL','OFFICE','RIGHT HALL'];
+  document.getElementById('view-lbl').textContent=labels[G.viewPos+1];
 }
-
-function restartWeek() { G.lives=3; beginNight(); }
-
-function winFn() {
-  G.phase='win';
-  document.getElementById('win-sub').textContent=`ALL ${MAX_NIGHTS} NIGHTS SURVIVED — INCLUDING THE BONUS`;
-  document.getElementById('win-score').textContent=G.score;
-  show('win-screen');
-}
-
-// ─── CONTROLS ────────────────────────────────────────────────
-function lookLeft() {
+function toggleFlash(){
   if(G.phase!=='playing') return;
-  G.viewPos = G.viewPos===-1 ? 0 : -1;
-  updateViewLabel();
-}
-function lookRight() {
-  if(G.phase!=='playing') return;
-  G.viewPos = G.viewPos===1 ? 0 : 1;
-  updateViewLabel();
-}
-function updateViewLabel() {
-  const lbl=['LOOKING LEFT','LOOKING AHEAD','LOOKING RIGHT'];
-  document.getElementById('view-lbl').textContent=lbl[G.viewPos+1];
-}
-
-function toggleFlash() {
-  if(G.phase!=='playing') return;
-  if(G.flashTimer) { clearTimeout(G.flashTimer); G.flashTimer=null; }
+  if(G.flashTimer){clearTimeout(G.flashTimer);G.flashTimer=null;}
   G.flashOn=!G.flashOn;
   document.getElementById('btn-flash').classList.toggle('on',G.flashOn);
-  if(G.flashOn) {
-    thump(200,0.1,0.15);
-    checkAttack();
-    G.flashTimer=setTimeout(()=>{ G.flashOn=false; document.getElementById('btn-flash').classList.remove('on'); },3000);
-  }
+  if(G.flashOn){ thump(200,0.08,0.12); checkAttack(); G.flashTimer=setTimeout(()=>{G.flashOn=false;document.getElementById('btn-flash').classList.remove('on');},3000); }
 }
-
-function openCams() {
+function openCams(){
   if(G.phase!=='playing') return;
   G.camsOpen=true;
   document.getElementById('cam-overlay').classList.add('open');
   document.getElementById('btn-cam').classList.add('on');
-  setCam(G.currentCam);
-  resizeCanvases();
-  drawCamera();
+  setCam(G.currentCam); resizeAll(); drawCamera();
 }
-function closeCams() {
-  G.camsOpen=false;
-  document.getElementById('cam-overlay').classList.remove('open');
-  document.getElementById('btn-cam').classList.remove('on');
-}
-function setCam(n) {
-  G.currentCam=n;
-  document.querySelectorAll('.cbtn').forEach((b,i)=>b.classList.toggle('on',i===n-1));
-  drawCamera();
-}
+function closeCams(){ G.camsOpen=false; document.getElementById('cam-overlay').classList.remove('open'); document.getElementById('btn-cam').classList.remove('on'); }
+function setCam(n){ G.currentCam=n; document.querySelectorAll('.cbtn').forEach((b,i)=>b.classList.toggle('on',i===n-1)); drawCamera(); }
 
-// ─── HUD UPDATE ──────────────────────────────────────────────
-function updateHUD() {
-  document.getElementById('hud-night').textContent=G.night;
-  document.getElementById('hud-score').textContent=G.score;
-  document.querySelectorAll('.life').forEach((l,i)=>l.classList.toggle('lost',i>=G.lives));
-}
-
-// ─── CANVAS CLICK ZONES (arrows) ─────────────────────────────
-canvas.addEventListener('click', e=>{
+// Canvas clicks
+canvas.addEventListener('click',e=>{
   if(G.phase!=='playing') return;
-  const x=e.offsetX, W=canvas.width;
-  if(x < W*0.1) lookLeft();
-  else if(x > W*0.9) lookRight();
+  const x=e.offsetX, y=e.offsetY, W=canvas.width, H=canvas.height;
+  // Monitor click
+  if(G.monitorBounds && x>G.monitorBounds.x && x<G.monitorBounds.x+G.monitorBounds.w && y>G.monitorBounds.y && y<G.monitorBounds.y+G.monitorBounds.h){ openCams(); return; }
+  // Floor arrows
+  const fY=H*0.68;
+  if(y>fY){
+    if(x<W*0.3) lookLeft();
+    else if(x>W*0.7) lookRight();
+    else if(G.viewPos!==0 && x>W*0.35 && x<W*0.65) { G.viewPos=0; updateViewLabel(); }
+  }
+  // Back button in hall view
+  if(G.viewPos!==0 && y>H*0.86 && x>W*0.35 && x<W*0.65){ G.viewPos=0; updateViewLabel(); }
+  // Side click for looking
+  if(G.viewPos===0){
+    if(x<W*0.15) lookLeft();
+    else if(x>W*0.85) lookRight();
+  }
 });
 
-// ─── KEYBOARD ────────────────────────────────────────────────
-document.addEventListener('keydown', e=>{
-  if(G.phase!=='playing' && G.phase!=='playing') return;
+document.addEventListener('keydown',e=>{
+  if(G.phase!=='playing') return;
   const k=e.key.toLowerCase();
   if(k==='f') toggleFlash();
-  if(k==='c') G.camsOpen ? closeCams() : openCams();
+  if(k==='c') G.camsOpen?closeCams():openCams();
   if(k==='arrowleft'||k==='a') lookLeft();
   if(k==='arrowright'||k==='d') lookRight();
-  if(k==='escape') closeCams();
+  if(k==='escape'||(k==='arrowup'||k==='w')) { if(G.camsOpen) closeCams(); else if(G.viewPos!==0){G.viewPos=0;updateViewLabel();} }
 });
+
+// HUD
+function updateHUD(){ document.getElementById('hud-night').textContent=G.night; document.getElementById('hud-score').textContent=G.score; document.querySelectorAll('.life').forEach((l,i)=>l.classList.toggle('lost',i>=G.lives)); }
 
 resetState();
 </script>
