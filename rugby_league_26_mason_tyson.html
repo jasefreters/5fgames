@@ -718,10 +718,11 @@ function updateCamera(){
     return;
   }
   const carrier = attackers[state.controlledIndex].mesh;
-  const behind = new THREE.Vector3(-Math.sin(carrier.rotation.y), 0, -Math.cos(carrier.rotation.y)).multiplyScalar(9.5);
-  const desired = carrier.position.clone().add(new THREE.Vector3(behind.x, 6.5, behind.z));
+  // static orientation — camera always sits behind on -X and looks toward +X (the opposing team),
+  // it follows the player's position but never rotates with their facing direction
+  const desired = carrier.position.clone().add(new THREE.Vector3(-9.5, 6.5, 0));
   camera.position.lerp(desired, 0.12);
-  const lookAt = carrier.position.clone().add(new THREE.Vector3(0,1.4,0));
+  const lookAt = carrier.position.clone().add(new THREE.Vector3(6, 1.2, 0));
   camera.lookAt(lookAt);
 }
 
