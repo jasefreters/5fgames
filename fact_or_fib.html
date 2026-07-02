@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fact or Fib? — Class Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#211A3E;
+    --cream:#FFF8EC;
+    --coral:#FF6B4A;
+    --coral-dark:#E5502F;
+    --teal:#20C4B0;
+    --teal-dark:#0FA393;
+    --yellow:#FFC83C;
+    --indigo:#2B2158;
+    --indigo-deep:#1B1533;
+    --purple-glow:#5B4A9C;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Nunito', sans-serif;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(255,107,74,0.35), transparent 45%),
+      radial-gradient(circle at 88% 20%, rgba(32,196,176,0.30), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(255,200,60,0.20), transparent 50%),
+      var(--indigo-deep);
+    color:var(--cream);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    width:100%;
+    max-width:640px;
+    position:relative;
+  }
+
+  h1,h2,h3{font-family:'Baloo 2', sans-serif; margin:0;}
+
+  /* ---------- Screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block; animation:pop .35s cubic-bezier(.2,.9,.3,1.3);}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+
+  /* ---------- Intro ---------- */
+  .intro-card{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:28px;
+    padding:40px 32px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    position:relative;
+  }
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-bottom:18px;}
+  .badge{
+    width:14px; height:14px; border-radius:50%;
+  }
+  .b-coral{background:var(--coral);}
+  .b-teal{background:var(--teal);}
+  .b-yellow{background:var(--yellow);}
+
+  .intro-card h1{
+    font-size:2.6rem;
+    font-weight:800;
+    line-height:1.05;
+    color:var(--indigo-deep);
+  }
+  .intro-card h1 span{color:var(--coral);}
+  .intro-sub{
+    font-weight:700;
+    color:var(--indigo);
+    opacity:.75;
+    margin-top:8px;
+    font-size:1.05rem;
+  }
+  .intro-rules{
+    text-align:left;
+    background:rgba(43,33,88,0.06);
+    border-radius:18px;
+    padding:18px 20px;
+    margin:26px 0;
+    font-weight:700;
+    font-size:.98rem;
+    color:var(--indigo);
+  }
+  .intro-rules li{margin:8px 0;}
+  .intro-rules b{color:var(--coral-dark);}
+
+  input#playerName{
+    width:100%;
+    padding:14px 16px;
+    border-radius:14px;
+    border:3px solid var(--indigo);
+    font-family:'Nunito',sans-serif;
+    font-weight:800;
+    font-size:1.05rem;
+    color:var(--ink);
+    margin-bottom:16px;
+    outline:none;
+    text-align:center;
+  }
+  input#playerName:focus{border-color:var(--coral);}
+
+  .btn{
+    display:inline-block;
+    border:none;
+    cursor:pointer;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.15rem;
+    letter-spacing:.02em;
+    padding:14px 34px;
+    border-radius:50px;
+    color:#fff;
+    background:linear-gradient(135deg, var(--coral), var(--coral-dark));
+    box-shadow:0 8px 0 var(--coral-dark), 0 14px 24px rgba(0,0,0,.25);
+    transition:transform .08s ease;
+  }
+  .btn:active{transform:translateY(6px); box-shadow:0 2px 0 var(--coral-dark), 0 6px 12px rgba(0,0,0,.2);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  .btn-teal{background:linear-gradient(135deg, var(--teal), var(--teal-dark)); box-shadow:0 8px 0 var(--teal-dark), 0 14px 24px rgba(0,0,0,.25);}
+  .btn-teal:active{box-shadow:0 2px 0 var(--teal-dark), 0 6px 12px rgba(0,0,0,.2);}
+
+  /* ---------- Quiz screen ---------- */
+  .quiz-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .progress-label{font-weight:800; font-size:.95rem; color:var(--cream); opacity:.85;}
+  .progress-track{
+    flex:1; height:10px; margin:0 16px; background:rgba(255,255,255,.15); border-radius:20px; overflow:hidden;
+  }
+  .progress-fill{height:100%; background:linear-gradient(90deg, var(--teal), var(--yellow)); border-radius:20px; transition:width .35s ease;}
+
+  .timer-wrap{position:relative; width:56px; height:56px; flex-shrink:0;}
+  .timer-wrap svg{transform:rotate(-90deg);}
+  .timer-track{fill:none; stroke:rgba(255,255,255,.15); stroke-width:6;}
+  .timer-fill{fill:none; stroke:var(--teal); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset 1s linear, stroke .3s ease;}
+  .timer-num{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.15rem; color:var(--cream);
+  }
+
+  .person-card{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:26px;
+    padding:30px 26px 26px;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  .avatar{
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg, var(--coral), var(--yellow));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.3rem; color:#fff;
+    margin:0 auto 10px;
+    box-shadow:0 6px 14px rgba(0,0,0,.2);
+  }
+  .person-name{text-align:center; font-size:1.5rem; font-weight:800; color:var(--indigo-deep); margin-bottom:4px;}
+  .person-prompt{text-align:center; font-weight:700; color:var(--coral-dark); font-size:.95rem; margin-bottom:22px; text-transform:uppercase; letter-spacing:.04em;}
+
+  .options{display:flex; flex-direction:column; gap:12px;}
+  .option{
+    display:flex; align-items:center; gap:14px;
+    text-align:left;
+    background:#fff;
+    border:3px solid rgba(43,33,88,.12);
+    border-radius:16px;
+    padding:14px 16px;
+    font-family:'Nunito',sans-serif;
+    font-weight:700;
+    font-size:1.02rem;
+    color:var(--ink);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .option:hover{border-color:var(--teal); transform:translateY(-2px);}
+  .option.selected{
+    border-color:var(--coral);
+    background:rgba(255,107,74,.08);
+  }
+  .option .letter{
+    flex-shrink:0;
+    width:30px; height:30px; border-radius:50%;
+    background:var(--indigo);
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:.9rem;
+  }
+  .option.selected .letter{background:var(--coral);}
+
+  /* ---------- Summary ---------- */
+  .summary-card{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:28px;
+    padding:36px 30px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  .score-fraction{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    font-size:4rem;
+    color:var(--coral);
+    line-height:1;
+    margin:6px 0 4px;
+  }
+  .score-fraction span{font-size:2.1rem; color:var(--indigo); opacity:.55;}
+  .score-caption{font-weight:800; color:var(--indigo); opacity:.8; margin-bottom:22px;}
+
+  .review-list{
+    text-align:left;
+    max-height:320px;
+    overflow-y:auto;
+    margin:18px 0 26px;
+    padding-right:6px;
+  }
+  .review-item{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 4px;
+    border-bottom:1px solid rgba(43,33,88,.1);
+    font-size:.92rem;
+  }
+  .review-icon{
+    flex-shrink:0; width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:#fff; font-size:.85rem; margin-top:1px;
+  }
+  .icon-right{background:var(--teal-dark);}
+  .icon-wrong{background:var(--coral-dark);}
+  .review-text b{color:var(--indigo-deep);}
+  .review-text .lie-text{color:var(--coral-dark); font-weight:700;}
+
+  .btn-row{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(43,33,88,.25); border-radius:10px;}
+
+  @media (max-width:480px){
+    .intro-card, .person-card, .summary-card{padding:26px 20px;}
+    .intro-card h1{font-size:2.1rem;}
+    .score-fraction{font-size:3.2rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- INTRO SCREEN -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-card">
+      <div class="badge-row">
+        <div class="badge b-coral"></div><div class="badge b-teal"></div><div class="badge b-yellow"></div>
+      </div>
+      <h1>Fact or <span>Fib?</span></h1>
+      <div class="intro-sub">A 2 Truths &amp; 1 Lie class quiz</div>
+
+      <ul class="intro-rules">
+        <li>You'll see <b>24 people</b>, each with 3 statements.</li>
+        <li>Tap the one you think is the <b>LIE</b>.</li>
+        <li>You've got <b>15 seconds</b> per question — no answer, no points!</li>
+        <li>No feedback until the very end — see your score then.</li>
+      </ul>
+
+      <input type="text" id="playerName" placeholder="Type your name...">
+      <br>
+      <button class="btn" id="startBtn">Start the Quiz</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-top">
+      <div class="progress-label" id="progressLabel">1 / 24</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="timer-wrap">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle class="timer-track" cx="28" cy="28" r="24"></circle>
+          <circle class="timer-fill" id="timerRing" cx="28" cy="28" r="24"></circle>
+        </svg>
+        <div class="timer-num" id="timerNum">15</div>
+      </div>
+    </div>
+
+    <div class="person-card">
+      <div class="avatar" id="avatarInitial">?</div>
+      <div class="person-name" id="personName">Name</div>
+      <div class="person-prompt">Which one is the LIE?</div>
+      <div class="options" id="optionsWrap"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY SCREEN -->
+  <div class="screen" id="screen-summary">
+    <div class="summary-card">
+      <h2 style="color:var(--indigo-deep); font-size:1.4rem;">Nice work, <span id="summaryName">Detective</span>!</h2>
+      <div class="score-fraction" id="scoreFraction">0<span>/24</span></div>
+      <div class="score-caption" id="scoreCaption">lies correctly spotted</div>
+
+      <div class="review-list" id="reviewList"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-teal" id="reviewToggle">Show / Hide Answers</button>
+        <button class="btn" id="playAgainBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---------- Data: [name, truth1, truth2, lie] ----------
+  const RAW_DATA = [
+    ["Jax", "I have green eyes", "I love soccer", "I haven't touched grass in a month"],
+    ["Aria", "I have green and grey eyes", "My favourite fruit are strawberries", "I support the Maroons and the Broncos"],
+    ["Grayson", "I am a little bit Korean", "I like K-Pop", "I have 2 dogs"],
+    ["Cody", "I have blue eyes", "I have a cat", "I have a dog"],
+    ["Kaleb", "I've taken a cricket bat to the eye", "I like Mortal Kombat", "I don't like Doom the Dark Ages"],
+    ["Tyson", "I play rugby", "I am Samoan", "I have broken a bone"],
+    ["Kaiden", "I have a brother", "I have blue eyes", "I have broken my leg twice"],
+    ["Hayden", "I am a boy", "I have a sister", "I have $1,000,000,000"],
+    ["Sprsh", "My name is Sprsh", "I like food", "My name is Splash"],
+    ["Isabella", "I have a dog", "I have 4 brothers", "I went to Gregory Hills primary school before I came here"],
+    ["Declan", "I have brown eyes", "I like Spongebob", "I don't like pizza"],
+    ["Hunter", "My dad threw me through the roof (on accident)", "I've had to get my head glued back together", "I have 5 siblings"],
+    ["Jaylen", "I have brown eyes", "I like Spongebob", "I hate drawing"],
+    ["Ruby", "I've almost drowned before", "I used to have a step-brother", "I lived in Victoria for 2 years"],
+    ["Farrah", "I am Indonesian", "I'm a little bit Pakistani", "I'm mostly Arabic"],
+    ["Joseph", "I love Pikachu!", "My favourite Pokemon is Mudkip", "I love the Pokemon Charmander"],
+    ["Bibija", "I have been to more than 3 countries", "I have 2 siblings", "I was born in February"],
+    ["Connor", "I have two rabbits", "I did a backflip as a baby (in my mum's tummy)", "I nearly cut off my finger with scissors at preschool"],
+    ["Mason", "I play footy", "I like hanging out with my friends", "I have 1 brother"],
+    ["Laila", "I have 2 step-sisters", "I've only flown on a plane once", "I do gymnastics outside of school"],
+    ["Mikayla", "I like Davina", "I like dogs", "I am 11 years old"],
+    ["Edric", "I live on a hill", "My old school was demolished", "My kitchen caught fire"],
+    ["Mr Fretwell", "I have broken my toe on a pool table", "I have broken my hand on a heater", "I have broken my arm playing AFL"],
+    ["Mr Innes", "I have a fear of balloons", "I have flown in a plane", "I have lived in Austria"]
+  ];
+
+  const TIME_LIMIT = 15;
+  const RING_CIRC = 2 * Math.PI * 24;
+
+  let questions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let timer = null;
+  let timeLeft = TIME_LIMIT;
+  let answered = false;
+  let playerName = "Detective";
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildQuestions(){
+    questions = RAW_DATA.map(([name, t1, t2, lie]) => {
+      const opts = shuffle([
+        {text: t1, isLie: false},
+        {text: t2, isLie: false},
+        {text: lie, isLie: true}
+      ]);
+      return {name, options: opts, chosenIndex: null, timedOut: false};
+    });
+  }
+
+  function initials(name){
+    return name.replace(/^Mr[s]?\.?\s*/i, "").trim().split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase();
+  }
+
+  const screens = {
+    intro: document.getElementById('screen-intro'),
+    quiz: document.getElementById('screen-quiz'),
+    summary: document.getElementById('screen-summary')
+  };
+  function showScreen(name){
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[name].classList.add('active');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    const val = document.getElementById('playerName').value.trim();
+    playerName = val || "Detective";
+    buildQuestions();
+    currentIndex = 0;
+    score = 0;
+    showScreen('quiz');
+    renderQuestion();
+  });
+
+  const timerRing = document.getElementById('timerRing');
+  timerRing.setAttribute('stroke-dasharray', RING_CIRC);
+
+  function renderQuestion(){
+    answered = false;
+    timeLeft = TIME_LIMIT;
+    const q = questions[currentIndex];
+
+    document.getElementById('progressLabel').textContent = (currentIndex + 1) + " / " + questions.length;
+    document.getElementById('progressFill').style.width = ((currentIndex) / questions.length * 100) + "%";
+    document.getElementById('avatarInitial').textContent = initials(q.name);
+    document.getElementById('personName').textContent = q.name;
+
+    const wrap = document.getElementById('optionsWrap');
+    wrap.innerHTML = "";
+    const letters = ["A","B","C"];
+    q.options.forEach((opt, idx) => {
+      const div = document.createElement('div');
+      div.className = "option";
+      div.innerHTML = '<span class="letter">' + letters[idx] + '</span><span>' + opt.text + '</span>';
+      div.addEventListener('click', () => selectOption(idx));
+      wrap.appendChild(div);
+    });
+
+    updateTimerDisplay();
+    clearInterval(timer);
+    timer = setInterval(tick, 1000);
+  }
+
+  function updateTimerDisplay(){
+    document.getElementById('timerNum').textContent = timeLeft;
+    const offset = RING_CIRC * (1 - timeLeft / TIME_LIMIT);
+    timerRing.style.strokeDashoffset = offset;
+    let color = "var(--teal)";
+    if(timeLeft <= 5) color = "var(--coral)";
+    else if(timeLeft <= 9) color = "var(--yellow)";
+    timerRing.style.stroke = color;
+  }
+
+  function tick(){
+    timeLeft--;
+    if(timeLeft <= 0){
+      updateTimerDisplay();
+      clearInterval(timer);
+      if(!answered){
+        questions[currentIndex].timedOut = true;
+        questions[currentIndex].chosenIndex = null;
+      }
+      nextQuestion();
+      return;
+    }
+    updateTimerDisplay();
+  }
+
+  function selectOption(idx){
+    if(answered) return;
+    answered = true;
+    clearInterval(timer);
+    const q = questions[currentIndex];
+    q.chosenIndex = idx;
+    if(q.options[idx].isLie) score++;
+
+    const opts = document.querySelectorAll('.option');
+    opts.forEach(o => o.style.pointerEvents = "none");
+    opts[idx].classList.add('selected');
+
+    setTimeout(nextQuestion, 350);
+  }
+
+  function nextQuestion(){
+    currentIndex++;
+    if(currentIndex >= questions.length){
+      finishQuiz();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function finishQuiz(){
+    document.getElementById('progressFill').style.width = "100%";
+    document.getElementById('summaryName').textContent = playerName;
+    document.getElementById('scoreFraction').innerHTML = score + '<span>/' + questions.length + '</span>';
+
+    const pct = Math.round((score / questions.length) * 100);
+    let caption = "lies correctly spotted";
+    if(pct === 100) caption = "PERFECT SCORE — Master Detective! 🕵️";
+    else if(pct >= 75) caption = "lies correctly spotted — great instincts!";
+    else if(pct >= 50) caption = "lies correctly spotted — nice work!";
+    else caption = "lies correctly spotted — the class is full of good liars!";
+    document.getElementById('scoreCaption').textContent = caption;
+
+    const reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = "";
+    reviewList.style.display = "none";
+    questions.forEach(q => {
+      const correct = q.chosenIndex !== null && q.options[q.chosenIndex].isLie;
+      const lieText = q.options.find(o => o.isLie).text;
+      const chosenText = q.chosenIndex !== null ? q.options[q.chosenIndex].text : "(no answer — time ran out)";
+      const div = document.createElement('div');
+      div.className = "review-item";
+      div.innerHTML =
+        '<div class="review-icon ' + (correct ? "icon-right" : "icon-wrong") + '">' + (correct ? "✓" : "✕") + '</div>' +
+        '<div class="review-text"><b>' + q.name + ':</b> the lie was <span class="lie-text">"' + lieText + '"</span>.' +
+        (correct ? "" : ' You picked: "' + chosenText + '"') + '</div>';
+      reviewList.appendChild(div);
+    });
+
+    showScreen('summary');
+  }
+
+  document.getElementById('reviewToggle').addEventListener('click', () => {
+    const el = document.getElementById('reviewList');
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  });
+
+  document.getElementById('playAgainBtn').addEventListener('click', () => {
+    showScreen('intro');
+  });
+
+  document.getElementById('playerName').addEventListener('keydown', (e) => {
+    if(e.key === "Enter") document.getElementById('startBtn').click();
+  });
+</script>
+
+</body>
+</html>
