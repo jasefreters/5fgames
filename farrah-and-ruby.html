@@ -5,141 +5,121 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Farrah & Ruby — Who Do You Trust?</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0a0a14; font-family: 'Segoe UI', sans-serif; color: #e8e0d0; overflow: hidden; height: 100vh; width: 100vw; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a14; font-family:'Segoe UI',sans-serif; color:#e8e0d0; overflow:hidden; height:100vh; width:100vw; }
+  .screen { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; }
+  .screen.active { display:flex; }
 
-  /* ── SCREENS ── */
-  .screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; }
-  .screen.active { display: flex; }
+  /* TITLE */
+  #titleScreen { background:radial-gradient(ellipse at 50% 30%,#1a0a2e 0%,#0a0a14 70%); }
+  .title-logo { font-size:52px; font-weight:900; color:#fff; text-shadow:0 0 40px #8b5cf6; margin-bottom:8px; }
+  .title-sub { font-size:16px; color:#9b8fc0; margin-bottom:48px; letter-spacing:3px; text-transform:uppercase; }
+  .btn { padding:14px 36px; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer; transition:all .2s; }
+  .btn-primary { background:#7c3aed; color:#fff; }
+  .btn-primary:hover { background:#6d28d9; transform:scale(1.04); }
 
-  /* ── TITLE SCREEN ── */
-  #titleScreen { background: radial-gradient(ellipse at 50% 30%, #1a0a2e 0%, #0a0a14 70%); }
-  .title-logo { font-size: 52px; font-weight: 900; letter-spacing: -1px; color: #fff; text-shadow: 0 0 40px #8b5cf6; margin-bottom: 8px; }
-  .title-sub { font-size: 16px; color: #9b8fc0; margin-bottom: 48px; letter-spacing: 3px; text-transform: uppercase; }
-  .btn { padding: 14px 36px; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all .2s; }
-  .btn-primary { background: #7c3aed; color: #fff; }
-  .btn-primary:hover { background: #6d28d9; transform: scale(1.04); }
-  .btn-danger { background: #dc2626; color: #fff; }
-  .btn-danger:hover { background: #b91c1c; }
+  /* SETUP */
+  #setupScreen { background:#0d0d1a; gap:16px; padding:30px; overflow-y:auto; }
+  .setup-title { font-size:26px; font-weight:800; }
+  .player-inputs { display:flex; flex-direction:column; gap:8px; width:320px; }
+  .player-inputs input { background:#1a1a2e; border:1px solid #3b2f6b; border-radius:8px; padding:10px 14px; color:#e8e0d0; font-size:15px; width:100%; outline:none; }
+  .player-inputs input:focus { border-color:#7c3aed; }
+  .player-label { font-size:12px; color:#9b8fc0; }
 
-  /* ── SETUP SCREEN ── */
-  #setupScreen { background: #0d0d1a; gap: 20px; padding: 30px; }
-  .setup-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
-  .player-inputs { display: flex; flex-direction: column; gap: 10px; width: 340px; }
-  .player-inputs input { background: #1a1a2e; border: 1px solid #3b2f6b; border-radius: 8px; padding: 10px 14px; color: #e8e0d0; font-size: 15px; width: 100%; outline: none; }
-  .player-inputs input:focus { border-color: #7c3aed; }
-  .player-label { font-size: 12px; color: #9b8fc0; margin-bottom: 2px; }
+  /* SPIN */
+  #spinScreen { background:#0a0a14; gap:20px; }
+  .spin-title { font-size:26px; font-weight:800; text-align:center; }
+  .spin-subtitle { color:#9b8fc0; font-size:13px; text-align:center; }
+  .wheels-grid { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; max-width:720px; }
+  .wheel-card { background:#131325; border:1px solid #2a2450; border-radius:12px; padding:14px; width:130px; text-align:center; }
+  .wheel-name { font-size:12px; color:#9b8fc0; margin-bottom:8px; font-weight:600; }
+  .wheel-face { font-size:36px; min-height:44px; display:flex; align-items:center; justify-content:center; }
+  .wheel-result { font-size:12px; font-weight:800; min-height:20px; margin-top:6px; }
+  .spin-note { font-size:13px; color:#666; font-style:italic; text-align:center; max-width:500px; }
 
-  /* ── SPIN SCREEN ── */
-  #spinScreen { background: #0a0a14; gap: 24px; }
-  .spin-title { font-size: 28px; font-weight: 800; text-align: center; }
-  .spin-subtitle { color: #9b8fc0; font-size: 14px; text-align: center; }
-  .wheels-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 700px; }
-  .wheel-card { background: #131325; border: 1px solid #2a2450; border-radius: 12px; padding: 16px; width: 140px; text-align: center; }
-  .wheel-name { font-size: 13px; color: #9b8fc0; margin-bottom: 10px; font-weight: 600; }
-  .wheel-face { font-size: 40px; min-height: 50px; display: flex; align-items: center; justify-content: center; transition: transform .08s; }
-  .wheel-face.spinning { animation: spinWheel .08s linear infinite; }
-  @keyframes spinWheel { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-  .wheel-result { font-size: 14px; font-weight: 800; min-height: 22px; margin-top: 8px; }
-  .role-murderer { color: #ef4444; }
-  .role-sheriff { color: #f59e0b; }
-  .role-innocent { color: #6ee7b7; }
-  .spin-note { font-size: 13px; color: #666; font-style: italic; }
+  /* GAME */
+  #gameScreen { background:#111; flex-direction:column; padding:0; }
+  #gameCanvas { display:block; }
+  #hud { position:absolute; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:rgba(0,0,0,.8); font-size:13px; font-weight:700; z-index:10; gap:10px; flex-wrap:wrap; }
+  #timerDisplay { font-size:22px; color:#f59e0b; }
+  #roleHint { font-size:12px; padding:4px 10px; border-radius:6px; background:rgba(255,255,255,.08); flex:1; }
+  #aliveCount { color:#6ee7b7; font-size:13px; }
+  #controlHud { font-size:11px; color:#555; }
 
-  /* ── GAME SCREEN ── */
-  #gameScreen { background: #0d1117; flex-direction: column; padding: 0; }
-  #gameCanvas { display: block; }
-  #hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: rgba(0,0,0,.7); font-size: 14px; font-weight: 700; z-index: 10; }
-  #timerDisplay { font-size: 22px; color: #f59e0b; }
-  #roleHint { font-size: 13px; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,.08); }
-  #aliveCount { color: #6ee7b7; }
+  /* TRIVIA */
+  #triviaOverlay { position:absolute; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:center; flex-direction:column; gap:18px; z-index:20; }
+  #triviaOverlay.show { display:flex; }
+  .trivia-box { background:#13132b; border:1px solid #3b2f6b; border-radius:14px; padding:30px; max-width:440px; width:90%; text-align:center; }
+  .trivia-q { font-size:20px; font-weight:800; margin-bottom:6px; }
+  .trivia-hint { font-size:13px; color:#9b8fc0; margin-bottom:20px; }
+  .trivia-options { display:flex; flex-direction:column; gap:10px; }
+  .trivia-opt { background:#1e1e3f; border:1px solid #3b2f6b; border-radius:8px; padding:12px 16px; cursor:pointer; font-size:14px; transition:background .15s; text-align:left; color:#e8e0d0; }
+  .trivia-opt:hover { background:#2d2d5e; }
+  .trivia-opt.correct { background:#064e3b; border-color:#34d399; color:#6ee7b7; }
+  .trivia-opt.wrong { background:#7f1d1d; border-color:#ef4444; color:#fca5a5; }
+  .trivia-fb { font-size:14px; font-weight:700; min-height:20px; margin-top:10px; }
 
-  /* ── TRIVIA OVERLAY ── */
-  #triviaOverlay { position: absolute; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 18px; z-index: 20; }
-  #triviaOverlay.show { display: flex; }
-  .trivia-box { background: #13132b; border: 1px solid #3b2f6b; border-radius: 14px; padding: 32px; max-width: 440px; width: 90%; text-align: center; }
-  .trivia-q { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-  .trivia-hint { font-size: 13px; color: #9b8fc0; margin-bottom: 22px; }
-  .trivia-options { display: flex; flex-direction: column; gap: 10px; }
-  .trivia-opt { background: #1e1e3f; border: 1px solid #3b2f6b; border-radius: 8px; padding: 12px 18px; cursor: pointer; font-size: 15px; transition: background .15s; text-align: left; color: #e8e0d0; }
-  .trivia-opt:hover { background: #2d2d5e; }
-  .trivia-opt.correct { background: #064e3b; border-color: #34d399; color: #6ee7b7; }
-  .trivia-opt.wrong { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; }
-  .trivia-fb { font-size: 15px; font-weight: 700; min-height: 22px; }
+  /* END */
+  #endScreen { background:#0a0a14; gap:20px; }
+  .end-emoji { font-size:72px; }
+  .end-title { font-size:36px; font-weight:900; text-align:center; }
+  .end-sub { color:#9b8fc0; font-size:15px; text-align:center; max-width:420px; }
 
-  /* ── DEAD LOBBY OVERLAY ── */
-  #deadOverlay { position: absolute; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 15; }
-  #deadOverlay.show { display: flex; }
-  .dead-box { background: #1a0a0a; border: 1px solid #7f1d1d; border-radius: 14px; padding: 28px 36px; text-align: center; }
-  .dead-title { font-size: 28px; font-weight: 900; color: #ef4444; margin-bottom: 8px; }
-  .dead-text { color: #fca5a5; font-size: 14px; }
+  /* CONFETTI */
+  .confetti-piece { position:fixed; top:-10px; animation:confettiFall linear forwards; z-index:100; border-radius:2px; }
+  @keyframes confettiFall { to { transform:translateY(110vh) rotate(720deg); opacity:0; } }
 
-  /* ── END SCREEN ── */
-  #endScreen { background: #0a0a14; gap: 20px; }
-  .end-emoji { font-size: 72px; }
-  .end-title { font-size: 36px; font-weight: 900; text-align: center; }
-  .end-sub { color: #9b8fc0; font-size: 16px; }
-
-  /* ── CONFETTI ── */
-  .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; animation: confettiFall linear forwards; z-index: 100; border-radius: 2px; }
-  @keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
-
-  /* ── CONTROLS HINT ── */
-  #controlsHint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); padding: 6px 14px; border-radius: 8px; font-size: 12px; color: #666; z-index: 10; }
+  /* PLAYER SWITCH BANNER */
+  #switchBanner { position:absolute; bottom:36px; left:50%; transform:translateX(-50%); background:rgba(124,58,237,.9); padding:6px 18px; border-radius:20px; font-size:13px; font-weight:700; z-index:12; display:none; white-space:nowrap; }
 </style>
 </head>
 <body>
 
-<!-- TITLE SCREEN -->
+<!-- TITLE -->
 <div id="titleScreen" class="screen active">
   <div class="title-logo">🔪 Farrah & Ruby</div>
   <div class="title-sub">Who Do You Trust?</div>
   <button class="btn btn-primary" onclick="showSetup()">Play Game</button>
 </div>
 
-<!-- SETUP SCREEN -->
+<!-- SETUP -->
 <div id="setupScreen" class="screen">
   <div class="setup-title">👥 Enter Player Names</div>
-  <p style="color:#9b8fc0;font-size:13px;margin-bottom:12px;">2–6 players (at least 3 recommended)</p>
-  <div class="player-inputs" id="playerInputs">
-    <div class="player-label">Player 1 (required)</div>
-    <input type="text" placeholder="Player 1 name" id="p1">
-    <div class="player-label">Player 2 (required)</div>
-    <input type="text" placeholder="Player 2 name" id="p2">
-    <div class="player-label">Player 3 (required)</div>
-    <input type="text" placeholder="Player 3 name" id="p3">
-    <div class="player-label">Player 4</div>
-    <input type="text" placeholder="Player 4 name (optional)" id="p4">
-    <div class="player-label">Player 5</div>
-    <input type="text" placeholder="Player 5 name (optional)" id="p5">
-    <div class="player-label">Player 6</div>
-    <input type="text" placeholder="Player 6 name (optional)" id="p6">
+  <p style="color:#9b8fc0;font-size:13px;">3–6 players recommended</p>
+  <div class="player-inputs">
+    <div class="player-label">Player 1 (required)</div><input type="text" id="p1" placeholder="Player 1">
+    <div class="player-label">Player 2 (required)</div><input type="text" id="p2" placeholder="Player 2">
+    <div class="player-label">Player 3 (required)</div><input type="text" id="p3" placeholder="Player 3">
+    <div class="player-label">Player 4</div><input type="text" id="p4" placeholder="Player 4 (optional)">
+    <div class="player-label">Player 5</div><input type="text" id="p5" placeholder="Player 5 (optional)">
+    <div class="player-label">Player 6</div><input type="text" id="p6" placeholder="Player 6 (optional)">
   </div>
   <br>
-  <button class="btn btn-primary" onclick="startSpin()" style="margin-top:6px;">Spin for Roles! 🎡</button>
+  <button class="btn btn-primary" onclick="startSpin()">Spin for Roles! 🎡</button>
 </div>
 
-<!-- SPIN SCREEN -->
+<!-- SPIN -->
 <div id="spinScreen" class="screen">
   <div class="spin-title">🎡 Spinning for Roles…</div>
-  <div class="spin-subtitle">Everyone spins at the same time — keep your role SECRET!</div>
+  <div class="spin-subtitle">Everyone spins together — keep your role SECRET!</div>
   <div class="wheels-grid" id="wheelsGrid"></div>
   <div class="spin-note" id="spinNote"></div>
-  <button class="btn btn-primary" id="spinRevealBtn" style="display:none;" onclick="revealRoles()">✅ Everyone Look Away — Reveal!</button>
-  <button class="btn btn-primary" id="startGameBtn" style="display:none;" onclick="startGame()">▶ Start Game!</button>
+  <button class="btn btn-primary" id="spinRevealBtn" style="display:none" onclick="revealRoles()">✅ Everyone Look Away — Reveal!</button>
+  <button class="btn btn-primary" id="startGameBtn" style="display:none" onclick="startGame()">▶ Start Game!</button>
 </div>
 
-<!-- GAME SCREEN -->
+<!-- GAME -->
 <div id="gameScreen" class="screen">
   <div id="hud">
-    <div id="roleHint">Your role: <span id="myRole">—</span></div>
+    <div id="roleHint">Role: —</div>
     <div id="timerDisplay">2:00</div>
-    <div id="aliveCount">Alive: <span id="aliveNum">—</span></div>
+    <div id="aliveCount">Alive: —</div>
+    <div id="controlHud">WASD/Arrows+Numpad · SPACE=run · BACKSPACE=switch player</div>
   </div>
   <canvas id="gameCanvas"></canvas>
-  <div id="controlsHint">WASD / Arrow Keys to move &nbsp;|&nbsp; Click to interact</div>
+  <div id="switchBanner">Now controlling: —</div>
 
-  <!-- TRIVIA OVERLAY -->
+  <!-- TRIVIA -->
   <div id="triviaOverlay">
     <div class="trivia-box">
       <div class="trivia-q" id="triviaQ"></div>
@@ -148,17 +128,9 @@
       <div class="trivia-fb" id="triviaFb"></div>
     </div>
   </div>
-
-  <!-- DEAD OVERLAY -->
-  <div id="deadOverlay">
-    <div class="dead-box">
-      <div class="dead-title">💀 You've been eliminated!</div>
-      <div class="dead-text">You've been sent to the lobby.<br>Watch quietly and see who wins…</div>
-    </div>
-  </div>
 </div>
 
-<!-- END SCREEN -->
+<!-- END -->
 <div id="endScreen" class="screen">
   <div class="end-emoji" id="endEmoji">🏆</div>
   <div class="end-title" id="endTitle">Game Over</div>
@@ -168,443 +140,555 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────
-//  STATE
-// ─────────────────────────────────────────
-let players = [];
-let roles = {};      // name → 'murderer'|'sheriff'|'innocent'
-let gameRunning = false;
-let gameTime = 120;  // seconds
-let timerInterval = null;
-let aliveSet = new Set();
-let murdererName = '';
-let sheriffName  = '';
-let gunDropped   = false;
-let gunPickedUp  = false;
-let triviaActive = false;
-let triviaTimer  = null;
-let nextTriviaAt = 30; // seconds remaining when trivia fires
+// ══════════════════════════════════════════════════
+//  GLOBALS
+// ══════════════════════════════════════════════════
+let players=[], roles={}, murdererName='', sheriffName='';
+let gameRunning=false, gameTime=120;
+let timerInterval=null;
+let triviaActive=false, triviaIdx=0, triviaAnswered=false, nextTriviaAt=60;
+let gunDropped=false, droppedGun=null, gunPickedUp=false, gunHolderIdx=null;
 
-// Canvas state
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let W, H;
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let W,H;
 
-// Player avatar (single avatar for demo — one person's screen)
-const avatar = { x: 300, y: 300, r: 14, speed: 3, color: '#7c3aed', dir: 0 };
-const keys = {};
-const npcs = []; // other players rendered as NPC blobs
-let droppedGun = null; // { x, y }
+// All player-controlled avatars (one per player entry)
+let avatars=[];
+let controlledIdx=0;  // which avatar WASD controls right now
 
-const TRIVIA = [
-  { q: "🍝 Pasta or mac 'n' cheese?", hint: "Think about which one is the 'real' dish…", opts: ["Pasta", "Mac 'n' cheese"], answer: 0, note: "Pasta is the answer! Mac 'n' cheese is delicious, but pasta is the classic." },
-  { q: "🌡️ Cold or hot?", hint: "Sometimes staying cool is the smart choice…", opts: ["Cold", "Hot"], answer: 0, note: "Cold is the correct answer!" },
-  { q: "🤔 Can you always trust someone you've just met?", hint: "Think carefully — this is what the game is really about!", opts: ["Yes, always!", "No, not always"], answer: 1, note: "You can't always trust everyone easily. Stay alert!" },
-  { q: "🔍 If someone is acting suspicious, what should you do?", hint: "Think like a sheriff…", opts: ["Ignore it", "Watch them carefully", "Tell everyone immediately"], answer: 1, note: "Watch carefully before acting. Jumping to conclusions can be wrong!" },
-];
-let triviaIdx = 0;
-let triviaAnswered = false;
+// Physics
+const keys={};
+let jumpVel=0, isJumping=false, isRunning=false;
+const GRAVITY=0.6, JUMP_FORCE=-12, JUMP_SPEED_BONUS=2;
+let jumpZ=0; // simulated height for jump arc visual
 
-// ─────────────────────────────────────────
-//  SCREEN HELPERS
-// ─────────────────────────────────────────
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-function showTitle()  { show('titleScreen'); }
-function showSetup()  { show('setupScreen'); }
+// Map rooms (drawn on canvas, used for collision + hiding)
+// Layout: top-down apartment
+// We define rooms as rects: {label, x,y,w,h, floor, wall, door?}
+let MAP={};
 
-// ─────────────────────────────────────────
+// ══════════════════════════════════════════════════
+//  SCREEN UTILS
+// ══════════════════════════════════════════════════
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showTitle(){ show('titleScreen'); }
+function showSetup(){ show('setupScreen'); }
+
+// ══════════════════════════════════════════════════
 //  SETUP → SPIN
-// ─────────────────────────────────────────
-function startSpin() {
-  const names = [];
-  for (let i = 1; i <= 6; i++) {
-    const v = document.getElementById('p' + i).value.trim();
-    if (v) names.push(v);
-  }
-  if (names.length < 3) { alert('Please enter at least 3 player names!'); return; }
-  players = names;
+// ══════════════════════════════════════════════════
+function startSpin(){
+  const names=[];
+  for(let i=1;i<=6;i++){ const v=document.getElementById('p'+i).value.trim(); if(v) names.push(v); }
+  if(names.length<3){alert('Enter at least 3 player names!');return;}
+  players=names;
   buildWheels();
   show('spinScreen');
 }
 
-function buildWheels() {
-  const grid = document.getElementById('wheelsGrid');
-  grid.innerHTML = '';
-  players.forEach(name => {
-    const card = document.createElement('div');
-    card.className = 'wheel-card';
-    card.innerHTML = `<div class="wheel-name">${name}</div>
-      <div class="wheel-face" id="wf_${name}">❓</div>
-      <div class="wheel-result" id="wr_${name}"></div>`;
-    grid.appendChild(card);
+function buildWheels(){
+  const grid=document.getElementById('wheelsGrid');
+  grid.innerHTML='';
+  players.forEach(name=>{
+    const c=document.createElement('div'); c.className='wheel-card';
+    c.innerHTML=`<div class="wheel-name">${name}</div><div class="wheel-face" id="wf_${CSS.escape(name)}">❓</div><div class="wheel-result" id="wr_${CSS.escape(name)}"></div>`;
+    grid.appendChild(c);
   });
-
   // Assign roles
-  roles = {};
-  const shuffled = [...players].sort(() => Math.random() - .5);
-  roles[shuffled[0]] = 'murderer';
-  roles[shuffled[1]] = 'sheriff';
-  for (let i = 2; i < shuffled.length; i++) roles[shuffled[i]] = 'innocent';
-  murdererName = shuffled[0];
-  sheriffName  = shuffled[1];
+  roles={};
+  const sh=[...players].sort(()=>Math.random()-.5);
+  roles[sh[0]]='murderer'; murdererName=sh[0];
+  roles[sh[1]]='sheriff';  sheriffName=sh[1];
+  for(let i=2;i<sh.length;i++) roles[sh[i]]='innocent';
 
-  document.getElementById('spinNote').textContent = '';
-  document.getElementById('spinRevealBtn').style.display = 'none';
-  document.getElementById('startGameBtn').style.display = 'none';
+  document.getElementById('spinNote').textContent='';
+  document.getElementById('spinRevealBtn').style.display='none';
+  document.getElementById('startGameBtn').style.display='none';
 
-  // Spin animation
-  const ICONS = ['🗡️','⭐','🔫','👤','❓','💫','🎭','🃏'];
-  let ticks = 0;
-  const totalTicks = 40 + Math.floor(Math.random() * 30);
-  const spinInterval = setInterval(() => {
+  const ICONS=['🗡️','⭐','🔫','👤','❓','💫','🎭','🃏'];
+  let ticks=0, total=45+Math.floor(Math.random()*25);
+  const si=setInterval(()=>{
     ticks++;
-    players.forEach(name => {
-      const face = document.getElementById('wf_' + name);
-      face.textContent = ICONS[Math.floor(Math.random() * ICONS.length)];
-    });
-    if (ticks >= totalTicks) {
-      clearInterval(spinInterval);
-      players.forEach(name => document.getElementById('wf_' + name).textContent = '🎭');
-      document.getElementById('spinNote').textContent = 'Everyone: look at the screen one at a time to see your secret role!';
-      document.getElementById('spinRevealBtn').style.display = 'inline-block';
+    players.forEach(n=>{ const el=document.getElementById('wf_'+CSS.escape(n)); if(el) el.textContent=ICONS[Math.floor(Math.random()*ICONS.length)]; });
+    if(ticks>=total){
+      clearInterval(si);
+      players.forEach(n=>{ const el=document.getElementById('wf_'+CSS.escape(n)); if(el) el.textContent='🎭'; });
+      document.getElementById('spinNote').textContent='Each person: look at your role privately, then look away!';
+      document.getElementById('spinRevealBtn').style.display='inline-block';
     }
-  }, 80);
+  },80);
 }
 
-let revealIndex = 0;
-function revealRoles() {
-  if (revealIndex >= players.length) {
-    document.getElementById('spinRevealBtn').style.display = 'none';
-    document.getElementById('startGameBtn').style.display = 'inline-block';
-    document.getElementById('spinNote').textContent = 'All roles revealed! Press Start when everyone is ready. 🤫';
+let revealIndex=0;
+function revealRoles(){
+  if(revealIndex>=players.length){
+    document.getElementById('spinRevealBtn').style.display='none';
+    document.getElementById('startGameBtn').style.display='inline-block';
+    document.getElementById('spinNote').textContent='All roles set! 🤫 Press Start when everyone is ready.';
     return;
   }
-  const name = players[revealIndex];
-  const role = roles[name];
-  const emojis = { murderer: '🗡️', sheriff: '🔫', innocent: '👤' };
-  const colors = { murderer: '#ef4444', sheriff: '#f59e0b', innocent: '#6ee7b7' };
-  const labels = { murderer: 'MURDERER — eliminate everyone!', sheriff: 'SHERIFF — find and stop the murderer!', innocent: 'INNOCENT — survive 2 minutes!' };
-  
-  const el = document.getElementById('wr_' + name);
-  const face = document.getElementById('wf_' + name);
-  face.textContent = emojis[role];
-  el.textContent = labels[role];
-  el.style.color = colors[role];
-
-  setTimeout(() => {
-    // Hide after player has seen
-    el.textContent = '🤫 Role seen';
-    el.style.color = '#444';
-    face.textContent = '❓';
+  const name=players[revealIndex], role=roles[name];
+  const emojis={murderer:'🗡️',sheriff:'🔫',innocent:'👤'};
+  const colors={murderer:'#ef4444',sheriff:'#f59e0b',innocent:'#6ee7b7'};
+  const labels={murderer:'MURDERER — eliminate everyone!',sheriff:'SHERIFF — shoot the murderer only!',innocent:'INNOCENT — survive 2 minutes!'};
+  const face=document.getElementById('wf_'+CSS.escape(name));
+  const res=document.getElementById('wr_'+CSS.escape(name));
+  if(face) face.textContent=emojis[role];
+  if(res){ res.textContent=labels[role]; res.style.color=colors[role]; }
+  setTimeout(()=>{
+    if(res){ res.textContent='🤫 Seen'; res.style.color='#444'; }
+    if(face) face.textContent='❓';
     revealIndex++;
-    document.getElementById('spinNote').textContent = revealIndex < players.length
-      ? `Next: ${players[revealIndex]} — look now!`
-      : 'All roles revealed!';
-  }, 3000);
+    document.getElementById('spinNote').textContent=
+      revealIndex<players.length?`Next: ${players[revealIndex]} — your turn to look!`:'All roles seen!';
+  },3000);
 }
 
-// ─────────────────────────────────────────
-//  GAME START
-// ─────────────────────────────────────────
-function startGame() {
-  resizeCanvas();
-  initNPCs();
-  gameTime = 120;
-  aliveSet = new Set(players);
-  droppedGun = null;
-  gunDropped = false;
-  gunPickedUp = false;
-  triviaIdx = 0;
-  triviaAnswered = false;
-  nextTriviaAt = 60;
-  show('gameScreen');
-  document.getElementById('myRole').textContent = '(only you know)';
-  document.getElementById('aliveNum').textContent = aliveSet.size;
-  document.getElementById('deadOverlay').classList.remove('show');
-  document.getElementById('triviaOverlay').classList.remove('show');
-  gameRunning = true;
-  timerInterval = setInterval(gameTick, 1000);
-  requestAnimationFrame(drawGame);
+// ══════════════════════════════════════════════════
+//  MAP DEFINITION  (built after canvas sized)
+// ══════════════════════════════════════════════════
+function buildMap(){
+  // Apartment top-down layout
+  // Total canvas: W x H
+  // Structure:
+  //   [HALLWAY] runs vertically down the centre-left
+  //   [LIVING ROOM] top-left
+  //   [KITCHEN]     top-right
+  //   [BATHROOM]    mid-hallway (right side, accessible)
+  //   [BASEMENT]    bottom — darker, stairs
+
+  const hw=Math.floor(W*0.18);   // hallway width
+  const hx=Math.floor(W*0.28);   // hallway left edge x
+
+  MAP={
+    hallway:{   label:'Hallway',    x:hx,          y:40,           w:hw,             h:H-40,           floor:'#c8b89a', wall:'#8a7060', type:'hall' },
+    living:{    label:'Living Room',x:0,            y:40,           w:hx,             h:Math.floor((H-40)*0.55), floor:'#d4c5a9', wall:'#7a6555', type:'room', furniture:[
+      {x:30,y:80,w:80,h:50,color:'#8b6f5e',label:'Sofa'},
+      {x:140,y:90,w:50,h:40,color:'#6b5040',label:'Chair'},
+      {x:40,y:200,w:60,h:40,color:'#5a4535',label:'Table'},
+    ]},
+    kitchen:{   label:'Kitchen',    x:hx+hw,       y:40,           w:W-(hx+hw),      h:Math.floor((H-40)*0.50), floor:'#e0d5c0', wall:'#9a8870', type:'room', furniture:[
+      {x:hx+hw+20,y:60,w:70,h:30,color:'#7a7060',label:'Counter'},
+      {x:hx+hw+20,y:110,w:40,h:40,color:'#6a6050',label:'Fridge'},
+      {x:W-100,y:60,w:60,h:40,color:'#5a5040',label:'Stove'},
+    ]},
+    bathroom:{  label:'Bathroom 🚿',x:hx+hw,       y:40+Math.floor((H-40)*0.3), w:Math.floor(W*0.22), h:Math.floor((H-40)*0.22), floor:'#c5d8e0', wall:'#7090a0', type:'hide', furniture:[
+      {x:hx+hw+15,y:40+Math.floor((H-40)*0.3)+15,w:40,h:30,color:'#9ab0ba',label:'Toilet'},
+      {x:hx+hw+70,y:40+Math.floor((H-40)*0.3)+10,w:50,h:35,color:'#aac0ca',label:'Bath'},
+    ]},
+    basement:{  label:'Basement 🪜',x:0,            y:40+Math.floor((H-40)*0.62), w:W,              h:Math.floor((H-40)*0.38), floor:'#6a6055', wall:'#3a3530', type:'room', dark:true, furniture:[
+      {x:40,y:40+Math.floor((H-40)*0.65),w:60,h:40,color:'#4a4035',label:'Boxes'},
+      {x:120,y:40+Math.floor((H-40)*0.68),w:40,h:60,color:'#3a3028',label:'Shelf'},
+      {x:W-120,y:40+Math.floor((H-40)*0.65),w:80,h:50,color:'#4a3a30',label:'Crate'},
+    ]},
+  };
+  // Door positions (open gaps in walls — just visual markers)
+  MAP.doors=[
+    {x:hx,    y:40+Math.floor((H-40)*0.15),  w:hw, h:20, label:'→ Living Room'},
+    {x:hx,    y:40+Math.floor((H-40)*0.40),  w:hw, h:20, label:'→ Bathroom'},
+    {x:hx,    y:40+Math.floor((H-40)*0.70),  w:hw, h:20, label:'↓ Basement Stairs'},
+    {x:hx+hw, y:40+Math.floor((H-40)*0.08),  w:20, h:20, label:'→ Kitchen'},
+  ];
 }
 
-function resizeCanvas() {
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight - 40;
-  avatar.x = W / 2;
-  avatar.y = H / 2;
-}
+// ══════════════════════════════════════════════════
+//  PLAYER AVATARS
+// ══════════════════════════════════════════════════
+const AVATAR_COLORS=['#a78bfa','#ef4444','#f59e0b','#34d399','#60a5fa','#f472b6'];
 
-function initNPCs() {
-  npcs.length = 0;
-  const colors = ['#ef4444','#f59e0b','#6ee7b7','#60a5fa','#f472b6'];
-  players.forEach((name, i) => {
-    if (i === 0) return; // player 0 is the avatar
-    npcs.push({
-      x: 100 + Math.random() * (W - 200),
-      y: 100 + Math.random() * (H - 200),
-      r: 12,
-      name,
-      color: colors[i % colors.length],
-      alive: true,
-      vx: (Math.random() - .5) * 1.5,
-      vy: (Math.random() - .5) * 1.5,
+function initAvatars(){
+  avatars=[];
+  players.forEach((name,i)=>{
+    avatars.push({
+      name, role:roles[name],
+      x: MAP.hallway.x + MAP.hallway.w/2 + (i%2===0?-12:12),
+      y: MAP.hallway.y + 80 + i*30,
+      r:13,
+      color: AVATAR_COLORS[i%AVATAR_COLORS.length],
+      alive:true,
+      speed:2.8,
+      vx:0, vy:0,
+      jumpZ:0, jumpVel:0, onGround:true,
+      hidden:false,  // inside bathroom
+      hasGun:false,
     });
   });
+  controlledIdx=0;
 }
 
-// ─────────────────────────────────────────
-//  GAME LOOP
-// ─────────────────────────────────────────
-function gameTick() {
-  if (!gameRunning) return;
+// ══════════════════════════════════════════════════
+//  START GAME
+// ══════════════════════════════════════════════════
+function startGame(){
+  resizeCanvas();
+  buildMap();
+  initAvatars();
+  gameTime=120; triviaIdx=0; triviaAnswered=false; nextTriviaAt=60;
+  gunDropped=false; droppedGun=null; gunPickedUp=false; gunHolderIdx=null;
+  isJumping=false; jumpZ=0; jumpVel=0;
+  document.getElementById('triviaOverlay').classList.remove('show');
+  updateHUD();
+  show('gameScreen');
+  gameRunning=true;
+  timerInterval=setInterval(gameTick,1000);
+  requestAnimationFrame(drawGame);
+}
+
+function resizeCanvas(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight-42;
+}
+
+// ══════════════════════════════════════════════════
+//  HUD
+// ══════════════════════════════════════════════════
+function updateHUD(){
+  const av=avatars[controlledIdx];
+  if(!av) return;
+  const roleColors={murderer:'#ef4444',sheriff:'#f59e0b',innocent:'#6ee7b7'};
+  const roleLabels={murderer:'🗡️ MURDERER',sheriff:'🔫 SHERIFF',innocent:'👤 INNOCENT'};
+  document.getElementById('roleHint').innerHTML=
+    `Controlling: <b style="color:${AVATAR_COLORS[controlledIdx]}">${av.name}</b> &nbsp;|&nbsp; Role: <b style="color:${roleColors[av.role]}">${roleLabels[av.role]}</b>${av.hasGun?' 🔫':''}`;
+  const alive=avatars.filter(a=>a.alive).length;
+  document.getElementById('aliveCount').textContent=`Alive: ${alive}`;
+}
+
+function updateTimer(){
+  const m=Math.floor(gameTime/60), s=gameTime%60;
+  document.getElementById('timerDisplay').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════════════
+//  GAME TICK (1s)
+// ══════════════════════════════════════════════════
+function gameTick(){
+  if(!gameRunning) return;
   gameTime--;
-  updateTimerDisplay();
-
-  if (gameTime === nextTriviaAt && triviaIdx < TRIVIA.length) {
-    fireTrivia();
-    nextTriviaAt -= 30;
-  }
-
-  // Move NPCs randomly
-  npcs.forEach(npc => {
-    if (!npc.alive) return;
-    npc.x = Math.max(20, Math.min(W - 20, npc.x + npc.vx * 1.5));
-    npc.y = Math.max(60, Math.min(H - 20, npc.y + npc.vy * 1.5));
-    if (Math.random() < .03) { npc.vx = (Math.random() - .5) * 3; npc.vy = (Math.random() - .5) * 3; }
-  });
-
-  if (gameTime <= 0) {
-    endGame('innocents');
-  }
+  updateTimer();
+  if(gameTime===nextTriviaAt && triviaIdx<TRIVIA.length){ fireTrivia(); nextTriviaAt-=30; }
+  if(gameTime<=0) endGame('innocents');
 }
 
-function updateTimerDisplay() {
-  const m = Math.floor(gameTime / 60);
-  const s = gameTime % 60;
-  document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-}
-
-// ─────────────────────────────────────────
-//  DRAW
-// ─────────────────────────────────────────
-function drawGame() {
-  if (!gameRunning) return;
+// ══════════════════════════════════════════════════
+//  DRAW LOOP
+// ══════════════════════════════════════════════════
+function drawGame(){
+  if(!gameRunning){ return; }
   requestAnimationFrame(drawGame);
 
-  // Move avatar
-  if (!triviaActive) {
-    if (keys['ArrowLeft']  || keys['a']) { avatar.x -= avatar.speed; avatar.dir = Math.PI; }
-    if (keys['ArrowRight'] || keys['d']) { avatar.x += avatar.speed; avatar.dir = 0; }
-    if (keys['ArrowUp']    || keys['w']) { avatar.y -= avatar.speed; avatar.dir = -Math.PI/2; }
-    if (keys['ArrowDown']  || keys['s']) { avatar.y += avatar.speed; avatar.dir = Math.PI/2; }
-    avatar.x = Math.max(14, Math.min(W - 14, avatar.x));
-    avatar.y = Math.max(54, Math.min(H - 14, avatar.y));
+  // Move controlled avatar
+  const av=avatars[controlledIdx];
+  if(av && av.alive && !triviaActive){
+    const spd=av.speed * (isRunning?1.9:1);
+    // WASD + Arrows + Numpad
+    const left  = keys['ArrowLeft']  || keys['a'] || keys['4']; // numpad 4
+    const right = keys['ArrowRight'] || keys['d'] || keys['6']; // numpad 6
+    const up    = keys['ArrowUp']    || keys['w'] || keys['8']; // numpad 8
+    const down  = keys['ArrowDown']  || keys['s'] || keys['2']; // numpad 2
+
+    if(left)  av.x-=spd;
+    if(right) av.x+=spd;
+    if(up)    av.y-=spd;
+    if(down)  av.y+=spd;
+
+    // Clamp to map bounds
+    av.x=Math.max(av.r, Math.min(W-av.r, av.x));
+    av.y=Math.max(42+av.r, Math.min(H-av.r, av.y));
+
+    // Jump arc (visual only — Z axis bob)
+    if(isJumping){
+      av.jumpZ+=av.jumpVel;
+      av.jumpVel+=GRAVITY;
+      if(av.jumpZ>=0){ av.jumpZ=0; av.jumpVel=0; isJumping=false; }
+    }
+
+    // Check if hidden in bathroom
+    const bth=MAP.bathroom;
+    av.hidden = av.x>bth.x && av.x<bth.x+bth.w && av.y>bth.y && av.y<bth.y+bth.h;
   }
 
-  // BG
-  ctx.fillStyle = '#0d1117';
-  ctx.fillRect(0, 0, W, H);
+  // ── DRAW MAP ──
+  ctx.clearRect(0,0,W,H);
 
-  // Grid
-  ctx.strokeStyle = '#1a1a2e';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,40); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y = 40; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  // Outer apartment wall
+  ctx.fillStyle='#2a2015'; ctx.fillRect(0,40,W,H-40);
 
-  // Hide spots (crates)
-  ctx.fillStyle = '#1e1e3f';
-  [[100,150],[W-180,120],[160,H-100],[W-200,H-140],[W/2-30,200]].forEach(([cx,cy]) => {
-    ctx.beginPath(); ctx.roundRect(cx, cy, 50, 50, 6); ctx.fill();
-    ctx.strokeStyle='#2d2d6e'; ctx.lineWidth=1; ctx.stroke();
+  // Rooms
+  Object.values(MAP).forEach(room=>{
+    if(!room.x && room.x!==0) return; // skip doors array
+    if(Array.isArray(room)) return;
+    ctx.fillStyle = room.dark ? '#3a3530' : room.floor;
+    ctx.fillRect(room.x,room.y,room.w,room.h);
+    // Wall border
+    ctx.strokeStyle=room.wall||'#666'; ctx.lineWidth=4;
+    ctx.strokeRect(room.x,room.y,room.w,room.h);
+    // Room label
+    ctx.fillStyle=room.dark?'#887060':'#5a4535';
+    ctx.font='bold 11px Segoe UI'; ctx.textAlign='left';
+    ctx.fillText(room.label, room.x+8, room.y+18);
+    // Furniture
+    if(room.furniture) room.furniture.forEach(f=>{
+      ctx.fillStyle=f.color; ctx.fillRect(f.x,f.y,f.w,f.h);
+      ctx.strokeStyle='#00000040'; ctx.lineWidth=1; ctx.strokeRect(f.x,f.y,f.w,f.h);
+      ctx.fillStyle='#ffffff60'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+      ctx.fillText(f.label,f.x+f.w/2,f.y+f.h/2+3);
+    });
   });
+
+  // Door arches
+  MAP.doors.forEach(d=>{
+    ctx.fillStyle='#c8a870';
+    ctx.fillRect(d.x,d.y,d.w,d.h);
+    ctx.fillStyle='#8b6840'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('🚪',d.x+d.w/2, d.y+d.h-3);
+  });
+
+  // Hallway runner rug
+  const hx=MAP.hallway.x, hw=MAP.hallway.w;
+  ctx.fillStyle='#8b4040';
+  ctx.fillRect(hx+hw*0.2, 60, hw*0.6, H-80);
+  ctx.strokeStyle='#6b2020'; ctx.lineWidth=2;
+  ctx.strokeRect(hx+hw*0.2, 60, hw*0.6, H-80);
 
   // Dropped gun
-  if (droppedGun) {
-    ctx.font = '24px serif';
-    ctx.fillText('🔫', droppedGun.x - 12, droppedGun.y + 10);
-
-    // Check avatar near gun
-    const dx = avatar.x - droppedGun.x, dy = avatar.y - droppedGun.y;
-    if (Math.sqrt(dx*dx + dy*dy) < 30 && !gunPickedUp) {
-      ctx.fillStyle = '#f59e0b'; ctx.font = '12px Segoe UI';
-      ctx.fillText('Click to pick up gun!', droppedGun.x - 40, droppedGun.y - 20);
-    }
+  if(droppedGun){
+    ctx.font='22px serif'; ctx.textAlign='center';
+    ctx.fillText('🔫', droppedGun.x, droppedGun.y+8);
+    // Pulse ring
+    ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(droppedGun.x,droppedGun.y,18+Math.sin(Date.now()/200)*4,0,Math.PI*2); ctx.stroke();
+    ctx.font='10px Segoe UI'; ctx.fillStyle='#f59e0b';
+    ctx.fillText('Click to grab!',droppedGun.x,droppedGun.y-22);
   }
 
-  // NPCs
-  npcs.forEach(npc => {
-    if (!npc.alive) return;
+  // ── DRAW AVATARS ──
+  avatars.forEach((a,i)=>{
+    if(!a.alive) return;
+    const isControlled = i===controlledIdx;
+    const drawY = a.y + a.jumpZ; // jump lifts avatar
+
+    // Hidden in bathroom — ghosted
+    if(a.hidden){
+      ctx.globalAlpha=0.35;
+    }
     // Glow
-    const grd = ctx.createRadialGradient(npc.x, npc.y, 2, npc.x, npc.y, npc.r + 6);
-    grd.addColorStop(0, npc.color + '80');
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.arc(npc.x, npc.y, npc.r + 6, 0, Math.PI*2); ctx.fill();
-    // Body
-    ctx.fillStyle = npc.color;
-    ctx.beginPath(); ctx.arc(npc.x, npc.y, npc.r, 0, Math.PI*2); ctx.fill();
-    // Name
-    ctx.fillStyle = '#ccc'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'center';
-    ctx.fillText(npc.name, npc.x, npc.y - npc.r - 5);
+    const grd=ctx.createRadialGradient(a.x,drawY,2,a.x,drawY,a.r+8);
+    grd.addColorStop(0,a.color+'90'); grd.addColorStop(1,'transparent');
+    ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(a.x,drawY,a.r+8,0,Math.PI*2); ctx.fill();
+    // Body circle
+    ctx.fillStyle=a.color; ctx.beginPath(); ctx.arc(a.x,drawY,a.r,0,Math.PI*2); ctx.fill();
+    // Controlled ring
+    if(isControlled){
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.arc(a.x,drawY,a.r+3,0,Math.PI*2); ctx.stroke();
+    }
+    // Name tag
+    ctx.fillStyle='#fff'; ctx.font=`${isControlled?'bold ':''} 11px Segoe UI`; ctx.textAlign='center';
+    ctx.fillText(a.name, a.x, drawY-a.r-6);
+    // Gun badge
+    if(a.hasGun){ ctx.font='13px serif'; ctx.fillText('🔫',a.x+a.r,drawY-a.r); }
+    // Hidden indicator
+    if(a.hidden){ ctx.font='13px serif'; ctx.fillText('🚿',a.x,drawY+a.r+14); }
+
+    ctx.globalAlpha=1;
   });
 
-  // Avatar
-  const aGrd = ctx.createRadialGradient(avatar.x, avatar.y, 2, avatar.x, avatar.y, avatar.r + 8);
-  aGrd.addColorStop(0, '#7c3aed80'); aGrd.addColorStop(1, 'transparent');
-  ctx.fillStyle = aGrd;
-  ctx.beginPath(); ctx.arc(avatar.x, avatar.y, avatar.r + 8, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#a78bfa';
-  ctx.beginPath(); ctx.arc(avatar.x, avatar.y, avatar.r, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'center';
-  ctx.fillText('YOU', avatar.x, avatar.y - avatar.r - 5);
-  // Direction dot
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(avatar.x + Math.cos(avatar.dir)*avatar.r*.7, avatar.y + Math.sin(avatar.dir)*avatar.r*.7, 3, 0, Math.PI*2); ctx.fill();
-
-  ctx.textAlign = 'left';
+  ctx.textAlign='left';
 }
 
-// ─────────────────────────────────────────
-//  CLICK TO INTERACT
-// ─────────────────────────────────────────
-canvas.addEventListener('click', e => {
-  if (!gameRunning || triviaActive) return;
-  const rect = canvas.getBoundingClientRect();
-  const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+// ══════════════════════════════════════════════════
+//  PLAYER SWITCH (Backspace)
+// ══════════════════════════════════════════════════
+function switchControlled(){
+  const alive=avatars.map((a,i)=>a.alive?i:-1).filter(i=>i>=0);
+  if(alive.length===0) return;
+  const cur=alive.indexOf(controlledIdx);
+  controlledIdx=alive[(cur+1)%alive.length];
+  const banner=document.getElementById('switchBanner');
+  banner.textContent=`Now controlling: ${avatars[controlledIdx].name}`;
+  banner.style.display='block';
+  setTimeout(()=>{ banner.style.display='none'; },1600);
+  updateHUD();
+}
 
-  // Pick up gun
-  if (droppedGun && !gunPickedUp) {
-    const dx = cx - droppedGun.x, dy = cy - droppedGun.y;
-    if (Math.sqrt(dx*dx+dy*dy) < 40) {
-      gunPickedUp = true;
-      droppedGun = null;
-      document.getElementById('roleHint').innerHTML = 'You picked up the <b style="color:#f59e0b">SHERIFF\'S GUN</b>! Click the murderer to shoot!';
-      return;
+// ══════════════════════════════════════════════════
+//  CLICK — ATTACK / PICK UP GUN
+// ══════════════════════════════════════════════════
+canvas.addEventListener('click',e=>{
+  if(!gameRunning||triviaActive) return;
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+
+  // Pick up dropped gun
+  if(droppedGun && !avatars[controlledIdx].hasGun){
+    const dx=cx-droppedGun.x, dy=cy-droppedGun.y;
+    if(Math.sqrt(dx*dx+dy*dy)<40){
+      const av=avatars[controlledIdx];
+      const dist=Math.sqrt((av.x-droppedGun.x)**2+(av.y-droppedGun.y)**2);
+      if(dist<80){
+        av.hasGun=true; droppedGun=null; gunPickedUp=true;
+        updateHUD(); return;
+      }
     }
   }
 
-  // Attack NPC (within range)
-  npcs.forEach(npc => {
-    if (!npc.alive) return;
-    const dx = cx - npc.x, dy = cy - npc.y;
-    if (Math.sqrt(dx*dx+dy*dy) > 50) return;
+  // Attack a target
+  const attacker=avatars[controlledIdx];
+  if(!attacker||!attacker.alive) return;
 
-    // Avatar NPC proximity check
-    const adx = avatar.x - npc.x, ady = avatar.y - npc.y;
-    if (Math.sqrt(adx*adx+ady*ady) > 80) return;
+  avatars.forEach((target,ti)=>{
+    if(ti===controlledIdx||!target.alive) return;
+    const dx=cx-target.x, dy=cy-target.y;
+    if(Math.sqrt(dx*dx+dy*dy)>50) return;
+    const dist=Math.sqrt((attacker.x-target.x)**2+(attacker.y-target.y)**2);
+    if(dist>90) return;
 
-    eliminateNPC(npc);
+    const attackerRole=attacker.role;
+    const targetRole=target.role;
+
+    // KILL RULES:
+    // Murderer → can kill anyone
+    // Sheriff  → can ONLY kill the murderer
+    // Innocent → cannot kill anyone
+    if(attackerRole==='innocent') return; // innocents can't kill
+
+    if(attackerRole==='sheriff'){
+      if(targetRole!=='murderer') return; // sheriff can only kill murderer
+      if(!attacker.hasGun) return; // sheriff needs gun
+    }
+
+    if(attackerRole==='murderer'){
+      // murderer can kill anyone except they need proximity (no gun needed)
+    }
+
+    eliminateAvatar(ti);
   });
 });
 
-function eliminateNPC(npc) {
-  npc.alive = false;
-  aliveSet.delete(npc.name);
-  document.getElementById('aliveNum').textContent = aliveSet.size;
-
-  // If sheriff killed, drop gun
-  if (npc.name === sheriffName && !gunDropped) {
-    gunDropped = true;
-    droppedGun = { x: npc.x, y: npc.y };
+function eliminateAvatar(idx){
+  const a=avatars[idx];
+  a.alive=false;
+  // Drop gun if they had it
+  if(a.hasGun){ a.hasGun=false; gunDropped=true; droppedGun={x:a.x,y:a.y}; }
+  // If sheriff dies without gun being dropped yet
+  if(a.role==='sheriff' && !gunDropped){
+    gunDropped=true; droppedGun={x:a.x,y:a.y};
   }
+  // Win checks
+  const alive=avatars.filter(av=>av.alive);
+  const murdererDead=!alive.find(av=>av.role==='murderer');
+  const nonMurdererAlive=alive.filter(av=>av.role!=='murderer').length;
 
-  // Win check: murderer killed if avatar attacks them using gun
-  if (npc.name === murdererName && gunPickedUp) {
-    endGame('sheriff');
-    return;
-  }
+  if(murdererDead){ endGame('sheriff'); return; }
+  if(nonMurdererAlive===0){ endGame('murderer'); return; }
 
-  // If all innocents + sheriff dead
-  const aliveArr = [...aliveSet];
-  const innocentsAlive = aliveArr.filter(n => roles[n] === 'innocent' || roles[n] === 'sheriff').length;
-  if (innocentsAlive === 0) { endGame('murderer'); }
+  // Switch away from dead avatar
+  if(controlledIdx===idx) switchControlled();
+  updateHUD();
 }
 
-// ─────────────────────────────────────────
+// ══════════════════════════════════════════════════
 //  TRIVIA
-// ─────────────────────────────────────────
-function fireTrivia() {
-  if (triviaIdx >= TRIVIA.length) return;
-  triviaActive = true;
-  triviaAnswered = false;
-  const t = TRIVIA[triviaIdx++];
-  document.getElementById('triviaQ').textContent = t.q;
-  document.getElementById('triviaHint').textContent = t.hint;
-  document.getElementById('triviaFb').textContent = '';
-  const optsEl = document.getElementById('triviaOpts');
-  optsEl.innerHTML = '';
-  t.opts.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'trivia-opt';
-    btn.textContent = opt;
-    btn.onclick = () => answerTrivia(i, t, btn);
-    optsEl.appendChild(btn);
+// ══════════════════════════════════════════════════
+const TRIVIA=[
+  {q:"🍝 Pasta or mac 'n' cheese?",hint:"Which one is the 'real' dish…",opts:["Pasta","Mac 'n' cheese"],answer:0,note:"Pasta is the answer!"},
+  {q:"🌡️ Cold or hot?",hint:"Staying cool is often the smart move…",opts:["Cold","Hot"],answer:0,note:"Cold is correct!"},
+  {q:"🤔 Can you always trust someone you just met?",hint:"This is what the game is about!",opts:["Yes, always!","No, not always"],answer:1,note:"You can't always trust everyone easily. Stay alert!"},
+  {q:"🔍 Someone is acting suspicious. What do you do?",hint:"Think like a Sheriff…",opts:["Ignore it","Watch carefully","Tell everyone immediately"],answer:1,note:"Watch carefully before acting. Jumping to conclusions can be wrong!"},
+];
+
+function fireTrivia(){
+  if(triviaIdx>=TRIVIA.length) return;
+  triviaActive=true; triviaAnswered=false;
+  const t=TRIVIA[triviaIdx++];
+  document.getElementById('triviaQ').textContent=t.q;
+  document.getElementById('triviaHint').textContent=t.hint;
+  document.getElementById('triviaFb').textContent='';
+  const el=document.getElementById('triviaOpts'); el.innerHTML='';
+  t.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button'); btn.className='trivia-opt';
+    btn.textContent=opt; btn.onclick=()=>answerTrivia(i,t,btn);
+    el.appendChild(btn);
   });
   document.getElementById('triviaOverlay').classList.add('show');
 }
 
-function answerTrivia(idx, trivia, btn) {
-  if (triviaAnswered) return;
-  triviaAnswered = true;
-  const allBtns = document.querySelectorAll('.trivia-opt');
-  btn.classList.add(idx === trivia.answer ? 'correct' : 'wrong');
-  allBtns[trivia.answer].classList.add('correct');
-  document.getElementById('triviaFb').textContent = trivia.note;
-  setTimeout(() => {
-    document.getElementById('triviaOverlay').classList.remove('show');
-    triviaActive = false;
-  }, 2800);
+function answerTrivia(idx,t,btn){
+  if(triviaAnswered) return;
+  triviaAnswered=true;
+  document.querySelectorAll('.trivia-opt').forEach((b,i)=>{ if(i===t.answer) b.classList.add('correct'); });
+  if(idx!==t.answer) btn.classList.add('wrong');
+  document.getElementById('triviaFb').textContent=t.note;
+  setTimeout(()=>{ document.getElementById('triviaOverlay').classList.remove('show'); triviaActive=false; },2800);
 }
 
-// ─────────────────────────────────────────
+// ══════════════════════════════════════════════════
 //  END GAME
-// ─────────────────────────────────────────
-function endGame(winner) {
-  gameRunning = false;
-  clearInterval(timerInterval);
-  const data = {
-    murderer: { emoji: '🗡️', title: `${murdererName} wins!`, sub: 'The murderer eliminated everyone. Nobody could be trusted…', confetti: true },
-    sheriff:  { emoji: '🔫', title: 'The Sheriff wins!', sub: `${murdererName} was the murderer all along. Justice is served!`, confetti: true },
-    innocents:{ emoji: '🕊️', title: 'Innocents survive!', sub: `The innocents stayed alive for 2 minutes. They didn't trust too easily!`, confetti: true },
+// ══════════════════════════════════════════════════
+function endGame(winner){
+  gameRunning=false; clearInterval(timerInterval);
+  const data={
+    murderer:{emoji:'🗡️',title:`${murdererName} wins!`,sub:'The murderer eliminated everyone. Nobody could be trusted…',confetti:true},
+    sheriff: {emoji:'🔫',title:'Justice served!',sub:`${murdererName} was the murderer. The Sheriff took them down!`,confetti:true},
+    innocents:{emoji:'🕊️',title:'Innocents survived!',sub:"The innocents stayed alive for 2 minutes. They didn't trust too easily!",confetti:true},
   };
-  const d = data[winner];
-  document.getElementById('endEmoji').textContent = d.emoji;
-  document.getElementById('endTitle').textContent  = d.title;
-  document.getElementById('endSub').textContent    = d.sub;
+  const d=data[winner];
+  document.getElementById('endEmoji').textContent=d.emoji;
+  document.getElementById('endTitle').textContent=d.title;
+  document.getElementById('endSub').textContent=d.sub;
   show('endScreen');
-  if (d.confetti) launchConfetti();
+  if(d.confetti) launchConfetti();
 }
 
-// ─────────────────────────────────────────
+// ══════════════════════════════════════════════════
 //  CONFETTI
-// ─────────────────────────────────────────
-function launchConfetti() {
-  const colors = ['#7c3aed','#f59e0b','#6ee7b7','#ef4444','#60a5fa','#f472b6','#fff'];
-  for (let i = 0; i < 90; i++) {
-    setTimeout(() => {
-      const el = document.createElement('div');
-      el.className = 'confetti-piece';
-      el.style.left = Math.random() * 100 + 'vw';
-      el.style.background = colors[Math.floor(Math.random() * colors.length)];
-      el.style.width  = (6 + Math.random() * 10) + 'px';
-      el.style.height = (6 + Math.random() * 10) + 'px';
-      el.style.animationDuration = (1.5 + Math.random() * 2.5) + 's';
-      el.style.animationDelay = '0s';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 4000);
-    }, i * 30);
+// ══════════════════════════════════════════════════
+function launchConfetti(){
+  const colors=['#7c3aed','#f59e0b','#6ee7b7','#ef4444','#60a5fa','#f472b6','#fff'];
+  for(let i=0;i<100;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div'); el.className='confetti-piece';
+      el.style.left=Math.random()*100+'vw';
+      el.style.background=colors[Math.floor(Math.random()*colors.length)];
+      el.style.width=(6+Math.random()*10)+'px'; el.style.height=(6+Math.random()*10)+'px';
+      el.style.animationDuration=(1.5+Math.random()*2.5)+'s';
+      document.body.appendChild(el); setTimeout(()=>el.remove(),4000);
+    },i*25);
   }
 }
 
-// ─────────────────────────────────────────
+// ══════════════════════════════════════════════════
 //  INPUT
-// ─────────────────────────────────────────
-window.addEventListener('keydown', e => { keys[e.key] = true; });
-window.addEventListener('keyup',   e => { keys[e.key] = false; });
-window.addEventListener('resize',  () => { if (gameRunning) resizeCanvas(); });
+// ══════════════════════════════════════════════════
+window.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  // Numpad keys also stored by key name e.g. "4","6","8","2"
+  if(e.code==='Numpad4') keys['4']=true;
+  if(e.code==='Numpad6') keys['6']=true;
+  if(e.code==='Numpad8') keys['8']=true;
+  if(e.code==='Numpad2') keys['2']=true;
+
+  if(e.key===' '||e.code==='Space'){
+    e.preventDefault();
+    isRunning=true;
+    // Jump
+    const av=avatars[controlledIdx];
+    if(av&&av.alive&&!isJumping){ isJumping=true; av.jumpVel=-10; }
+  }
+  if(e.key==='Backspace'&&gameRunning){ e.preventDefault(); switchControlled(); }
+});
+
+window.addEventListener('keyup',e=>{
+  keys[e.key]=false;
+  if(e.code==='Numpad4') keys['4']=false;
+  if(e.code==='Numpad6') keys['6']=false;
+  if(e.code==='Numpad8') keys['8']=false;
+  if(e.code==='Numpad2') keys['2']=false;
+  if(e.key===' '||e.code==='Space'){ isRunning=false; }
+});
+
+window.addEventListener('resize',()=>{ if(gameRunning){ resizeCanvas(); buildMap(); } });
 </script>
 </body>
 </html>
