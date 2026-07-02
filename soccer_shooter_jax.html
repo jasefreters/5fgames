@@ -3,562 +3,757 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soccer Shooter – Jax's Goalkeeper Game</title>
+<title>Soccer Shooter – Jax</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
+  * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: 'Arial Black', Arial, sans-serif;
-    background: linear-gradient(180deg, #4fc3f7 0%, #81d4fa 40%, #a5d6a7 40%, #66bb6a 55%, #388e3c 100%);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow: hidden;
-    position: relative;
+    font-family:'Arial Black',Arial,sans-serif;
+    background: linear-gradient(180deg,#4fc3f7 0%,#81d4fa 38%,#a5d6a7 38%,#66bb6a 54%,#388e3c 100%);
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    overflow:hidden; position:relative; user-select:none;
   }
-
   /* Clouds */
-  .cloud {
-    position: absolute;
-    background: white;
-    border-radius: 50px;
-    opacity: 0.85;
-  }
-  .cloud::before, .cloud::after {
-    content: '';
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-  }
-  .c1 { width: 120px; height: 40px; top: 60px; left: 8%; animation: drift 18s linear infinite; }
-  .c1::before { width: 60px; height: 60px; top: -30px; left: 15px; }
-  .c1::after  { width: 40px; height: 40px; top: -20px; left: 55px; }
-  .c2 { width: 90px; height: 30px; top: 90px; left: 55%; animation: drift 24s linear infinite 4s; }
-  .c2::before { width: 45px; height: 45px; top: -22px; left: 10px; }
-  .c2::after  { width: 35px; height: 35px; top: -15px; left: 42px; }
-  .c3 { width: 70px; height: 25px; top: 40px; right: 15%; animation: drift 20s linear infinite 8s; }
-  .c3::before { width: 35px; height: 35px; top: -17px; left: 8px; }
-  .c3::after  { width: 28px; height: 28px; top: -12px; left: 33px; }
-  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(30px); } }
+  .cloud { position:absolute; background:white; border-radius:50px; opacity:0.85; }
+  .cloud::before,.cloud::after { content:''; position:absolute; background:white; border-radius:50%; }
+  .c1{width:120px;height:40px;top:55px;left:6%;animation:drift 18s linear infinite;}
+  .c1::before{width:60px;height:60px;top:-30px;left:15px;}
+  .c1::after{width:40px;height:40px;top:-20px;left:55px;}
+  .c2{width:90px;height:30px;top:80px;left:54%;animation:drift 24s linear infinite 4s;}
+  .c2::before{width:45px;height:45px;top:-22px;left:10px;}
+  .c2::after{width:35px;height:35px;top:-15px;left:42px;}
+  .c3{width:70px;height:25px;top:38px;right:13%;animation:drift 20s linear infinite 8s;}
+  .c3::before{width:35px;height:35px;top:-17px;left:8px;}
+  .c3::after{width:28px;height:28px;top:-12px;left:33px;}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(30px)}}
 
   /* Scoreboard */
   #scoreboard {
-    position: absolute;
-    top: 12px;
-    left: 14px;
-    background: rgba(0,0,20,0.82);
-    border: 3px solid gold;
-    border-radius: 12px;
-    padding: 8px 16px;
-    color: white;
-    min-width: 120px;
-    z-index: 100;
+    position:absolute; top:10px; left:12px;
+    background:rgba(0,0,20,0.85); border:3px solid gold;
+    border-radius:12px; padding:7px 14px; color:white;
+    min-width:110px; z-index:100;
   }
-  #scoreboard .label { font-size: 10px; color: gold; letter-spacing: 1px; text-transform: uppercase; }
-  #scoreboard .score { font-size: 28px; font-weight: 900; color: white; line-height: 1; }
-  #scoreboard .target { font-size: 11px; color: #aaa; margin-top: 2px; }
+  #scoreboard .lbl{font-size:9px;color:gold;letter-spacing:1px;text-transform:uppercase;}
+  #scoreboard .sc{font-size:26px;font-weight:900;line-height:1;}
+  #scoreboard .tgt{font-size:10px;color:#aaa;margin-top:1px;}
 
-  /* Title */
+  /* Round counter top-right */
+  #round-info {
+    position:absolute; top:10px; right:12px;
+    background:rgba(0,0,20,0.85); border:3px solid #ff9800;
+    border-radius:12px; padding:7px 14px; color:white;
+    text-align:center; z-index:100;
+  }
+  #round-info .lbl{font-size:9px;color:#ff9800;letter-spacing:1px;text-transform:uppercase;}
+  #round-info .rn{font-size:22px;font-weight:900;line-height:1;}
+  #round-info .mode-tag{font-size:10px;margin-top:1px;}
+
   #title {
-    margin-top: 14px;
-    font-size: 28px;
-    font-weight: 900;
-    color: white;
-    text-shadow: 2px 3px 0 #1565c0, 0 0 20px rgba(0,0,0,0.4);
-    letter-spacing: 1px;
-    z-index: 10;
+    margin-top:12px; font-size:26px; font-weight:900; color:white;
+    text-shadow:2px 3px 0 #1565c0,0 0 18px rgba(0,0,0,0.4);
+    letter-spacing:1px; z-index:10;
   }
 
-  /* Game area */
-  #game-area {
-    position: relative;
-    width: 500px;
-    height: 380px;
-    margin-top: 10px;
-    z-index: 10;
-  }
+  /* Canvas */
+  #game-canvas { display:block; z-index:10; margin-top:6px; cursor:default; }
 
-  /* Goal */
-  #goal {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 320px;
-    height: 160px;
-    border: 8px solid white;
-    border-bottom: none;
-    background: rgba(255,255,255,0.12);
-    /* net lines */
-    background-image:
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 32px),
-      repeating-linear-gradient(0deg,  rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 1px, transparent 1px, transparent 32px);
-    border-radius: 4px 4px 0 0;
-  }
-  .goal-post {
-    position: absolute;
-    bottom: 72px;
-    width: 14px;
-    height: 170px;
-    background: white;
-    border-radius: 4px;
-  }
-  #post-left  { left: calc(50% - 167px); }
-  #post-right { left: calc(50% + 153px); }
-  #crossbar {
-    position: absolute;
-    bottom: 232px;
-    left: calc(50% - 167px);
-    width: 334px;
-    height: 14px;
-    background: white;
-    border-radius: 4px;
-  }
-
-  /* Goalkeeper */
-  #keeper {
-    position: absolute;
-    bottom: 88px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 70px;
-    height: 90px;
-    transition: left 0.12s ease, transform 0.12s ease;
-    z-index: 20;
-  }
-  #keeper svg { width: 100%; height: 100%; }
-
-  /* Ball */
-  #ball {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff, #ddd 40%, #222 100%);
-    border: 2px solid #222;
-    display: none;
-    z-index: 30;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.4);
-  }
-
-  /* Buttons */
-  #controls {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-    z-index: 10;
-  }
-  .dive-btn {
-    padding: 16px 32px;
-    font-size: 18px;
-    font-weight: 900;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: transform 0.1s, box-shadow 0.1s;
-    box-shadow: 0 5px 0 rgba(0,0,0,0.3);
-  }
-  .dive-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
-  #btn-left  { background: #1565c0; color: gold; }
-  #btn-center { background: #f57f17; color: white; }
-  #btn-right { background: #1b5e20; color: gold; }
-
-  /* Instruction */
   #instruction {
-    font-size: 15px;
-    color: white;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-    margin-top: 6px;
-    z-index: 10;
-    min-height: 22px;
-    font-weight: bold;
+    font-size:14px; color:white;
+    text-shadow:1px 1px 3px rgba(0,0,0,0.8);
+    margin-top:4px; z-index:10; min-height:20px; font-weight:bold; text-align:center;
   }
 
-  /* Fast ball indicator */
-  #fast-ball-warning {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    background: #f44336;
-    color: white;
-    font-size: 13px;
-    font-weight: 900;
-    padding: 6px 12px;
-    border-radius: 10px;
-    display: none;
-    animation: pulse 0.4s infinite alternate;
-    z-index: 100;
+  /* Controls */
+  #controls { display:flex; gap:12px; margin-top:7px; z-index:10; }
+  .dive-btn {
+    padding:13px 26px; font-size:16px; font-weight:900; border:none;
+    border-radius:12px; cursor:pointer; text-transform:uppercase; letter-spacing:1px;
+    transition:transform .1s,box-shadow .1s; box-shadow:0 5px 0 rgba(0,0,0,0.3);
   }
-  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+  .dive-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,0.3);}
+  #btn-left{background:#1565c0;color:gold;}
+  #btn-center{background:#f57f17;color:white;}
+  #btn-right{background:#1b5e20;color:gold;}
 
-  /* Overlay */
-  #overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
+  #key-hint{font-size:11px;color:rgba(255,255,255,0.65);margin-top:3px;z-index:10;}
+
+  /* Flash */
+  #result-flash {
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:56px;font-weight:900;pointer-events:none;z-index:250;
+    opacity:0;text-shadow:3px 3px 10px rgba(0,0,0,0.5);transition:opacity .1s;
   }
-  #overlay-box {
-    background: linear-gradient(135deg, #1565c0, #0d47a1);
-    border: 4px solid gold;
-    border-radius: 20px;
-    padding: 36px 48px;
-    text-align: center;
-    color: white;
-    max-width: 360px;
+
+  /* OVERLAYS */
+  .modal-bg {
+    position:fixed;inset:0;background:rgba(0,0,0,0.75);
+    display:flex;align-items:center;justify-content:center;z-index:200;
   }
-  #overlay-box h1 { font-size: 32px; color: gold; margin-bottom: 10px; }
-  #overlay-box p  { font-size: 16px; margin-bottom: 20px; color: #cce; }
-  #overlay-box .final { font-size: 22px; font-weight: 900; color: white; margin: 10px 0; }
-  #start-btn {
-    padding: 14px 36px;
-    font-size: 20px;
-    font-weight: 900;
-    border: none;
-    border-radius: 12px;
-    background: gold;
-    color: #1565c0;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 0 #b8860b;
-    transition: transform 0.1s;
+  .modal-box {
+    background:linear-gradient(135deg,#1565c0,#0d47a1);
+    border:4px solid gold;border-radius:20px;
+    padding:32px 44px;text-align:center;color:white;max-width:400px;width:90%;
   }
-  #start-btn:active { transform: translateY(3px); }
+  .modal-box h1{font-size:28px;color:gold;margin-bottom:8px;}
+  .modal-box p{font-size:14px;margin-bottom:14px;color:#cce;line-height:1.5;}
+  .modal-box .final{font-size:20px;font-weight:900;margin:8px 0;}
+  .gold-btn {
+    padding:12px 32px;font-size:18px;font-weight:900;border:none;
+    border-radius:12px;background:gold;color:#1565c0;cursor:pointer;
+    text-transform:uppercase;letter-spacing:1px;
+    box-shadow:0 4px 0 #b8860b;transition:transform .1s;display:inline-block;
+  }
+  .gold-btn:active{transform:translateY(3px);}
+
+  /* BONUS LEVEL overlay */
+  #bonus-overlay { display:none; }
+  #bonus-overlay .modal-box { background:linear-gradient(135deg,#6a1b9a,#4a148c); border-color:#ce93d8; }
+  #bonus-overlay h1 { color:#ce93d8; }
+  #bonus-overlay p { color:#e1bee7; }
+
+  /* SHOP overlay */
+  #shop-overlay { display:none; }
+  #shop-overlay .modal-box { background:linear-gradient(135deg,#004d40,#00251a); border-color:#80cbc4; max-width:460px; }
+  #shop-overlay h1 { color:#80cbc4; }
+  .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+  .shop-item {
+    background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.2);
+    border-radius:12px; padding:12px 10px; text-align:center; cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  .shop-item:hover { background:rgba(255,255,255,0.15); border-color:#80cbc4; }
+  .shop-item.bought { opacity:0.45; cursor:not-allowed; }
+  .shop-item .item-icon { font-size:28px; display:block; margin-bottom:4px; }
+  .shop-item .item-name { font-size:13px; font-weight:900; color:white; }
+  .shop-item .item-desc { font-size:10px; color:#aaa; margin:3px 0; }
+  .shop-item .item-cost { font-size:14px; color:gold; font-weight:900; }
+  #shop-points { font-size:16px; color:gold; margin-bottom:6px; font-weight:900; }
 
   /* Confetti */
   .confetti-piece {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    top: -10px;
-    z-index: 300;
-    border-radius: 2px;
-    animation: fall linear forwards;
+    position:fixed;width:10px;height:10px;top:-10px;
+    z-index:300;border-radius:2px;animation:fall linear forwards;
   }
-  @keyframes fall {
-    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-  }
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
 
-  /* Result flash */
-  #result-flash {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 60px;
-    font-weight: 900;
-    pointer-events: none;
-    z-index: 250;
-    opacity: 0;
-    text-shadow: 3px 3px 10px rgba(0,0,0,0.5);
-    transition: opacity 0.1s;
+  /* Fast-ball badge */
+  #fast-badge {
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    background:#f44336;color:white;font-size:12px;font-weight:900;
+    padding:5px 12px;border-radius:10px;display:none;
+    animation:pulse .4s infinite alternate;z-index:100;white-space:nowrap;
   }
+  @keyframes pulse{from{opacity:1}to{opacity:.5}}
 
-  /* Ground strip */
-  #ground {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 80px;
-    background: linear-gradient(0deg, #2e7d32, #43a047);
-    border-top: 4px solid white;
-    z-index: 5;
-  }
-
-  /* Keyboard hint */
-  #key-hint {
-    font-size: 12px;
-    color: rgba(255,255,255,0.7);
-    margin-top: 4px;
-    z-index: 10;
+  /* Bonus badge */
+  #bonus-badge {
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(90deg,#9c27b0,#673ab7);
+    color:white;font-size:12px;font-weight:900;
+    padding:5px 12px;border-radius:10px;display:none;z-index:100;
   }
 </style>
 </head>
 <body>
 
-<!-- Clouds -->
 <div class="cloud c1"></div>
 <div class="cloud c2"></div>
 <div class="cloud c3"></div>
 
-<!-- Scoreboard (top-left) -->
 <div id="scoreboard">
-  <div class="label">Score</div>
-  <div class="score" id="score-display">0</div>
-  <div class="target">First to 20 wins!</div>
+  <div class="lbl">Score</div>
+  <div class="sc" id="score-display">0</div>
+  <div class="tgt">First to 50 wins!</div>
 </div>
 
-<!-- Fast ball warning -->
-<div id="fast-ball-warning">⚡ FAST BALL!</div>
+<div id="round-info">
+  <div class="lbl">Round</div>
+  <div class="rn" id="round-display">1</div>
+  <div class="mode-tag" id="mode-tag">Normal</div>
+</div>
+
+<div id="fast-badge">⚡ FAST BALL!</div>
+<div id="bonus-badge">⭐ BONUS ROUND — 2× Points!</div>
 
 <div id="title">⚽ Soccer Shooter</div>
 
-<div id="game-area">
-  <!-- Goal structure -->
-  <div id="goal"></div>
-  <div class="goal-post" id="post-left"></div>
-  <div class="goal-post" id="post-right"></div>
-  <div id="crossbar"></div>
-
-  <!-- Goalkeeper -->
-  <div id="keeper">
-    <svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
-      <!-- Body (gold kit) -->
-      <rect x="20" y="38" width="30" height="32" rx="4" fill="#f9a825"/>
-      <!-- Number on shirt -->
-      <text x="35" y="57" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">1</text>
-      <!-- Head -->
-      <circle cx="35" cy="26" r="14" fill="#FDBCB4"/>
-      <!-- Hair -->
-      <ellipse cx="35" cy="14" rx="13" ry="7" fill="#4a2c0a"/>
-      <!-- Eyes -->
-      <circle cx="30" cy="25" r="2" fill="#333"/>
-      <circle cx="40" cy="25" r="2" fill="#333"/>
-      <!-- Mouth -->
-      <path d="M30 31 Q35 35 40 31" stroke="#c0786b" stroke-width="1.5" fill="none"/>
-      <!-- Gloves -->
-      <rect x="8"  y="40" width="14" height="10" rx="4" fill="#ff6f00"/>
-      <rect x="48" y="40" width="14" height="10" rx="4" fill="#ff6f00"/>
-      <!-- Legs -->
-      <rect x="22" y="68" width="11" height="18" rx="3" fill="#1565c0"/>
-      <rect x="37" y="68" width="11" height="18" rx="3" fill="#1565c0"/>
-      <!-- Boots -->
-      <rect x="20" y="82" width="14" height="8" rx="3" fill="#212121"/>
-      <rect x="36" y="82" width="14" height="8" rx="3" fill="#212121"/>
-    </svg>
-  </div>
-
-  <!-- Ball -->
-  <div id="ball"></div>
-
-  <!-- Ground -->
-  <div id="ground"></div>
-</div>
+<canvas id="game-canvas" width="500" height="340"></canvas>
 
 <p id="instruction">Press START to play!</p>
 
-<!-- Controls -->
 <div id="controls">
-  <button class="dive-btn" id="btn-left"   onclick="dive('left')">⬅ Dive Left</button>
+  <button class="dive-btn" id="btn-left"   onclick="dive('left')">⬅ Left</button>
   <button class="dive-btn" id="btn-center" onclick="dive('center')">🙌 Stay</button>
-  <button class="dive-btn" id="btn-right"  onclick="dive('right')">Dive Right ➡</button>
+  <button class="dive-btn" id="btn-right"  onclick="dive('right')">Right ➡</button>
 </div>
-
 <p id="key-hint">Keyboard: ← Left &nbsp;|&nbsp; ↑ Stay &nbsp;|&nbsp; → Right</p>
 
-<!-- Result flash -->
 <div id="result-flash"></div>
 
-<!-- Overlay (start / game over) -->
-<div id="overlay">
-  <div id="overlay-box">
+<!-- Start / Game Over overlay -->
+<div class="modal-bg" id="main-overlay">
+  <div class="modal-box">
     <h1 id="overlay-title">⚽ Soccer Shooter</h1>
-    <p id="overlay-msg">You're the goalkeeper! Dive left, right, or stay to save shots. First to reach 20 points wins!</p>
+    <p id="overlay-msg">You're the goalkeeper! Dive left, right, or stay to save shots.<br>Reach <strong>50 points</strong> to win!<br><br>🛒 Shop appears every 3 rounds<br>⭐ Bonus rounds give 2× points<br>🔄 Ball curves — watch it carefully!</p>
     <p id="overlay-final" class="final"></p>
-    <button id="start-btn" onclick="startGame()">KICK OFF!</button>
+    <button class="gold-btn" id="start-btn" onclick="startGame()">KICK OFF!</button>
+  </div>
+</div>
+
+<!-- Bonus level overlay -->
+<div class="modal-bg" id="bonus-overlay">
+  <div class="modal-box">
+    <h1>⭐ BONUS ROUND!</h1>
+    <p>Every save is worth <strong>2 points</strong> this round!<br>Watch out — the ball is faster!</p>
+    <button class="gold-btn" onclick="startBonusShot()">LET'S GO!</button>
+  </div>
+</div>
+
+<!-- Shop overlay -->
+<div class="modal-bg" id="shop-overlay">
+  <div class="modal-box">
+    <h1>🛒 Power-Up Shop</h1>
+    <p id="shop-points">Your points: 0</p>
+    <div class="shop-grid" id="shop-grid"></div>
+    <button class="gold-btn" onclick="closeShop()">Continue Playing</button>
   </div>
 </div>
 
 <script>
-  // --- State ---
-  let score = 0;
-  let shotCount = 0;
-  let keeperPos = 'center'; // 'left', 'center', 'right'
-  let ballTarget = 'center';
-  let waiting = true;
-  let isFastBall = false;
-  let ballTimeout = null;
-  let animating = false;
-  const WIN_SCORE = 20;
+// ============================================================
+// CONSTANTS
+// ============================================================
+const WIN_SCORE = 50;
+const CANVAS_W  = 500;
+const CANVAS_H  = 340;
+const GROUND_Y  = CANVAS_H - 60;
 
-  const keeper = document.getElementById('keeper');
-  const ball = document.getElementById('ball');
-  const scoreDisplay = document.getElementById('score-display');
-  const instruction = document.getElementById('instruction');
-  const flashEl = document.getElementById('result-flash');
-  const fastWarn = document.getElementById('fast-ball-warning');
+// Goal dimensions
+const GOAL_W = 300, GOAL_H = 140, GOAL_POST = 10;
+const GOAL_X = (CANVAS_W - GOAL_W) / 2;
+const GOAL_Y = GROUND_Y - GOAL_H;
 
-  // Keeper positions (left% from center of game-area)
-  const KEEPER_POS = {
-    left:   { left: '22%', transform: 'translateX(-50%)' },
-    center: { left: '50%', transform: 'translateX(-50%)' },
-    right:  { left: '78%', transform: 'translateX(-50%)' }
-  };
+// Keeper
+const KEEPER_W = 60, KEEPER_H = 80;
+const KEEPER_Y = GROUND_Y - KEEPER_H;
+const KEEPER_POSITIONS = {
+  left:   GOAL_X + 30,
+  center: CANVAS_W / 2,
+  right:  GOAL_X + GOAL_W - 30
+};
 
-  // Ball target landing positions (in game-area)
-  const BALL_TARGETS = {
-    left:   { left: '28%', bottom: '120px' },
-    center: { left: '50%', bottom: '115px' },
-    right:  { left: '72%', bottom: '120px' }
-  };
+// Ball
+const BALL_R   = 18;
+const BALL_START_X = CANVAS_W / 2;
+const BALL_START_Y = CANVAS_H - 20;
+const BALL_TARGETS = {
+  left:   { x: GOAL_X + 55,       y: GOAL_Y + GOAL_H * 0.55 },
+  center: { x: CANVAS_W / 2,      y: GOAL_Y + GOAL_H * 0.5  },
+  right:  { x: GOAL_X + GOAL_W - 55, y: GOAL_Y + GOAL_H * 0.55 }
+};
 
-  // Ball start
-  const BALL_START = { left: '50%', bottom: '30px' };
+// Base speed (ms). 10% faster than original (800→720 normal, 350→315 fast)
+const BASE_SPEED_NORMAL = 720;
+const BASE_SPEED_FAST   = 315;
+const BASE_SPEED_BONUS  = 560; // bonus round speed
 
-  function startGame() {
-    score = 0;
-    shotCount = 0;
-    scoreDisplay.textContent = '0';
-    document.getElementById('overlay').style.display = 'none';
-    resetKeeper();
-    waiting = true;
+// ============================================================
+// STATE
+// ============================================================
+let score       = 0;
+let round       = 1;       // shot round counter
+let shotCount   = 0;
+let keeperPos   = 'center';
+let ballTarget  = 'center';
+let animating   = false;
+let isFastBall  = false;
+let isBonusRound = false;
+let playerDived = false;
+let diveChoice  = 'center';
+
+// Shop upgrades
+const SHOP_ITEMS = [
+  { id:'slow',   icon:'🐢', name:'Slow Ball',      desc:'Ball 25% slower',   cost:5,  bought:false },
+  { id:'wide',   icon:'🧤', name:'Wide Gloves',    desc:'Left & center both save left shots', cost:6, bought:false },
+  { id:'hint',   icon:'👁️', name:'Curve Hint',     desc:'Arrow shows curve direction', cost:7, bought:false },
+  { id:'shield', icon:'🛡️', name:'One-Time Shield',desc:'Block one goal (1 use)',  cost:8,  bought:false, uses:1 },
+];
+let upgrades = {};  // id → active
+let shieldUses = 0;
+
+// Canvas & animation
+const canvas  = document.getElementById('game-canvas');
+const ctx     = canvas.getContext('2d');
+
+// Ball animation via requestAnimationFrame
+let ballAnim  = null; // { startTime, duration, sx,sy, mx,my, ex,ey, curveType }
+let ballX = BALL_START_X, ballY = BALL_START_Y;
+
+// Curve types
+// straight-then-left:  starts going straight, veers left
+// straight-then-right: starts going straight, veers right
+// left-then-right:     starts left, ends right
+// right-then-left:     starts right, ends left
+const CURVE_TYPES = ['straight-left','straight-right','left-right','right-left'];
+
+// ============================================================
+// DRAW
+// ============================================================
+function drawScene(showBall) {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Ground
+  const grd = ctx.createLinearGradient(0, GROUND_Y, 0, CANVAS_H);
+  grd.addColorStop(0,'#43a047'); grd.addColorStop(1,'#2e7d32');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, GROUND_Y, CANVAS_W, CANVAS_H - GROUND_Y);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(CANVAS_W, GROUND_Y); ctx.stroke();
+
+  // Penalty spot
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.arc(CANVAS_W/2, GROUND_Y + 20, 4, 0, Math.PI*2); ctx.fill();
+
+  // Net pattern inside goal
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(GOAL_X, GOAL_Y, GOAL_W, GOAL_H);
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+  ctx.lineWidth = 1;
+  for (let x = GOAL_X; x <= GOAL_X + GOAL_W; x += 28) {
+    ctx.beginPath(); ctx.moveTo(x, GOAL_Y); ctx.lineTo(x, GOAL_Y + GOAL_H); ctx.stroke();
+  }
+  for (let y = GOAL_Y; y <= GOAL_Y + GOAL_H; y += 28) {
+    ctx.beginPath(); ctx.moveTo(GOAL_X, y); ctx.lineTo(GOAL_X + GOAL_W, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Goal frame
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = GOAL_POST;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(GOAL_X, GOAL_Y + GOAL_H);
+  ctx.lineTo(GOAL_X, GOAL_Y);
+  ctx.lineTo(GOAL_X + GOAL_W, GOAL_Y);
+  ctx.lineTo(GOAL_X + GOAL_W, GOAL_Y + GOAL_H);
+  ctx.stroke();
+
+  // Curve hint arrow
+  if (upgrades.hint && ballAnim && !playerDived) {
+    const hint = getCurveHint(ballAnim.curveType, ballTarget);
+    if (hint) {
+      ctx.save();
+      ctx.font = 'bold 20px Arial';
+      ctx.fillStyle = '#ffe082';
+      ctx.textAlign = 'center';
+      ctx.fillText(hint, CANVAS_W/2, CANVAS_H - 40);
+      ctx.restore();
+    }
+  }
+
+  // Ball (drawn before keeper so keeper appears in front)
+  if (showBall) {
+    // shadow
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(ballX, GROUND_Y + 4, BALL_R * 0.9, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // ball
+    const bg = ctx.createRadialGradient(ballX - 5, ballY - 5, 2, ballX, ballY, BALL_R);
+    bg.addColorStop(0,'#fff'); bg.addColorStop(0.4,'#ddd'); bg.addColorStop(1,'#222');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(ballX, ballY, BALL_R, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // seam lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(ballX - 3, ballY - 3, BALL_R * 0.55, 0.3, 2.2); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(ballX + 3, ballY + 3, BALL_R * 0.55, 3.5, 5.5); ctx.stroke();
+  }
+
+  // Keeper
+  drawKeeper(keeperPxX, isBonusRound);
+}
+
+let keeperPxX = CANVAS_W / 2;
+
+function drawKeeper(cx, bonus) {
+  const x = cx - KEEPER_W / 2;
+  const y = KEEPER_Y;
+  ctx.save();
+
+  // Body
+  ctx.fillStyle = bonus ? '#9c27b0' : '#f9a825';
+  roundRect(ctx, x + 14, y + 36, 32, 30, 4);
+  ctx.fill();
+
+  // Number
+  ctx.fillStyle = '#1565c0';
+  ctx.font = 'bold 11px Arial Black';
+  ctx.textAlign = 'center';
+  ctx.fillText('1', cx, y + 56);
+
+  // Head
+  ctx.fillStyle = '#FDBCB4';
+  ctx.beginPath(); ctx.arc(cx, y + 20, 14, 0, Math.PI*2); ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#4a2c0a';
+  ctx.beginPath();
+  ctx.ellipse(cx, y + 8, 13, 8, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.arc(cx - 5, y + 19, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 5, y + 19, 2, 0, Math.PI*2); ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = '#c0786b'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, y + 26, 5, 0.3, Math.PI - 0.3); ctx.stroke();
+
+  // Gloves
+  ctx.fillStyle = '#ff6f00';
+  roundRect(ctx, x, y + 38, 14, 10, 4); ctx.fill();
+  roundRect(ctx, x + KEEPER_W - 14, y + 38, 14, 10, 4); ctx.fill();
+
+  // Legs
+  ctx.fillStyle = '#1565c0';
+  roundRect(ctx, x + 14, y + 65, 11, 18, 3); ctx.fill();
+  roundRect(ctx, x + 35, y + 65, 11, 18, 3); ctx.fill();
+
+  // Boots
+  ctx.fillStyle = '#212121';
+  roundRect(ctx, x + 12, y + 78, 14, 8, 3); ctx.fill();
+  roundRect(ctx, x + 34, y + 78, 14, 8, 3); ctx.fill();
+
+  ctx.restore();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x+r, y);
+  c.lineTo(x+w-r, y); c.quadraticCurveTo(x+w, y, x+w, y+r);
+  c.lineTo(x+w, y+h-r); c.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  c.lineTo(x+r, y+h); c.quadraticCurveTo(x, y+h, x, y+h-r);
+  c.lineTo(x, y+r); c.quadraticCurveTo(x, y, x+r, y);
+  c.closePath();
+}
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function startGame() {
+  score = 0; round = 0; shotCount = 0;
+  isBonusRound = false; animating = false;
+  upgrades = {}; shieldUses = 0;
+  SHOP_ITEMS.forEach(i => i.bought = false);
+  document.getElementById('main-overlay').style.display = 'none';
+  document.getElementById('score-display').textContent = '0';
+  keeperPxX = CANVAS_W / 2; keeperPos = 'center';
+  ballX = BALL_START_X; ballY = BALL_START_Y;
+  drawScene(false);
+  scheduleNextShot(1000);
+}
+
+function scheduleNextShot(delay) {
+  setTimeout(() => {
+    round++;
+    document.getElementById('round-display').textContent = round;
+
+    // Every 3 rounds → shop, then maybe bonus
+    if (round > 1 && (round - 1) % 3 === 0) {
+      openShop();
+      return;
+    }
+    decideNextRound();
+  }, delay);
+}
+
+function decideNextRound() {
+  // Bonus round: every 4th shot (rounds 4,8,12…) after round 3
+  const isBonusTrigger = round >= 4 && (round % 4 === 0);
+  if (isBonusTrigger) {
+    isBonusRound = true;
+    document.getElementById('mode-tag').textContent = '⭐ Bonus';
+    document.getElementById('bonus-overlay').style.display = 'flex';
+  } else {
+    isBonusRound = false;
+    document.getElementById('mode-tag').textContent = 'Normal';
+    launchShot();
+  }
+}
+
+function startBonusShot() {
+  document.getElementById('bonus-overlay').style.display = 'none';
+  launchShot();
+}
+
+// ============================================================
+// SHOT LOGIC
+// ============================================================
+function launchShot() {
+  if (animating) return;
+  animating = true; playerDived = false; diveChoice = 'center';
+
+  shotCount++;
+  keeperPos = 'center';
+  keeperPxX = CANVAS_W / 2;
+
+  const targets = ['left','center','right'];
+  ballTarget = targets[Math.floor(Math.random() * 3)];
+
+  // Wide gloves upgrade: left zone also catches center
+  isFastBall = !isBonusRound && shotCount > 1 && shotCount % 3 === 0;
+
+  let baseSpeed = isBonusRound ? BASE_SPEED_BONUS : (isFastBall ? BASE_SPEED_FAST : BASE_SPEED_NORMAL);
+  if (upgrades.slow) baseSpeed = Math.round(baseSpeed * 1.33); // 25% slower
+
+  // Pick curve type
+  const curveType = CURVE_TYPES[Math.floor(Math.random() * CURVE_TYPES.length)];
+
+  // Compute midpoint for bezier curve
+  const ex = BALL_TARGETS[ballTarget].x;
+  const ey = BALL_TARGETS[ballTarget].y;
+  const sx = BALL_START_X, sy = BALL_START_Y;
+  const mx = computeMidX(sx, ex, curveType);
+  const my = (sy + ey) / 2;
+
+  ballAnim = { startTime: null, duration: baseSpeed, sx, sy, mx, my, ex, ey, curveType };
+  ballX = sx; ballY = sy;
+
+  // UI badges
+  document.getElementById('fast-badge').style.display  = isFastBall   ? 'block' : 'none';
+  document.getElementById('bonus-badge').style.display = isBonusRound ? 'block' : 'none';
+
+  const instr = document.getElementById('instruction');
+  if (isBonusRound)  instr.textContent = '⭐ BONUS — 2× points! Watch the curve!';
+  else if (isFastBall) instr.textContent = '⚡ FAST BALL — react quick!';
+  else               instr.textContent = 'Watch the curve — choose your move!';
+
+  requestAnimationFrame(animateBall);
+}
+
+function computeMidX(sx, ex, curveType) {
+  const spread = 130;
+  switch (curveType) {
+    case 'straight-left':  return (sx + ex) / 2 - spread * 0.5;
+    case 'straight-right': return (sx + ex) / 2 + spread * 0.5;
+    case 'left-right':     return sx - spread * 0.7;
+    case 'right-left':     return sx + spread * 0.7;
+  }
+  return (sx + ex) / 2;
+}
+
+function getCurveHint(curveType, target) {
+  switch (curveType) {
+    case 'straight-left':  return '↙ Curves Left';
+    case 'straight-right': return '↘ Curves Right';
+    case 'left-right':     return '↪ Left then Right';
+    case 'right-left':     return '↩ Right then Left';
+  }
+  return '';
+}
+
+function animateBall(ts) {
+  if (!ballAnim) return;
+  if (!ballAnim.startTime) ballAnim.startTime = ts;
+  const t = Math.min((ts - ballAnim.startTime) / ballAnim.duration, 1);
+  const { sx, sy, mx, my, ex, ey } = ballAnim;
+
+  // Quadratic bezier
+  ballX = (1-t)*(1-t)*sx + 2*(1-t)*t*mx + t*t*ex;
+  ballY = (1-t)*(1-t)*sy + 2*(1-t)*t*my + t*t*ey;
+
+  drawScene(true);
+
+  if (t < 1) {
+    requestAnimationFrame(animateBall);
+  } else {
+    ballAnim = null;
+    resolveShot();
+  }
+}
+
+// ============================================================
+// DIVE
+// ============================================================
+function dive(direction) {
+  if (!animating || playerDived) return;
+  playerDived = true;
+  diveChoice = direction;
+  keeperPos = direction;
+  // Animate keeper slide
+  animateKeeper(KEEPER_POSITIONS[direction]);
+}
+
+function animateKeeper(targetX) {
+  const speed = 120; // ms
+  const startX = keeperPxX;
+  const diff = targetX - startX;
+  const startT = performance.now();
+  function step(ts) {
+    const t = Math.min((ts - startT) / speed, 1);
+    keeperPxX = startX + diff * t;
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ============================================================
+// RESOLVE
+// ============================================================
+function resolveShot() {
+  document.getElementById('fast-badge').style.display  = 'none';
+  document.getElementById('bonus-badge').style.display = 'none';
+
+  const effectiveDiv = playerDived ? diveChoice : 'center';
+
+  // Wide gloves: left saves also count for center
+  let saved = false;
+  if (upgrades.wide) {
+    if (ballTarget === 'left' && (effectiveDiv === 'left' || effectiveDiv === 'center')) saved = true;
+    else saved = (effectiveDiv === ballTarget);
+  } else {
+    saved = (effectiveDiv === ballTarget);
+  }
+
+  // Shield
+  if (!saved && upgrades.shield && shieldUses > 0) {
+    shieldUses--;
+    if (shieldUses === 0) { delete upgrades.shield; SHOP_ITEMS.find(i=>i.id==='shield').bought=false; SHOP_ITEMS.find(i=>i.id==='shield').uses=1; }
+    saved = true;
+    flash('🛡️ SHIELD!', '#9c27b0');
+  }
+
+  const pts = isBonusRound ? 2 : 1;
+
+  if (saved) {
+    score += pts;
+    flash(isBonusRound ? `SAVED! +${pts} ⭐` : 'SAVED! 🧤', '#43a047');
+    spawnConfetti();
+    document.getElementById('instruction').textContent = isBonusRound ? `Double save! +2 pts → ${score}` : `Great save! Score: ${score}`;
+  } else {
+    score -= 1;
+    flash('GOAL! ⚽', '#e53935');
+    document.getElementById('instruction').textContent = `It's in! Score: ${score}`;
+  }
+
+  document.getElementById('score-display').textContent = score;
+
+  setTimeout(() => {
+    ballX = BALL_START_X; ballY = BALL_START_Y;
     animating = false;
-    instruction.textContent = 'Here comes the shot! Get ready...';
-    setTimeout(launchShot, 1200);
-  }
 
-  function resetKeeper() {
-    keeperPos = 'center';
-    keeper.style.left = '50%';
-    keeper.style.transform = 'translateX(-50%)';
-    keeper.style.transition = 'left 0.12s ease, transform 0.12s ease';
-  }
+    if (score >= WIN_SCORE) { endGame(true); return; }
+    scheduleNextShot(1000);
+  }, 700);
+}
 
-  function launchShot() {
-    if (animating) return;
-    animating = true;
-    waiting = false;
-    shotCount++;
-    resetKeeper();
-
-    // Every 3 saves = fast ball
-    const savesSoFar = Math.max(0, score);
-    isFastBall = (shotCount > 1 && shotCount % 3 === 0);
-
-    // Pick a random target
-    const targets = ['left', 'center', 'right'];
-    ballTarget = targets[Math.floor(Math.random() * 3)];
-
-    const speed = isFastBall ? 350 : 800;
-
-    if (isFastBall) {
-      fastWarn.style.display = 'block';
-      instruction.textContent = '⚡ FAST BALL — react quickly!';
-    } else {
-      fastWarn.style.display = 'none';
-      instruction.textContent = 'Choose your move!';
+// ============================================================
+// SHOP
+// ============================================================
+function openShop() {
+  const grid = document.getElementById('shop-grid');
+  document.getElementById('shop-points').textContent = `Your points: ${score}`;
+  grid.innerHTML = '';
+  SHOP_ITEMS.forEach(item => {
+    const d = document.createElement('div');
+    d.className = 'shop-item' + (item.bought ? ' bought' : '');
+    d.innerHTML = `
+      <span class="item-icon">${item.icon}</span>
+      <div class="item-name">${item.name}</div>
+      <div class="item-desc">${item.desc}</div>
+      <div class="item-cost">💰 ${item.cost} pts</div>
+      ${item.bought ? '<div style="font-size:11px;color:#80cbc4;margin-top:3px;">OWNED</div>' : ''}
+    `;
+    if (!item.bought) {
+      d.onclick = () => buyItem(item);
     }
-
-    // Show ball at bottom centre
-    ball.style.display = 'block';
-    ball.style.left = BALL_START.left;
-    ball.style.bottom = BALL_START.bottom;
-    ball.style.transform = 'translate(-50%, 0)';
-    ball.style.transition = 'none';
-    ball.style.top = 'auto';
-
-    // Animate ball toward target
-    const target = BALL_TARGETS[ballTarget];
-    setTimeout(() => {
-      ball.style.transition = `left ${speed}ms ease-in, bottom ${speed}ms ease-in`;
-      ball.style.left = target.left;
-      ball.style.bottom = target.bottom;
-    }, 30);
-
-    // After ball arrives
-    ballTimeout = setTimeout(() => {
-      resolveShot();
-    }, speed + 60);
-  }
-
-  function dive(direction) {
-    if (!animating || waiting) return;
-    // Cancel pending resolution — player acted
-    // (we let the ball animate, record the dive)
-    keeperPos = direction;
-    applyKeeperPos(direction);
-  }
-
-  function applyKeeperPos(pos) {
-    const p = KEEPER_POS[pos];
-    keeper.style.left = p.left;
-    keeper.style.transform = p.transform + (pos === 'left' ? ' scaleX(-1)' : pos === 'right' ? ' scaleX(1)' : '');
-  }
-
-  function resolveShot() {
-    fastWarn.style.display = 'none';
-    const saved = (keeperPos === ballTarget);
-
-    if (saved) {
-      score++;
-      flash('SAVED! 🧤', '#43a047', '+1');
-      spawnConfetti();
-      instruction.textContent = `Great save! Score: ${score}`;
-    } else {
-      score--;
-      flash('GOAL! ⚽', '#e53935', '-1');
-      instruction.textContent = `It's in! Score: ${score}`;
-    }
-
-    scoreDisplay.textContent = score;
-
-    // Hide ball
-    setTimeout(() => {
-      ball.style.display = 'none';
-      animating = false;
-
-      if (score >= WIN_SCORE) {
-        endGame(true);
-        return;
-      }
-
-      // Next shot after delay
-      setTimeout(launchShot, 1400);
-    }, 700);
-  }
-
-  function flash(emoji, color, change) {
-    flashEl.textContent = emoji;
-    flashEl.style.color = color;
-    flashEl.style.opacity = '1';
-    setTimeout(() => { flashEl.style.opacity = '0'; }, 800);
-  }
-
-  function endGame(won) {
-    const overlay = document.getElementById('overlay');
-    const title = document.getElementById('overlay-title');
-    const msg = document.getElementById('overlay-msg');
-    const final = document.getElementById('overlay-final');
-    const btn = document.getElementById('start-btn');
-
-    title.textContent = won ? '🏆 You Win!' : '😅 Game Over';
-    msg.textContent = won
-      ? `Amazing goalkeeping! You reached ${WIN_SCORE} points!`
-      : `Shots faced: ${shotCount}. Better luck next time!`;
-    final.textContent = `Final Score: ${score}`;
-    btn.textContent = 'PLAY AGAIN';
-    overlay.style.display = 'flex';
-  }
-
-  // --- Confetti ---
-  function spawnConfetti() {
-    const colours = ['#FFD700','#1565c0','#f44336','#4caf50','#ff9800','#e91e63','#fff'];
-    for (let i = 0; i < 40; i++) {
-      const c = document.createElement('div');
-      c.className = 'confetti-piece';
-      c.style.left = Math.random() * 100 + 'vw';
-      c.style.background = colours[Math.floor(Math.random() * colours.length)];
-      c.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
-      c.style.animationDelay = (Math.random() * 0.3) + 's';
-      c.style.width = c.style.height = (8 + Math.random() * 10) + 'px';
-      document.body.appendChild(c);
-      setTimeout(() => c.remove(), 3000);
-    }
-  }
-
-  // --- Keyboard controls ---
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft')  dive('left');
-    if (e.key === 'ArrowRight') dive('right');
-    if (e.key === 'ArrowUp')    dive('center');
+    grid.appendChild(d);
   });
+  document.getElementById('shop-overlay').style.display = 'flex';
+}
+
+function buyItem(item) {
+  if (item.bought) return;
+  if (score < item.cost) { flash('Not enough points!', '#f44336'); return; }
+  score -= item.cost;
+  document.getElementById('score-display').textContent = score;
+  item.bought = true;
+  upgrades[item.id] = true;
+  if (item.id === 'shield') shieldUses = item.uses;
+  // Refresh shop
+  document.getElementById('shop-points').textContent = `Your points: ${score}`;
+  openShop();
+}
+
+function closeShop() {
+  document.getElementById('shop-overlay').style.display = 'none';
+  decideNextRound();
+}
+
+// ============================================================
+// GAME OVER
+// ============================================================
+function endGame(won) {
+  const ol = document.getElementById('main-overlay');
+  document.getElementById('overlay-title').textContent = won ? '🏆 You Win!' : '😅 Game Over';
+  document.getElementById('overlay-msg').textContent = won
+    ? `Incredible goalkeeping! You reached ${WIN_SCORE} points in ${round} rounds!`
+    : `${round} rounds played. Better luck next time!`;
+  document.getElementById('overlay-final').textContent = `Final Score: ${score}`;
+  document.getElementById('start-btn').textContent = 'PLAY AGAIN';
+  ol.style.display = 'flex';
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+const flashEl = document.getElementById('result-flash');
+function flash(text, color) {
+  flashEl.textContent = text;
+  flashEl.style.color = color;
+  flashEl.style.fontSize = text.length > 10 ? '36px' : '52px';
+  flashEl.style.opacity = '1';
+  setTimeout(() => { flashEl.style.opacity = '0'; }, 900);
+}
+
+function spawnConfetti() {
+  const cols = ['#FFD700','#1565c0','#f44336','#4caf50','#ff9800','#e91e63','#fff','#ce93d8'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = cols[Math.floor(Math.random()*cols.length)];
+    c.style.animationDuration = (1.2 + Math.random()*1.5) + 's';
+    c.style.animationDelay    = (Math.random()*0.4) + 's';
+    const sz = (7 + Math.random()*10) + 'px';
+    c.style.width = c.style.height = sz;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  dive('left');
+  if (e.key === 'ArrowRight') dive('right');
+  if (e.key === 'ArrowUp')    dive('center');
+});
+
+// Initial draw
+drawScene(false);
 </script>
 </body>
 </html>
