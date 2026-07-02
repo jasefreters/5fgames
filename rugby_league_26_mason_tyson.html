@@ -56,17 +56,41 @@
     position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
     font-size:12px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:700;text-align:center;
   }
+  #passhint{
+    position:absolute;bottom:74px;left:50%;transform:translateX(-50%);
+    font-size:11px;letter-spacing:2px;color:#9aa0aa;text-transform:uppercase;text-align:center;
+  }
 
   #centermsg{
-    position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);
+    position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);
     text-align:center;font-weight:900;font-style:italic;
     text-shadow:0 4px 18px rgba(0,0,0,.8);
     opacity:0;transition:opacity .25s, transform .25s;
     pointer-events:none;
   }
   #centermsg.show{opacity:1;}
-  #centermsg .big{font-size:70px;letter-spacing:3px;color:var(--gold);}
-  #centermsg .small{font-size:18px;color:var(--white);letter-spacing:5px;margin-top:-6px;}
+  #centermsg .big{font-size:66px;letter-spacing:3px;color:var(--gold);}
+  #centermsg .small{font-size:17px;color:var(--white);letter-spacing:5px;margin-top:-6px;}
+
+  /* conversion overlay */
+  #conversionUI{
+    position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);
+    display:none;flex-direction:column;align-items:center;gap:14px;
+    pointer-events:none;
+  }
+  #conversionUI.show{display:flex;}
+  #convTitle{font-size:22px;font-weight:900;font-style:italic;letter-spacing:3px;color:var(--gold);text-shadow:0 3px 10px rgba(0,0,0,.7);}
+  #convBarBg{
+    width:420px;height:26px;background:var(--ink2);border:3px solid var(--gold-deep);border-radius:14px;
+    position:relative;overflow:hidden;
+  }
+  #convZone{
+    position:absolute;top:0;height:100%;background:rgba(244,184,58,0.45);border-left:2px solid var(--gold);border-right:2px solid var(--gold);
+  }
+  #convMarker{
+    position:absolute;top:-4px;width:6px;height:34px;background:var(--white);border-radius:3px;box-shadow:0 0 8px rgba(255,255,255,.8);
+  }
+  #convInstruction{font-size:13px;letter-spacing:3px;color:#d8d8d2;text-transform:uppercase;}
 
   #startscreen,#endscreen{
     position:fixed;inset:0;
@@ -81,8 +105,8 @@
   #startscreen h1 span, #endscreen h1 span{color:var(--gold);}
   #startscreen .sub, #endscreen .sub{color:#9aa0aa;letter-spacing:4px;font-size:13px;margin-top:6px;text-transform:uppercase;}
   #rules{
-    margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:12px 34px;
-    max-width:640px;text-align:left;
+    margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:12px 34px;
+    max-width:660px;text-align:left;
   }
   #rules div{font-size:13.5px;color:#d8d8d2;}
   #rules b{color:var(--gold);}
@@ -91,7 +115,7 @@
     border-radius:4px;padding:1px 8px;font-weight:700;color:var(--gold);margin-right:4px;
   }
   #startbtn,#againbtn{
-    margin-top:32px;padding:16px 52px;font-size:20px;font-weight:900;font-style:italic;letter-spacing:2px;
+    margin-top:30px;padding:16px 52px;font-size:20px;font-weight:900;font-style:italic;letter-spacing:2px;
     background:var(--gold);color:var(--ink);border:none;border-radius:6px;cursor:pointer;
     box-shadow:0 6px 0 var(--gold-deep);
   }
@@ -113,12 +137,14 @@
   <h1>RUGBY LEAGUE <span>26</span></h1>
   <div class="sub">Accor Stadium · 20 Minute Match</div>
   <div id="rules">
-    <div><span class="key">W A S D</span> Run</div>
+    <div><span class="key">&uarr;</span> Straight ahead <span class="key">&darr;</span> Back</div>
+    <div><span class="key">&larr;</span> Left <span class="key">&rarr;</span> Right</div>
     <div><span class="key">SHIFT</span> Sprint (uses stamina)</div>
     <div><span class="key">SPACE</span> Step / Dodge a tackle</div>
-    <div><b>Goal:</b> Break the defensive line and touch down</div>
-    <div><b>Scoring:</b> +4 points per try</div>
-    <div><b>Tackled:</b> the ball is passed to a teammate — you take control of them instantly</div>
+    <div><span class="key">F</span> Offload pass to a teammate</div>
+    <div><b>Goal:</b> Break the four-man defensive line and touch down</div>
+    <div><b>Try:</b> +4 points, then kick a conversion for +2</div>
+    <div><b>Tackled:</b> the ball is passed to your nearest teammate automatically</div>
   </div>
   <button id="startbtn">KICK OFF</button>
 </div>
@@ -151,10 +177,16 @@
     <div id="stamina-label">Stamina</div>
     <div id="stamina-bar-bg"><div id="stamina-bar"></div></div>
   </div>
-  <div id="teamlabel">Now Playing: Ball Carrier</div>
+  <div id="teamlabel">Now Playing: You</div>
+  <div id="passhint">Press F to offload</div>
   <div id="centermsg">
     <div class="big" id="centerBig">TRY!</div>
     <div class="small" id="centerSmall">+4 POINTS</div>
+  </div>
+  <div id="conversionUI">
+    <div id="convTitle">CONVERSION</div>
+    <div id="convBarBg"><div id="convZone"></div><div id="convMarker"></div></div>
+    <div id="convInstruction">Press SPACE when the marker hits the gold zone</div>
   </div>
 </div>
 
@@ -334,7 +366,7 @@ const crowd = new THREE.Points(crowdGeo, new THREE.PointsMaterial({size:0.9, ver
 scene.add(crowd);
 
 /* ---------------------------------------------------------------------
-   FIGURE BUILDER (cylinders + spheres — no CapsuleGeometry)
+   FIGURE BUILDER
 --------------------------------------------------------------------- */
 function buildFigure(shirtColor, shortsColor){
   const g = new THREE.Group();
@@ -393,15 +425,16 @@ function settleFigure(figure){
 }
 
 /* ---------------------------------------------------------------------
-   ATTACKING TEAM  (Mason & Tyson's side — player + 3 teammates)
+   ATTACKING TEAM  — player + 4 teammates
 --------------------------------------------------------------------- */
-const TEAM_SIZE = 4;
+const TEAM_SIZE = 5;
 const TEAM_SHIRT = 0x1b3a8a, TEAM_SHORTS = 0x0d1117;
 const attackers = [];
 const FORMATION_OFFSETS = [
-  {x:-4.5, z:-5.5},
-  {x:-4.5, z: 0},
-  {x:-4.5, z: 5.5},
+  {x:-4.5, z:-6.5},
+  {x:-4.5, z:-2.2},
+  {x:-4.5, z: 2.2},
+  {x:-4.5, z: 6.5},
 ];
 
 function buildTeam(){
@@ -416,20 +449,18 @@ function buildTeam(){
 }
 buildTeam();
 
-// controlled-player marker (floating gold diamond)
 const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0), new THREE.MeshStandardMaterial({color:0xf4b83a, emissive:0x996611, emissiveIntensity:0.6}));
 scene.add(marker);
 
-// ball
 const ball = new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8), new THREE.MeshStandardMaterial({color:0x7a3b12}));
 ball.scale.set(1,0.7,0.7);
 ball.castShadow = true;
 scene.add(ball);
 
 /* ---------------------------------------------------------------------
-   DEFENSIVE LINE
+   DEFENSIVE LINE — four defenders
 --------------------------------------------------------------------- */
-const DEFENDER_COUNT = 6;
+const DEFENDER_COUNT = 4;
 const DEF_SHIRT = 0xb5121b, DEF_SHORTS = 0xf2f1ec;
 const defenders = [];
 const LINE_GAP_START = 17;
@@ -455,6 +486,7 @@ buildDefense();
 --------------------------------------------------------------------- */
 const state = {
   running:false,
+  phase:'field', // 'field' | 'conversion'
   points:0,
   tries:0,
   tackled:0,
@@ -464,16 +496,27 @@ const state = {
   tackledUntil:0,
   dodgeUntil:0,
   dodgeCooldownUntil:0,
+  passCooldownUntil:0,
   stamina:100,
   sprinting:false,
   facing:0,
+  // conversion
+  convStart:0,
+  convZoneStart:0.4,
+  convZoneWidth:0.18,
+  convDone:false,
+  convX:0,
+  convZ:0,
 };
 
 function resetPlay(centerZ){
-  attackers.forEach((a,i)=>{
-    a.mesh.position.set(0 - i*3, 0, (centerZ||0) + (i===0?0:(FORMATION_OFFSETS[i-1]?FORMATION_OFFSETS[i-1].z:0)));
-    a.mesh.rotation.y = 0;
-  });
+  attackers[0].mesh.position.set(0, 0, centerZ||0);
+  attackers[0].mesh.rotation.y = 0;
+  for(let i=1;i<attackers.length;i++){
+    const off = FORMATION_OFFSETS[(i-1) % FORMATION_OFFSETS.length];
+    attackers[i].mesh.position.set(off.x, 0, (centerZ||0)+off.z);
+    attackers[i].mesh.rotation.y = 0;
+  }
   state.controlledIndex = 0;
   state.hasBall = true;
   state.facing = 0;
@@ -483,11 +526,20 @@ resetPlay(0);
 
 /* ---------------------------------------------------------------------
    INPUT
+   Up = straight ahead (toward the try line), Down = back, Left/Right = sideways
 --------------------------------------------------------------------- */
 const keys = {};
 window.addEventListener('keydown', e=>{
   keys[e.code] = true;
   if(e.code==='Space') e.preventDefault();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+
+  if(e.code==='Space' && state.phase==='conversion' && !state.convDone){
+    attemptConversion();
+  }
+  if(e.code==='KeyF' && state.phase==='field'){
+    tryOffload();
+  }
 });
 window.addEventListener('keyup', e=>{ keys[e.code] = false; });
 
@@ -502,6 +554,7 @@ const teamlabel = el('teamlabel');
 const centermsg = el('centermsg'), centerBig = el('centerBig'), centerSmall = el('centerSmall');
 const tackledFlash = el('tackled-flash');
 const startscreen = el('startscreen'), endscreen = el('endscreen');
+const conversionUI = el('conversionUI'), convZone = el('convZone'), convMarker = el('convMarker');
 
 function flashMessage(big, small, duration=1300){
   centerBig.textContent = big;
@@ -519,12 +572,14 @@ el('againbtn').addEventListener('click', ()=>{
 
 function startMatch(){
   state.running = true;
+  state.phase = 'field';
   state.points = 0; state.tries = 0; state.tackled = 0;
   state.matchSeconds = 20*60;
   state.stamina = 100;
   resetPlay(0);
   startscreen.style.display = 'none';
   endscreen.style.display = 'none';
+  conversionUI.classList.remove('show');
   updateHUD();
 }
 
@@ -548,18 +603,59 @@ function updateHUD(){
 }
 
 /* ---------------------------------------------------------------------
-   GAME LOGIC
+   TRY + CONVERSION
 --------------------------------------------------------------------- */
 function scoreTry(){
+  const carrier = attackers[state.controlledIndex];
   state.points += 4;
   state.tries += 1;
-  flashMessage('TRY!', '+4 POINTS');
+  flashMessage('TRY!', '+4 POINTS', 1600);
   state.hasBall = false;
+  state.convX = carrier.mesh.position.x;
+  state.convZ = carrier.mesh.position.z;
+
   setTimeout(()=>{
-    resetPlay((Math.random()*2-1)*8);
-  }, 900);
+    startConversion();
+  }, 1300);
 }
 
+function startConversion(){
+  state.phase = 'conversion';
+  state.convDone = false;
+  state.convStart = performance.now();
+
+  // harder / narrower zone the further out (wide angle) the try was scored
+  const wideness = Math.min(1, Math.abs(state.convZ) / FIELD_HALF_WIDTH);
+  state.convZoneWidth = 0.24 - wideness*0.14; // 0.24 (easy, central) -> 0.10 (hard, wide)
+  state.convZoneStart = 0.5 - state.convZoneWidth/2 + (Math.random()*0.1-0.05);
+
+  convZone.style.left = (state.convZoneStart*100)+'%';
+  convZone.style.width = (state.convZoneWidth*100)+'%';
+  conversionUI.classList.add('show');
+}
+
+function attemptConversion(){
+  state.convDone = true;
+  const t = (performance.now()-state.convStart)/1000;
+  const pos = (Math.sin(t*3.2)+1)/2; // 0..1
+  const hit = pos >= state.convZoneStart && pos <= state.convZoneStart+state.convZoneWidth;
+  if(hit){
+    state.points += 2;
+    flashMessage('CONVERTED!', '+2 POINTS');
+  } else {
+    flashMessage('CONVERSION MISSED', 'SO CLOSE');
+  }
+  updateHUD();
+  setTimeout(()=>{
+    conversionUI.classList.remove('show');
+    state.phase = 'field';
+    resetPlay((Math.random()*2-1)*8);
+  }, 1100);
+}
+
+/* ---------------------------------------------------------------------
+   TACKLE + PASS
+--------------------------------------------------------------------- */
 function doTackle(carrier){
   if(performance.now() < state.tackledUntil) return;
   state.tackled += 1;
@@ -567,17 +663,15 @@ function doTackle(carrier){
   tackledFlash.style.opacity = 0.35;
   setTimeout(()=>tackledFlash.style.opacity=0, 90);
 
-  // find nearest teammate to hand the ball to
   let bestIdx = -1, bestDist = Infinity;
   attackers.forEach((a,i)=>{
     if(i===state.controlledIndex) return;
     const d = a.mesh.position.distanceTo(carrier.mesh.position);
     if(d < bestDist){ bestDist = d; bestIdx = i; }
   });
-
   if(bestIdx === -1) bestIdx = 0;
 
-  flashMessage('TACKLED!', bestIdx===state.controlledIndex ? 'RESTART' : `BALL TO TEAMMATE ${bestIdx===0?'':bestIdx}`, 1200);
+  flashMessage('TACKLED!', bestIdx===0 ? 'RESTART' : `BALL TO TEAMMATE ${bestIdx}`, 1200);
 
   state.controlledIndex = bestIdx;
   state.hasBall = true;
@@ -585,13 +679,45 @@ function doTackle(carrier){
   lineGap = Math.min(LINE_GAP_START, lineGap + 9);
 }
 
+function tryOffload(){
+  const now = performance.now();
+  if(now < state.passCooldownUntil) return;
+  if(!state.hasBall) return;
+  if(now < state.tackledUntil) return;
+
+  const carrier = attackers[state.controlledIndex];
+  // legal rugby league pass: only to a teammate level with or behind the carrier
+  let bestIdx = -1, bestDist = Infinity;
+  attackers.forEach((a,i)=>{
+    if(i===state.controlledIndex) return;
+    if(a.mesh.position.x > carrier.mesh.position.x + 0.6) return;
+    const d = a.mesh.position.distanceTo(carrier.mesh.position);
+    if(d < bestDist){ bestDist = d; bestIdx = i; }
+  });
+
+  state.passCooldownUntil = now + 550;
+
+  if(bestIdx === -1){
+    flashMessage('NO ONE IN SUPPORT', 'CANNOT PASS FORWARD', 700);
+    return;
+  }
+
+  flashMessage('OFFLOAD!', `TEAMMATE ${bestIdx}`, 700);
+  state.controlledIndex = bestIdx;
+}
+
 /* ---------------------------------------------------------------------
    CAMERA
 --------------------------------------------------------------------- */
-const camOffset = new THREE.Vector3(-9.5,6.5,0);
 function updateCamera(){
+  if(state.phase==='conversion'){
+    const target = new THREE.Vector3(state.convX+12, 5.5, state.convZ);
+    camera.position.lerp(target, 0.08);
+    const lookAt = new THREE.Vector3(FIELD_HALF_LEN+TRY_DEPTH-1.5, 3.5, 0);
+    camera.lookAt(lookAt);
+    return;
+  }
   const carrier = attackers[state.controlledIndex].mesh;
-  // camera trails behind current facing direction
   const behind = new THREE.Vector3(-Math.sin(carrier.rotation.y), 0, -Math.cos(carrier.rotation.y)).multiplyScalar(9.5);
   const desired = carrier.position.clone().add(new THREE.Vector3(behind.x, 6.5, behind.z));
   camera.position.lerp(desired, 0.12);
@@ -614,11 +740,21 @@ function tick(){
   crowd.rotation.y += dt*0.01;
 
   if(state.running){
-    updateGame(dt, now);
+    if(state.phase==='conversion'){
+      updateConversion(now);
+    } else {
+      updateGame(dt, now);
+    }
   }
 
   updateCamera();
   renderer.render(scene, camera);
+}
+
+function updateConversion(now){
+  const t = (now-state.convStart)/1000;
+  const pos = (Math.sin(t*3.2)+1)/2;
+  convMarker.style.left = (pos*100)+'%';
 }
 
 function updateGame(dt, now){
@@ -634,18 +770,20 @@ function updateGame(dt, now){
   const isTackled = now < state.tackledUntil;
 
   // ---- controlled player movement ----
+  // Up = straight ahead (+X, toward the try line), Down = back, Left/Right = sideways (Z)
   let moveX=0, moveZ=0;
   if(!isTackled){
-    if(keys['KeyW']||keys['ArrowUp']) moveZ -= 1;
-    if(keys['KeyS']||keys['ArrowDown']) moveZ += 1;
-    if(keys['KeyA']||keys['ArrowLeft']) moveX -= 1;
-    if(keys['KeyD']||keys['ArrowRight']) moveX += 1;
+    if(keys['ArrowUp']||keys['KeyW']) moveX += 1;
+    if(keys['ArrowDown']||keys['KeyS']) moveX -= 1;
+    if(keys['ArrowLeft']||keys['KeyA']) moveZ -= 1;
+    if(keys['ArrowRight']||keys['KeyD']) moveZ += 1;
   }
   const moving = moveX!==0 || moveZ!==0;
 
   state.sprinting = moving && (keys['ShiftLeft']||keys['ShiftRight']) && state.stamina > 2;
-  if(state.sprinting){ state.stamina = Math.max(0, state.stamina - dt*24); }
-  else { state.stamina = Math.min(100, state.stamina + dt*16); }
+  // more stamina: slower drain, faster regen
+  if(state.sprinting){ state.stamina = Math.max(0, state.stamina - dt*10); }
+  else { state.stamina = Math.min(100, state.stamina + dt*22); }
 
   const isDodging = now < state.dodgeUntil;
   if(keys['Space'] && now > state.dodgeCooldownUntil && !isTackled){
@@ -653,7 +791,6 @@ function updateGame(dt, now){
     state.dodgeCooldownUntil = now + 1300;
   }
 
-  // faster sprint per request
   let baseSpeed = 6.4;
   if(state.sprinting) baseSpeed = 13.5;
   if(isDodging) baseSpeed = 15.5;
@@ -665,7 +802,7 @@ function updateGame(dt, now){
     const dz = (moveZ/len)*baseSpeed*dt;
     carrier.mesh.position.x = Math.max(-FIELD_HALF_LEN-TRY_DEPTH+2, Math.min(FIELD_HALF_LEN+TRY_DEPTH-2, carrier.mesh.position.x + dx));
     carrier.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, carrier.mesh.position.z + dz));
-    state.facing = Math.atan2(dx, dz);
+    state.facing = Math.atan2(dz, dx) - Math.PI/2; // orient mesh: +X is "forward"
     carrier.runT += dt;
     animateRun(carrier.mesh, carrier.runT, state.sprinting?1.6:1);
   } else {
@@ -674,19 +811,17 @@ function updateGame(dt, now){
   carrier.mesh.rotation.y = THREE.MathUtils.lerp(carrier.mesh.rotation.y, state.facing, 0.25);
   carrier.mesh.position.y = isDodging ? 0.15*Math.sin(now*0.05) : 0;
 
-  // ball follows carrier
   ball.position.set(
-    carrier.mesh.position.x + Math.sin(carrier.mesh.rotation.y)*0.35,
+    carrier.mesh.position.x + Math.sin(carrier.mesh.rotation.y+Math.PI/2)*0.35,
     1.15,
-    carrier.mesh.position.z + Math.cos(carrier.mesh.rotation.y)*0.35
+    carrier.mesh.position.z + Math.cos(carrier.mesh.rotation.y+Math.PI/2)*0.35
   );
   ball.visible = state.hasBall;
 
-  // marker above controlled player's head
   marker.position.set(carrier.mesh.position.x, 2.9 + Math.sin(now*0.005)*0.12, carrier.mesh.position.z);
   marker.rotation.y += dt*2;
 
-  // ---- AI teammates follow in formation, running with the team ----
+  // ---- AI teammates follow in formation ----
   let offsetSlot = 0;
   attackers.forEach((a,i)=>{
     if(i === state.controlledIndex) return;
@@ -704,7 +839,7 @@ function updateGame(dt, now){
       const dir = toTarget.normalize();
       a.mesh.position.x += dir.x*spd*dt;
       a.mesh.position.z += dir.z*spd*dt;
-      a.mesh.rotation.y = THREE.MathUtils.lerp(a.mesh.rotation.y, Math.atan2(dir.x,dir.z), 0.2);
+      a.mesh.rotation.y = THREE.MathUtils.lerp(a.mesh.rotation.y, Math.atan2(dir.z,dir.x)-Math.PI/2, 0.2);
       a.runT += dt;
       animateRun(a.mesh, a.runT, 1.1);
     } else {
@@ -714,9 +849,10 @@ function updateGame(dt, now){
     a.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, a.mesh.position.z));
   });
 
-  // ---- try scoring (attacking try line at +x) ----
+  // ---- try scoring ----
   if(state.hasBall && carrier.mesh.position.x > FIELD_HALF_LEN){
     scoreTry();
+    return;
   }
 
   // ---- defensive line ----
@@ -731,7 +867,6 @@ function updateGame(dt, now){
     d.runT += dt;
     let targetX, targetZ, speed;
     if(rushing){
-      // break formation, rush the ball carrier directly
       targetX = carrier.mesh.position.x;
       targetZ = carrier.mesh.position.z;
       speed = 9.5;
@@ -745,13 +880,12 @@ function updateGame(dt, now){
     const dist = dir.length();
     if(dist > 0.1){
       dir.normalize();
-      // if player is dodging and defender is close, throw them off slightly
       if(isDodging && dist < 3.5){
         dir.applyAxisAngle(new THREE.Vector3(0,1,0), 0.85);
       }
       d.mesh.position.x += dir.x*speed*dt;
       d.mesh.position.z += dir.z*speed*dt;
-      d.mesh.rotation.y = THREE.MathUtils.lerp(d.mesh.rotation.y, Math.atan2(dir.x,dir.z), 0.2);
+      d.mesh.rotation.y = THREE.MathUtils.lerp(d.mesh.rotation.y, Math.atan2(dir.z,dir.x)-Math.PI/2, 0.2);
       animateRun(d.mesh, d.runT, rushing?1.5:0.9);
     } else {
       settleFigure(d.mesh);
@@ -759,7 +893,6 @@ function updateGame(dt, now){
     d.mesh.position.x = Math.max(-FIELD_HALF_LEN+1, Math.min(FIELD_HALF_LEN-1, d.mesh.position.x));
     d.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, d.mesh.position.z));
 
-    // tackle check — only the ball carrier can be tackled
     if(!isTackled && state.hasBall && !isDodging){
       const tDist = new THREE.Vector3(carrier.mesh.position.x-d.mesh.position.x,0,carrier.mesh.position.z-d.mesh.position.z).length();
       if(tDist < 1.15){
