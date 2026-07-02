@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bob's Adventure</title>
+<style>
+  :root{
+    --sand: #e8d9a8;
+    --sand-dark: #d4bd7a;
+    --water: #2e86c1;
+    --water-deep: #1b5e8c;
+    --leaf-green: #3fae5c;
+    --leaf-dark: #2c7d42;
+    --paper: #ffffff;
+    --ink: #1c2b28;
+    --gold: #e8b93f;
+    --danger: #d64545;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin:0; padding:0; height:100%;
+    background: radial-gradient(circle at 50% 20%, #cfeeff 0%, var(--water-deep) 75%);
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  #wrap {
+    position:relative;
+    width:900px; max-width:96vw;
+  }
+  h1 {
+    text-align:center;
+    color: var(--paper);
+    text-shadow: 0 2px 0 var(--water-deep), 0 4px 10px rgba(0,0,0,0.35);
+    letter-spacing: 2px;
+    margin: 6px 0 10px 0;
+    font-size: 30px;
+  }
+  #stage {
+    position:relative;
+    border-radius: 18px;
+    overflow:hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45), inset 0 0 0 6px rgba(255,255,255,0.6);
+  }
+  canvas {
+    display:block;
+    width:100%;
+    height:auto;
+    background: var(--water);
+  }
+  #hud {
+    position:absolute; top:12px; left:12px; right:12px;
+    display:flex; justify-content:space-between;
+    pointer-events:none;
+    font-weight:bold;
+    font-size:16px;
+    color: var(--ink);
+  }
+  .pill {
+    background: rgba(255,255,255,0.85);
+    border-radius: 999px;
+    padding: 6px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    display:flex; align-items:center; gap:6px;
+  }
+  .chest-icon { color: var(--gold); }
+  .life { color: var(--danger); font-size: 18px; }
+  #overlay {
+    position:absolute; inset:0;
+    background: rgba(10,30,40,0.72);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color: var(--paper);
+    text-align:center;
+    gap: 14px;
+    padding: 20px;
+  }
+  #overlay.hidden { display:none; }
+  #overlay h2 { font-size: 34px; margin:0; text-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+  #overlay p { max-width: 460px; line-height:1.5; font-size:15px; margin:0; }
+  button {
+    font-family: inherit;
+    font-size: 18px;
+    font-weight:bold;
+    padding: 12px 28px;
+    border-radius: 999px;
+    border: none;
+    cursor:pointer;
+    background: var(--leaf-green);
+    color: white;
+    box-shadow: 0 4px 0 var(--leaf-dark);
+    transition: transform 0.08s ease;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--leaf-dark); }
+  #hint {
+    text-align:center;
+    color: rgba(255,255,255,0.85);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  #sword-banner {
+    position:absolute;
+    top: 50px; left:50%; transform: translateX(-50%);
+    background: var(--gold);
+    color: #4a3200;
+    font-weight:bold;
+    padding: 8px 18px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    opacity:0;
+    transition: opacity 0.4s ease;
+    pointer-events:none;
+    font-size:15px;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>🏝️ Bob's Adventure</h1>
+  <div id="stage">
+    <canvas id="game" width="900" height="560"></canvas>
+    <div id="hud">
+      <div class="pill"><span class="chest-icon">🧰</span><span id="chestCount">0 / 10</span></div>
+      <div class="pill"><span id="scoreVal">Score: 0</span></div>
+      <div class="pill"><span id="livesVal">❤️❤️❤️</span></div>
+    </div>
+    <div id="sword-banner">⚔️ You found the sword! Defeat the sand worm!</div>
+    <div id="overlay">
+      <h2 id="ovTitle">Bob's Adventure</h2>
+      <p id="ovText">Bob is stranded on a bright island and needs to collect 10 hidden treasure chests. Watch out for the giant sand worm — if it catches you, you lose a life! Find the sword in the final chest so you can fight back.</p>
+      <button id="ovButton">Start Game</button>
+    </div>
+  </div>
+  <div id="hint">Move: Arrow keys / WASD &nbsp;&middot;&nbsp; Attack (after you get the sword): Spacebar</div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// Island ellipse
+const island = { cx: W/2, cy: H/2 + 10, rx: 380, ry: 235 };
+
+function insideIsland(x, y, pad) {
+  pad = pad || 0;
+  const dx = (x - island.cx) / (island.rx - pad);
+  const dy = (y - island.cy) / (island.ry - pad);
+  return (dx*dx + dy*dy) <= 1;
+}
+
+// ---------- Game state ----------
+let state = 'menu'; // menu | playing | win | dead
+let score = 0;
+let lives = 3;
+let hasSword = false;
+let wormHits = 0;
+const WORM_HITS_NEEDED = 3;
+let invulnTimer = 0;
+let attackCooldown = 0;
+let wormFlash = 0;
+let time = 0;
+
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === ' ') { e.preventDefault(); tryAttack(); }
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// ---------- Bob ----------
+const bob = { x: island.cx, y: island.cy + 120, r: 16, speed: 3.1, facing: 1 };
+
+// ---------- Chests ----------
+function seededChests() {
+  // Fixed, spread-out layout inside the island
+  const spots = [
+    [-260, -110], [-180, 60], [-90, -170], [0, 130], [90, -60],
+    [180, -140], [230, 90], [-320, 40], [60, 190], [300, -20]
+  ];
+  return spots.map(([ox, oy], i) => ({
+    x: island.cx + ox, y: island.cy + oy, r: 16, collected: false, id: i
+  }));
+}
+let chests = seededChests();
+
+// ---------- Sand worm ----------
+const worm = {
+  x: island.cx + 40, y: island.cy - 30,
+  segments: [],
+  angle: 0,
+  speed: 1.6,
+  targetAngle: 0,
+  mode: 'patrol', // patrol | chase
+};
+function resetWorm() {
+  worm.x = island.cx + 40;
+  worm.y = island.cy - 30;
+  worm.angle = Math.random() * Math.PI * 2;
+  worm.segments = [];
+  for (let i = 0; i < 9; i++) worm.segments.push({ x: worm.x, y: worm.y });
+}
+resetWorm();
+
+function updateWorm(dt) {
+  const distToBob = Math.hypot(bob.x - worm.x, bob.y - worm.y);
+  const chaseRange = hasSword ? 260 : 190;
+
+  if (distToBob < chaseRange) {
+    worm.mode = 'chase';
+    worm.targetAngle = Math.atan2(bob.y - worm.y, bob.x - worm.x);
+  } else {
+    worm.mode = 'patrol';
+    if (Math.random() < 0.01) worm.targetAngle = Math.random() * Math.PI * 2;
+  }
+
+  // Smoothly turn toward target angle
+  let diff = worm.targetAngle - worm.angle;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  worm.angle += diff * 0.04;
+
+  const spd = (worm.mode === 'chase' ? (hasSword ? 2.6 : 2.0) : worm.speed);
+  let nx = worm.x + Math.cos(worm.angle) * spd;
+  let ny = worm.y + Math.sin(worm.angle) * spd;
+
+  // Keep worm within island, turn away from edge
+  if (!insideIsland(nx, ny, 30)) {
+    worm.targetAngle = Math.atan2(island.cy - worm.y, island.cx - worm.x);
+    nx = worm.x + Math.cos(worm.angle) * spd;
+    ny = worm.y + Math.sin(worm.angle) * spd;
+  }
+  worm.x = nx; worm.y = ny;
+
+  // Update trailing segments
+  worm.segments.unshift({ x: worm.x, y: worm.y });
+  if (worm.segments.length > 9) worm.segments.pop();
+}
+
+// ---------- Attack ----------
+function tryAttack() {
+  if (state !== 'playing' || !hasSword || attackCooldown > 0) return;
+  attackCooldown = 25;
+  const d = Math.hypot(worm.x - bob.x, worm.y - bob.y);
+  if (d < 60) {
+    wormHits++;
+    wormFlash = 12;
+    invulnTimer = 40;
+    if (wormHits >= WORM_HITS_NEEDED) {
+      winGame();
+    }
+  }
+}
+
+// ---------- Update ----------
+function updateBob() {
+  let dx = 0, dy = 0;
+  if (keys['arrowup'] || keys['w']) dy -= 1;
+  if (keys['arrowdown'] || keys['s']) dy += 1;
+  if (keys['arrowleft'] || keys['a']) { dx -= 1; bob.facing = -1; }
+  if (keys['arrowright'] || keys['d']) { dx += 1; bob.facing = 1; }
+  if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+  const nx = bob.x + dx * bob.speed;
+  const ny = bob.y + dy * bob.speed;
+  if (insideIsland(nx, bob.y, 18)) bob.x = nx;
+  if (insideIsland(bob.x, ny, 18)) bob.y = ny;
+}
+
+function checkChests() {
+  chests.forEach(c => {
+    if (!c.collected && Math.hypot(c.x - bob.x, c.y - bob.y) < c.r + bob.r) {
+      c.collected = true;
+      score += 10;
+      updateHud();
+      const collected = chests.filter(c => c.collected).length;
+      if (collected === chests.length) {
+        hasSword = true;
+        showSwordBanner();
+      }
+    }
+  });
+}
+
+function checkWormCollision() {
+  if (invulnTimer > 0) return;
+  const d = Math.hypot(worm.x - bob.x, worm.y - bob.y);
+  if (d < 26) {
+    loseLife();
+  }
+}
+
+function loseLife() {
+  lives--;
+  invulnTimer = 90;
+  updateHud();
+  // knock bob back toward center
+  const ang = Math.atan2(bob.y - island.cy, bob.x - island.cx);
+  bob.x += Math.cos(ang) * 40;
+  bob.y += Math.sin(ang) * 40;
+  if (lives <= 0) {
+    deadGame();
+  }
+}
+
+function updateHud() {
+  document.getElementById('chestCount').textContent =
+    chests.filter(c => c.collected).length + ' / 10';
+  document.getElementById('scoreVal').textContent = 'Score: ' + score;
+  document.getElementById('livesVal').textContent = '❤️'.repeat(Math.max(lives,0)) + '🖤'.repeat(3 - Math.max(lives,0));
+}
+
+function showSwordBanner() {
+  const b = document.getElementById('sword-banner');
+  b.style.opacity = 1;
+  setTimeout(() => { b.style.opacity = 0; }, 2600);
+}
+
+// ---------- Win / Lose ----------
+function winGame() {
+  state = 'win';
+  score += 50;
+  updateHud();
+  showOverlay('Victory!', `Bob defeated the sand worm and claimed all 10 treasures! Final score: ${score}.`, 'Play Again');
+}
+function deadGame() {
+  state = 'dead';
+  showOverlay('Bob was caught!', `The sand worm got you. You scored ${score} points and collected ${chests.filter(c=>c.collected).length} of 10 chests.`, 'Try Again');
+}
+function showOverlay(title, text, btnLabel) {
+  document.getElementById('ovTitle').textContent = title;
+  document.getElementById('ovText').textContent = text;
+  document.getElementById('ovButton').textContent = btnLabel;
+  document.getElementById('overlay').classList.remove('hidden');
+}
+function hideOverlay() {
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+document.getElementById('ovButton').addEventListener('click', () => {
+  resetGame();
+  hideOverlay();
+  state = 'playing';
+});
+
+function resetGame() {
+  score = 0; lives = 3; hasSword = false; wormHits = 0;
+  invulnTimer = 60; attackCooldown = 0;
+  bob.x = island.cx; bob.y = island.cy + 120; bob.facing = 1;
+  chests = seededChests();
+  resetWorm();
+  updateHud();
+}
+
+// ---------- Drawing ----------
+function drawWater() {
+  ctx.fillStyle = ctx.createLinearGradient(0,0,0,H);
+  const grad = ctx.fillStyle;
+  ctx.fillStyle = '#2e86c1';
+  ctx.fillRect(0,0,W,H);
+  // animated wave rings around island
+  for (let r = 0; r < 5; r++) {
+    ctx.beginPath();
+    const pulse = (time * 0.6 + r * 40) % 260;
+    ctx.ellipse(island.cx, island.cy, island.rx + 20 + pulse, island.ry + 14 + pulse*0.62, 0, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,255,255,${0.18 - pulse/1400})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+}
+
+function drawIsland() {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(island.cx, island.cy, island.rx, island.ry, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#f2e4b8';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(island.cx, island.cy, island.rx - 14, island.ry - 12, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#e8d9a8';
+  ctx.fill();
+  // subtle texture dots
+  ctx.fillStyle = 'rgba(212,189,122,0.5)';
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const rr = (island.rx - 40) * (0.3 + 0.6 * ((i * 37) % 10) / 10);
+    const px = island.cx + Math.cos(a) * rr;
+    const py = island.cy + Math.sin(a) * rr * (island.ry/island.rx);
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawChest(c) {
+  if (c.collected) return;
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  const bob_ = Math.sin(time * 0.08 + c.id) * 2;
+  ctx.translate(0, bob_);
+  ctx.fillStyle = '#8a5a2b';
+  ctx.fillRect(-14, -8, 28, 16);
+  ctx.fillStyle = '#6b431f';
+  ctx.fillRect(-14, -12, 28, 8);
+  ctx.fillStyle = '#e8b93f';
+  ctx.fillRect(-3, -6, 6, 10);
+  ctx.restore();
+}
+
+function drawWorm() {
+  ctx.save();
+  const flashColor = wormFlash > 0 ? '#ffffff' : null;
+  for (let i = worm.segments.length - 1; i >= 0; i--) {
+    const s = worm.segments[i];
+    const rad = 14 - i * 0.9;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, Math.max(rad, 5), 0, Math.PI*2);
+    ctx.fillStyle = flashColor || (i % 2 === 0 ? '#c9a15a' : '#b98a3f');
+    ctx.fill();
+  }
+  // eyes on head
+  const head = worm.segments[0];
+  ctx.fillStyle = '#2b1a0a';
+  const ex = Math.cos(worm.angle + 0.5) * 6, ey = Math.sin(worm.angle + 0.5) * 6;
+  const ex2 = Math.cos(worm.angle - 0.5) * 6, ey2 = Math.sin(worm.angle - 0.5) * 6;
+  ctx.beginPath(); ctx.arc(head.x + ex, head.y + ey, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(head.x + ex2, head.y + ey2, 2.4, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  if (wormFlash > 0) wormFlash--;
+}
+
+function drawBob() {
+  ctx.save();
+  ctx.translate(bob.x, bob.y);
+  ctx.scale(bob.facing, 1);
+  const blink = invulnTimer > 0 && Math.floor(invulnTimer/6) % 2 === 0;
+  ctx.globalAlpha = blink ? 0.4 : 1;
+  // body
+  ctx.fillStyle = '#3fae5c';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 14, 16, 0, 0, Math.PI*2);
+  ctx.fill();
+  // head
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, -12, 11, 0, Math.PI*2);
+  ctx.fill();
+  // face
+  ctx.fillStyle = '#1c2b28';
+  ctx.beginPath(); ctx.arc(4, -13, 1.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-3, -13, 1.6, 0, Math.PI*2); ctx.fill();
+  // sword
+  if (hasSword) {
+    ctx.save();
+    ctx.translate(16, 2);
+    ctx.rotate(-0.5);
+    ctx.fillStyle = '#cfd8dc';
+    ctx.fillRect(-2, -18, 4, 18);
+    ctx.fillStyle = '#e8b93f';
+    ctx.fillRect(-5, -2, 10, 4);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawWormHealth() {
+  if (!hasSword) return;
+  const barW = 140;
+  const x = W/2 - barW/2, y = 14;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(x, y, barW, 10);
+  ctx.fillStyle = '#d64545';
+  const pct = 1 - wormHits / WORM_HITS_NEEDED;
+  ctx.fillRect(x, y, barW * pct, 10);
+  ctx.strokeStyle = '#1c2b28';
+  ctx.strokeRect(x, y, barW, 10);
+  ctx.fillStyle = '#1c2b28';
+  ctx.font = '11px Trebuchet MS';
+  ctx.textAlign = 'center';
+  ctx.fillText('Sand Worm', W/2, y - 3);
+  ctx.restore();
+}
+
+// ---------- Main loop ----------
+function loop() {
+  time++;
+  if (attackCooldown > 0) attackCooldown--;
+  if (invulnTimer > 0) invulnTimer--;
+
+  if (state === 'playing') {
+    updateBob();
+    updateWorm();
+    checkChests();
+    checkWormCollision();
+  }
+
+  ctx.clearRect(0,0,W,H);
+  drawWater();
+  drawIsland();
+  chests.forEach(drawChest);
+  drawWorm();
+  drawBob();
+  drawWormHealth();
+
+  requestAnimationFrame(loop);
+}
+
+updateHud();
+loop();
+</script>
+</body>
+</html>
