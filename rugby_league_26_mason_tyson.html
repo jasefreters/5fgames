@@ -52,6 +52,11 @@
   }
   #stamina-bar{height:100%;width:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width .1s linear;}
 
+  #teamlabel{
+    position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
+    font-size:12px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:700;text-align:center;
+  }
+
   #centermsg{
     position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);
     text-align:center;font-weight:900;font-style:italic;
@@ -60,8 +65,8 @@
     pointer-events:none;
   }
   #centermsg.show{opacity:1;}
-  #centermsg .big{font-size:76px;letter-spacing:3px;color:var(--gold);}
-  #centermsg .small{font-size:20px;color:var(--white);letter-spacing:6px;margin-top:-6px;}
+  #centermsg .big{font-size:70px;letter-spacing:3px;color:var(--gold);}
+  #centermsg .small{font-size:18px;color:var(--white);letter-spacing:5px;margin-top:-6px;}
 
   #startscreen,#endscreen{
     position:fixed;inset:0;
@@ -70,23 +75,23 @@
     color:var(--white);text-align:center;z-index:10;pointer-events:all;
   }
   #startscreen h1,#endscreen h1{
-    font-size:52px;font-style:italic;font-weight:900;letter-spacing:2px;margin:0;
+    font-size:50px;font-style:italic;font-weight:900;letter-spacing:2px;margin:0;
     color:var(--white);
   }
   #startscreen h1 span, #endscreen h1 span{color:var(--gold);}
   #startscreen .sub, #endscreen .sub{color:#9aa0aa;letter-spacing:4px;font-size:13px;margin-top:6px;text-transform:uppercase;}
   #rules{
-    margin-top:34px;display:grid;grid-template-columns:1fr 1fr;gap:14px 34px;
-    max-width:620px;text-align:left;
+    margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:12px 34px;
+    max-width:640px;text-align:left;
   }
-  #rules div{font-size:14px;color:#d8d8d2;}
+  #rules div{font-size:13.5px;color:#d8d8d2;}
   #rules b{color:var(--gold);}
   .key{
     display:inline-block;background:var(--ink2);border:1px solid var(--gold-deep);
     border-radius:4px;padding:1px 8px;font-weight:700;color:var(--gold);margin-right:4px;
   }
   #startbtn,#againbtn{
-    margin-top:38px;padding:16px 52px;font-size:20px;font-weight:900;font-style:italic;letter-spacing:2px;
+    margin-top:32px;padding:16px 52px;font-size:20px;font-weight:900;font-style:italic;letter-spacing:2px;
     background:var(--gold);color:var(--ink);border:none;border-radius:6px;cursor:pointer;
     box-shadow:0 6px 0 var(--gold-deep);
   }
@@ -111,9 +116,9 @@
     <div><span class="key">W A S D</span> Run</div>
     <div><span class="key">SHIFT</span> Sprint (uses stamina)</div>
     <div><span class="key">SPACE</span> Step / Dodge a tackle</div>
-    <div><b>Goal:</b> Beat the defenders and touch the ball down in the try zone</div>
+    <div><b>Goal:</b> Break the defensive line and touch down</div>
     <div><b>Scoring:</b> +4 points per try</div>
-    <div><b>Tackled:</b> lose the ball, restart the play</div>
+    <div><b>Tackled:</b> the ball is passed to a teammate — you take control of them instantly</div>
   </div>
   <button id="startbtn">KICK OFF</button>
 </div>
@@ -146,6 +151,7 @@
     <div id="stamina-label">Stamina</div>
     <div id="stamina-bar-bg"><div id="stamina-bar"></div></div>
   </div>
+  <div id="teamlabel">Now Playing: Ball Carrier</div>
   <div id="centermsg">
     <div class="big" id="centerBig">TRY!</div>
     <div class="small" id="centerSmall">+4 POINTS</div>
@@ -220,11 +226,10 @@ addFloodlight(-46,-30); addFloodlight(46,-30);
 addFloodlight(-46, 30); addFloodlight(46, 30);
 
 /* ---------------------------------------------------------------------
-   PITCH  (NRL field roughly 68m x 100m + in-goal areas ~ 6-11m each end)
-   We'll scale to units: length (x) -60..60, width (z) -18..18
+   PITCH
 --------------------------------------------------------------------- */
-const FIELD_HALF_LEN = 55;      // try line at +/-55
-const TRY_DEPTH = 10;           // in-goal depth beyond try line
+const FIELD_HALF_LEN = 55;
+const TRY_DEPTH = 10;
 const FIELD_HALF_WIDTH = 19;
 
 const pitchGroup = new THREE.Group();
@@ -237,7 +242,6 @@ function makeLineTexture(){
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#1e6b34';
   ctx.fillRect(0,0,size,size);
-  // mow stripes
   for(let i=0;i<size;i+=size/16){
     ctx.fillStyle = (i/(size/16))%2===0 ? '#1e6b34' : '#227a3a';
     ctx.fillRect(0,i,size,size/16);
@@ -253,7 +257,6 @@ field.rotation.x = -Math.PI/2;
 field.receiveShadow = true;
 pitchGroup.add(field);
 
-// line marker helper
 function addLine(xStart,xEnd,z1,z2,color=0xffffff,h=0.02){
   const w = Math.max(Math.abs(xEnd-xStart), 0.2);
   const d = Math.max(Math.abs(z2-z1), 0.2);
@@ -264,20 +267,16 @@ function addLine(xStart,xEnd,z1,z2,color=0xffffff,h=0.02){
   m.position.set((xStart+xEnd)/2, h, (z1+z2)/2);
   pitchGroup.add(m);
 }
-// sideline & dead-ball lines
 addLine(-FIELD_HALF_LEN-TRY_DEPTH, FIELD_HALF_LEN+TRY_DEPTH, -FIELD_HALF_WIDTH, -FIELD_HALF_WIDTH,0xffffff);
 addLine(-FIELD_HALF_LEN-TRY_DEPTH, FIELD_HALF_LEN+TRY_DEPTH,  FIELD_HALF_WIDTH,  FIELD_HALF_WIDTH,0xffffff);
 addLine(-FIELD_HALF_LEN-TRY_DEPTH,-FIELD_HALF_LEN-TRY_DEPTH, -FIELD_HALF_WIDTH, FIELD_HALF_WIDTH,0xffffff);
 addLine( FIELD_HALF_LEN+TRY_DEPTH, FIELD_HALF_LEN+TRY_DEPTH, -FIELD_HALF_WIDTH, FIELD_HALF_WIDTH,0xffffff);
-// try lines
 addLine(-FIELD_HALF_LEN,-FIELD_HALF_LEN,-FIELD_HALF_WIDTH,FIELD_HALF_WIDTH,0xf4b83a,0.03);
 addLine( FIELD_HALF_LEN, FIELD_HALF_LEN,-FIELD_HALF_WIDTH,FIELD_HALF_WIDTH,0xf4b83a,0.03);
-// halfway + 20m lines
 [-40,-20,0,20,40].forEach(x=>{
   addLine(x,x,-FIELD_HALF_WIDTH,FIELD_HALF_WIDTH, x===0?0xffffff:0xdddddd);
 });
 
-// goal posts
 function goalPost(x){
   const g = new THREE.Group();
   const postMat = new THREE.MeshStandardMaterial({color:0xffffff});
@@ -297,7 +296,7 @@ goalPost(-FIELD_HALF_LEN-TRY_DEPTH+1.5);
 goalPost(FIELD_HALF_LEN+TRY_DEPTH-1.5);
 
 /* ---------------------------------------------------------------------
-   STADIUM BOWL (Accor Stadium style: black lower tier, gold upper trim)
+   STADIUM BOWL
 --------------------------------------------------------------------- */
 function buildStand(radiusInner, radiusOuter, height, color, y){
   const geo = new THREE.CylinderGeometry(radiusOuter, radiusOuter+6, height, 48, 1, true);
@@ -309,18 +308,16 @@ function buildStand(radiusInner, radiusOuter, height, color, y){
 const standGroup = new THREE.Group();
 standGroup.add(buildStand(70,72,26,0x101114,13));
 standGroup.add(buildStand(70,72,4,0xc9861a,27));
-// roof ring
 const roof = new THREE.Mesh(new THREE.TorusGeometry(74,1.4,8,48), new THREE.MeshStandardMaterial({color:0x2a2d33,metalness:0.5,roughness:0.4}));
 roof.rotation.x = Math.PI/2;
 roof.position.y = 29.5;
 standGroup.add(roof);
 scene.add(standGroup);
 
-// crowd speckle (instanced-ish via points)
 const crowdGeo = new THREE.BufferGeometry();
 const crowdCount = 2600;
 const positions = new Float32Array(crowdCount*3);
-const colors = new Float32Array(crowdCount*3);
+const ccolors = new Float32Array(crowdCount*3);
 const crowdColorChoices = [[0.9,0.75,0.2],[0.85,0.85,0.85],[0.1,0.1,0.1],[0.6,0.1,0.1],[0.15,0.4,0.7]];
 for(let i=0;i<crowdCount;i++){
   const ang = Math.random()*Math.PI*2;
@@ -329,15 +326,15 @@ for(let i=0;i<crowdCount;i++){
   positions[i*3+1] = 14 + Math.random()*11;
   positions[i*3+2] = Math.sin(ang)*rad;
   const c = crowdColorChoices[(Math.random()*crowdColorChoices.length)|0];
-  colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
+  ccolors[i*3]=c[0]; ccolors[i*3+1]=c[1]; ccolors[i*3+2]=c[2];
 }
 crowdGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
-crowdGeo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+crowdGeo.setAttribute('color', new THREE.BufferAttribute(ccolors,3));
 const crowd = new THREE.Points(crowdGeo, new THREE.PointsMaterial({size:0.9, vertexColors:true}));
 scene.add(crowd);
 
 /* ---------------------------------------------------------------------
-   PLAYER (built from cylinders + spheres — no CapsuleGeometry)
+   FIGURE BUILDER (cylinders + spheres — no CapsuleGeometry)
 --------------------------------------------------------------------- */
 function buildFigure(shirtColor, shortsColor){
   const g = new THREE.Group();
@@ -363,17 +360,17 @@ function buildFigure(shirtColor, shortsColor){
   head.castShadow = true;
   g.add(head);
 
-  function limb(mat, y, len, r1, r2){
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,8), mat);
+  function limb(mat){
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.13,0.85,8), mat);
     m.castShadow = true;
     return m;
   }
-  const legL = limb(shortsMat,0,0.9,0.16,0.14); legL.position.set(-0.18,0.1,0);
-  const legR = limb(shortsMat,0,0.9,0.16,0.14); legR.position.set(0.18,0.1,0);
+  const legL = limb(shortsMat); legL.position.set(-0.18,0.1,0);
+  const legR = limb(shortsMat); legR.position.set(0.18,0.1,0);
   g.add(legL,legR);
 
-  const armL = limb(shirtMat,0,0.8,0.13,0.11); armL.position.set(-0.62,1.25,0); armL.rotation.z=0.15;
-  const armR = limb(shirtMat,0,0.8,0.13,0.11); armR.position.set(0.62,1.25,0); armR.rotation.z=-0.15;
+  const armL = limb(shirtMat); armL.position.set(-0.62,1.25,0); armL.rotation.z=0.15;
+  const armR = limb(shirtMat); armR.position.set(0.62,1.25,0); armR.rotation.z=-0.15;
   g.add(armL,armR);
 
   g.userData.legL = legL; g.userData.legR = legR;
@@ -381,39 +378,77 @@ function buildFigure(shirtColor, shortsColor){
   return g;
 }
 
-const player = buildFigure(0x1b3a8a, 0x0d1117); // blue/black kit — Mason & Tyson's team
-scene.add(player);
+function animateRun(figure, t, speedFactor){
+  const swing = Math.sin(t*10*speedFactor)*0.6;
+  figure.userData.legL.rotation.x = swing;
+  figure.userData.legR.rotation.x = -swing;
+  figure.userData.armL.rotation.x = -swing*0.8;
+  figure.userData.armR.rotation.x = swing*0.8;
+}
+function settleFigure(figure){
+  figure.userData.legL.rotation.x *= 0.8;
+  figure.userData.legR.rotation.x *= 0.8;
+  figure.userData.armL.rotation.x *= 0.8;
+  figure.userData.armR.rotation.x *= 0.8;
+}
 
-// ball carried indicator
+/* ---------------------------------------------------------------------
+   ATTACKING TEAM  (Mason & Tyson's side — player + 3 teammates)
+--------------------------------------------------------------------- */
+const TEAM_SIZE = 4;
+const TEAM_SHIRT = 0x1b3a8a, TEAM_SHORTS = 0x0d1117;
+const attackers = [];
+const FORMATION_OFFSETS = [
+  {x:-4.5, z:-5.5},
+  {x:-4.5, z: 0},
+  {x:-4.5, z: 5.5},
+];
+
+function buildTeam(){
+  attackers.forEach(a=>scene.remove(a.mesh));
+  attackers.length = 0;
+  for(let i=0;i<TEAM_SIZE;i++){
+    const mesh = buildFigure(TEAM_SHIRT, TEAM_SHORTS);
+    mesh.position.set(-4*i, 0, 0);
+    scene.add(mesh);
+    attackers.push({mesh, runT:Math.random()*10});
+  }
+}
+buildTeam();
+
+// controlled-player marker (floating gold diamond)
+const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0), new THREE.MeshStandardMaterial({color:0xf4b83a, emissive:0x996611, emissiveIntensity:0.6}));
+scene.add(marker);
+
+// ball
 const ball = new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8), new THREE.MeshStandardMaterial({color:0x7a3b12}));
 ball.scale.set(1,0.7,0.7);
 ball.castShadow = true;
 scene.add(ball);
 
 /* ---------------------------------------------------------------------
-   DEFENDERS (bots)
+   DEFENSIVE LINE
 --------------------------------------------------------------------- */
-const BOT_COUNT = 5;
-const bots = [];
-function spawnBots(){
-  bots.forEach(b=>scene.remove(b.mesh));
-  bots.length = 0;
-  for(let i=0;i<BOT_COUNT;i++){
-    const mesh = buildFigure(0xb5121b, 0xf2f1ec); // red/white defenders
-    const z = (Math.random()*2-1)*FIELD_HALF_WIDTH*0.85;
-    const x = (Math.random()*0.5+0.15) * (Math.random()<0.5?1:-1) * FIELD_HALF_LEN * 0.7;
-    mesh.position.set(x, 0, z);
+const DEFENDER_COUNT = 6;
+const DEF_SHIRT = 0xb5121b, DEF_SHORTS = 0xf2f1ec;
+const defenders = [];
+const LINE_GAP_START = 17;
+const LINE_ADVANCE_SPEED = 1.9;
+const RUSH_THRESHOLD = 6.5;
+
+let lineGap = LINE_GAP_START;
+
+function buildDefense(){
+  defenders.forEach(d=>scene.remove(d.mesh));
+  defenders.length = 0;
+  for(let i=0;i<DEFENDER_COUNT;i++){
+    const mesh = buildFigure(DEF_SHIRT, DEF_SHORTS);
     scene.add(mesh);
-    bots.push({
-      mesh,
-      speed: 4.2 + Math.random()*1.4,
-      state:'patrol',
-      patrolTarget: new THREE.Vector3(x,0,z),
-      walkT: Math.random()*10
-    });
+    defenders.push({mesh, slot: (i/(DEFENDER_COUNT-1))*2-1, runT:Math.random()*10});
   }
+  lineGap = LINE_GAP_START;
 }
-spawnBots();
+buildDefense();
 
 /* ---------------------------------------------------------------------
    GAME STATE
@@ -425,21 +460,26 @@ const state = {
   tackled:0,
   matchSeconds: 20*60,
   hasBall:true,
+  controlledIndex:0,
   tackledUntil:0,
   dodgeUntil:0,
   dodgeCooldownUntil:0,
   stamina:100,
   sprinting:false,
-  playerVel: new THREE.Vector3(),
   facing:0,
 };
 
-function resetPlayerToRestart(x=0,z=0){
-  player.position.set(x,0,z);
+function resetPlay(centerZ){
+  attackers.forEach((a,i)=>{
+    a.mesh.position.set(0 - i*3, 0, (centerZ||0) + (i===0?0:(FORMATION_OFFSETS[i-1]?FORMATION_OFFSETS[i-1].z:0)));
+    a.mesh.rotation.y = 0;
+  });
+  state.controlledIndex = 0;
   state.hasBall = true;
+  state.facing = 0;
+  buildDefense();
 }
-
-resetPlayerToRestart(0,0);
+resetPlay(0);
 
 /* ---------------------------------------------------------------------
    INPUT
@@ -452,17 +492,18 @@ window.addEventListener('keydown', e=>{
 window.addEventListener('keyup', e=>{ keys[e.code] = false; });
 
 /* ---------------------------------------------------------------------
-   UI ELEMENTS
+   UI
 --------------------------------------------------------------------- */
 const el = id=>document.getElementById(id);
 const hudPoints = el('hudPoints'), hudTries = el('hudTries'), hudClock = el('hudClock');
 const clockpanel = el('clockpanel');
 const staminaBar = el('stamina-bar');
+const teamlabel = el('teamlabel');
 const centermsg = el('centermsg'), centerBig = el('centerBig'), centerSmall = el('centerSmall');
 const tackledFlash = el('tackled-flash');
 const startscreen = el('startscreen'), endscreen = el('endscreen');
 
-function flashMessage(big, small, duration=1400){
+function flashMessage(big, small, duration=1300){
   centerBig.textContent = big;
   centerSmall.textContent = small;
   centermsg.classList.add('show');
@@ -481,8 +522,7 @@ function startMatch(){
   state.points = 0; state.tries = 0; state.tackled = 0;
   state.matchSeconds = 20*60;
   state.stamina = 100;
-  resetPlayerToRestart(0,0);
-  spawnBots();
+  resetPlay(0);
   startscreen.style.display = 'none';
   endscreen.style.display = 'none';
   updateHUD();
@@ -504,67 +544,65 @@ function updateHUD(){
   hudClock.textContent = `${m}:${s.toString().padStart(2,'0')}`;
   clockpanel.classList.toggle('urgent', state.matchSeconds <= 60);
   staminaBar.style.width = Math.max(0,state.stamina) + '%';
+  teamlabel.textContent = state.controlledIndex===0 ? 'Now Playing: You' : `Now Playing: Teammate ${state.controlledIndex}`;
 }
 
 /* ---------------------------------------------------------------------
-   GAME LOGIC HELPERS
+   GAME LOGIC
 --------------------------------------------------------------------- */
 function scoreTry(){
   state.points += 4;
   state.tries += 1;
   flashMessage('TRY!', '+4 POINTS');
   state.hasBall = false;
-  // brief pause then restart play from halfway, alternate side
   setTimeout(()=>{
-    resetPlayerToRestart(0, (Math.random()*2-1)*8);
-    spawnBots();
+    resetPlay((Math.random()*2-1)*8);
   }, 900);
 }
 
-function doTackle(){
+function doTackle(carrier){
   if(performance.now() < state.tackledUntil) return;
   state.tackled += 1;
   state.hasBall = false;
   tackledFlash.style.opacity = 0.35;
   setTimeout(()=>tackledFlash.style.opacity=0, 90);
-  flashMessage('TACKLED!', 'RESTART THE PLAY', 1100);
-  state.tackledUntil = performance.now() + 1300;
-  setTimeout(()=>{
-    resetPlayerToRestart(
-      Math.max(-FIELD_HALF_LEN+5, Math.min(FIELD_HALF_LEN-5, player.position.x - 6*Math.sign(player.position.x||1))),
-      player.position.z
-    );
-    spawnBots();
-  }, 700);
+
+  // find nearest teammate to hand the ball to
+  let bestIdx = -1, bestDist = Infinity;
+  attackers.forEach((a,i)=>{
+    if(i===state.controlledIndex) return;
+    const d = a.mesh.position.distanceTo(carrier.mesh.position);
+    if(d < bestDist){ bestDist = d; bestIdx = i; }
+  });
+
+  if(bestIdx === -1) bestIdx = 0;
+
+  flashMessage('TACKLED!', bestIdx===state.controlledIndex ? 'RESTART' : `BALL TO TEAMMATE ${bestIdx===0?'':bestIdx}`, 1200);
+
+  state.controlledIndex = bestIdx;
+  state.hasBall = true;
+  state.tackledUntil = performance.now() + 500;
+  lineGap = Math.min(LINE_GAP_START, lineGap + 9);
 }
 
 /* ---------------------------------------------------------------------
-   CAMERA FOLLOW
+   CAMERA
 --------------------------------------------------------------------- */
-const camOffset = new THREE.Vector3(0,6.5,9.5);
+const camOffset = new THREE.Vector3(-9.5,6.5,0);
 function updateCamera(){
-  const desired = player.position.clone().add(camOffset.clone().applyAxisAngle(new THREE.Vector3(0,1,0), 0));
+  const carrier = attackers[state.controlledIndex].mesh;
+  // camera trails behind current facing direction
+  const behind = new THREE.Vector3(-Math.sin(carrier.rotation.y), 0, -Math.cos(carrier.rotation.y)).multiplyScalar(9.5);
+  const desired = carrier.position.clone().add(new THREE.Vector3(behind.x, 6.5, behind.z));
   camera.position.lerp(desired, 0.12);
-  const lookAt = player.position.clone().add(new THREE.Vector3(0,1.4,0));
+  const lookAt = carrier.position.clone().add(new THREE.Vector3(0,1.4,0));
   camera.lookAt(lookAt);
-}
-
-/* ---------------------------------------------------------------------
-   ANIMATION HELPERS
---------------------------------------------------------------------- */
-function animateRun(figure, t, speedFactor){
-  const swing = Math.sin(t*10*speedFactor)*0.6;
-  figure.userData.legL.rotation.x = swing;
-  figure.userData.legR.rotation.x = -swing;
-  figure.userData.armL.rotation.x = -swing*0.8;
-  figure.userData.armR.rotation.x = swing*0.8;
 }
 
 /* ---------------------------------------------------------------------
    MAIN LOOP
 --------------------------------------------------------------------- */
 let lastTime = performance.now();
-let runT = 0;
 
 function tick(){
   requestAnimationFrame(tick);
@@ -573,7 +611,7 @@ function tick(){
   dt = Math.min(dt, 0.05);
   lastTime = now;
 
-  crowd.rotation.y += dt*0.01; // subtle ambient life
+  crowd.rotation.y += dt*0.01;
 
   if(state.running){
     updateGame(dt, now);
@@ -584,7 +622,6 @@ function tick(){
 }
 
 function updateGame(dt, now){
-  // match clock
   state.matchSeconds -= dt;
   if(state.matchSeconds <= 0){
     state.matchSeconds = 0;
@@ -593,9 +630,10 @@ function updateGame(dt, now){
     return;
   }
 
+  const carrier = attackers[state.controlledIndex];
   const isTackled = now < state.tackledUntil;
 
-  // ---- player movement ----
+  // ---- controlled player movement ----
   let moveX=0, moveZ=0;
   if(!isTackled){
     if(keys['KeyW']||keys['ArrowUp']) moveZ -= 1;
@@ -606,105 +644,126 @@ function updateGame(dt, now){
   const moving = moveX!==0 || moveZ!==0;
 
   state.sprinting = moving && (keys['ShiftLeft']||keys['ShiftRight']) && state.stamina > 2;
-  if(state.sprinting){ state.stamina = Math.max(0, state.stamina - dt*28); }
-  else { state.stamina = Math.min(100, state.stamina + dt*14); }
+  if(state.sprinting){ state.stamina = Math.max(0, state.stamina - dt*24); }
+  else { state.stamina = Math.min(100, state.stamina + dt*16); }
 
-  // dodge
   const isDodging = now < state.dodgeUntil;
   if(keys['Space'] && now > state.dodgeCooldownUntil && !isTackled){
     state.dodgeUntil = now + 350;
-    state.dodgeCooldownUntil = now + 1400;
+    state.dodgeCooldownUntil = now + 1300;
   }
 
-  let baseSpeed = 5.6;
-  if(state.sprinting) baseSpeed = 8.6;
-  if(isDodging) baseSpeed = 11;
+  // faster sprint per request
+  let baseSpeed = 6.4;
+  if(state.sprinting) baseSpeed = 13.5;
+  if(isDodging) baseSpeed = 15.5;
   if(isTackled) baseSpeed = 0;
 
   if(moving){
     const len = Math.hypot(moveX,moveZ) || 1;
     const dx = (moveX/len)*baseSpeed*dt;
     const dz = (moveZ/len)*baseSpeed*dt;
-    player.position.x = Math.max(-FIELD_HALF_LEN-TRY_DEPTH+2, Math.min(FIELD_HALF_LEN+TRY_DEPTH-2, player.position.x + dx));
-    player.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, player.position.z + dz));
+    carrier.mesh.position.x = Math.max(-FIELD_HALF_LEN-TRY_DEPTH+2, Math.min(FIELD_HALF_LEN+TRY_DEPTH-2, carrier.mesh.position.x + dx));
+    carrier.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, carrier.mesh.position.z + dz));
     state.facing = Math.atan2(dx, dz);
-    runT += dt;
-    animateRun(player, runT, state.sprinting?1.5:1);
+    carrier.runT += dt;
+    animateRun(carrier.mesh, carrier.runT, state.sprinting?1.6:1);
   } else {
-    player.userData.legL.rotation.x *= 0.8;
-    player.userData.legR.rotation.x *= 0.8;
-    player.userData.armL.rotation.x *= 0.8;
-    player.userData.armR.rotation.x *= 0.8;
+    settleFigure(carrier.mesh);
   }
-  player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, state.facing, 0.25);
+  carrier.mesh.rotation.y = THREE.MathUtils.lerp(carrier.mesh.rotation.y, state.facing, 0.25);
+  carrier.mesh.position.y = isDodging ? 0.15*Math.sin(now*0.05) : 0;
 
-  // slight bob when dodging for feedback
-  player.position.y = isDodging ? 0.15*Math.sin(now*0.05) : 0;
-
-  // ball position — carried in front of torso
+  // ball follows carrier
   ball.position.set(
-    player.position.x + Math.sin(player.rotation.y)*0.35,
+    carrier.mesh.position.x + Math.sin(carrier.mesh.rotation.y)*0.35,
     1.15,
-    player.position.z + Math.cos(player.rotation.y)*0.35
+    carrier.mesh.position.z + Math.cos(carrier.mesh.rotation.y)*0.35
   );
   ball.visible = state.hasBall;
 
-  // ---- try scoring ----
-  if(state.hasBall && Math.abs(player.position.x) > FIELD_HALF_LEN){
+  // marker above controlled player's head
+  marker.position.set(carrier.mesh.position.x, 2.9 + Math.sin(now*0.005)*0.12, carrier.mesh.position.z);
+  marker.rotation.y += dt*2;
+
+  // ---- AI teammates follow in formation, running with the team ----
+  let offsetSlot = 0;
+  attackers.forEach((a,i)=>{
+    if(i === state.controlledIndex) return;
+    const off = FORMATION_OFFSETS[offsetSlot % FORMATION_OFFSETS.length];
+    offsetSlot++;
+    const target = new THREE.Vector3(
+      carrier.mesh.position.x + off.x,
+      0,
+      carrier.mesh.position.z + off.z
+    );
+    const toTarget = new THREE.Vector3().subVectors(target, a.mesh.position);
+    const dist = toTarget.length();
+    if(dist > 0.15){
+      const spd = Math.min(dist*3.5, baseSpeed*0.98 + 1.5);
+      const dir = toTarget.normalize();
+      a.mesh.position.x += dir.x*spd*dt;
+      a.mesh.position.z += dir.z*spd*dt;
+      a.mesh.rotation.y = THREE.MathUtils.lerp(a.mesh.rotation.y, Math.atan2(dir.x,dir.z), 0.2);
+      a.runT += dt;
+      animateRun(a.mesh, a.runT, 1.1);
+    } else {
+      settleFigure(a.mesh);
+    }
+    a.mesh.position.x = Math.max(-FIELD_HALF_LEN-TRY_DEPTH+2, Math.min(FIELD_HALF_LEN+TRY_DEPTH-2, a.mesh.position.x));
+    a.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, a.mesh.position.z));
+  });
+
+  // ---- try scoring (attacking try line at +x) ----
+  if(state.hasBall && carrier.mesh.position.x > FIELD_HALF_LEN){
     scoreTry();
   }
 
-  // ---- bots AI ----
-  bots.forEach(bot=>{
-    bot.walkT += dt;
-    const toPlayer = new THREE.Vector3().subVectors(player.position, bot.mesh.position);
-    const dist = toPlayer.length();
-    const DETECT = 16;
+  // ---- defensive line ----
+  const rushing = lineGap <= RUSH_THRESHOLD;
+  if(!rushing){
+    lineGap = Math.max(RUSH_THRESHOLD - 0.01, lineGap - LINE_ADVANCE_SPEED*dt);
+  }
+  const targetLineX = Math.min(FIELD_HALF_LEN - 3, carrier.mesh.position.x + lineGap);
+  const lineShift = Math.max(-8, Math.min(8, carrier.mesh.position.z*0.7));
 
-    if(!isTackled && state.hasBall && dist < DETECT){
-      bot.state = 'chase';
-    } else if(dist > DETECT*1.4) {
-      bot.state = 'patrol';
-    }
-
-    let speed = bot.speed;
-    let dir = new THREE.Vector3();
-
-    if(bot.state==='chase'){
-      dir.copy(toPlayer).normalize();
-      // dodge evasion: if player is dodging and bot is close, bot slightly overshoots
-      if(isDodging && dist < 3){
-        dir.applyAxisAngle(new THREE.Vector3(0,1,0), 0.9);
-      }
+  defenders.forEach(d=>{
+    d.runT += dt;
+    let targetX, targetZ, speed;
+    if(rushing){
+      // break formation, rush the ball carrier directly
+      targetX = carrier.mesh.position.x;
+      targetZ = carrier.mesh.position.z;
+      speed = 9.5;
     } else {
-      const toTarget = new THREE.Vector3().subVectors(bot.patrolTarget, bot.mesh.position);
-      if(toTarget.length() < 1.2 || Math.random()<0.003){
-        bot.patrolTarget.set(
-          (Math.random()*2-1)*FIELD_HALF_LEN*0.6,
-          0,
-          (Math.random()*2-1)*FIELD_HALF_WIDTH*0.8
-        );
+      targetX = targetLineX;
+      targetZ = d.slot * (FIELD_HALF_WIDTH-2) + lineShift*0.6;
+      targetZ = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, targetZ));
+      speed = 6.2;
+    }
+    const dir = new THREE.Vector3(targetX-d.mesh.position.x, 0, targetZ-d.mesh.position.z);
+    const dist = dir.length();
+    if(dist > 0.1){
+      dir.normalize();
+      // if player is dodging and defender is close, throw them off slightly
+      if(isDodging && dist < 3.5){
+        dir.applyAxisAngle(new THREE.Vector3(0,1,0), 0.85);
       }
-      dir.copy(toTarget).normalize();
-      speed = bot.speed*0.45;
+      d.mesh.position.x += dir.x*speed*dt;
+      d.mesh.position.z += dir.z*speed*dt;
+      d.mesh.rotation.y = THREE.MathUtils.lerp(d.mesh.rotation.y, Math.atan2(dir.x,dir.z), 0.2);
+      animateRun(d.mesh, d.runT, rushing?1.5:0.9);
+    } else {
+      settleFigure(d.mesh);
     }
+    d.mesh.position.x = Math.max(-FIELD_HALF_LEN+1, Math.min(FIELD_HALF_LEN-1, d.mesh.position.x));
+    d.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, d.mesh.position.z));
 
-    bot.mesh.position.x += dir.x*speed*dt;
-    bot.mesh.position.z += dir.z*speed*dt;
-    bot.mesh.position.x = Math.max(-FIELD_HALF_LEN+1, Math.min(FIELD_HALF_LEN-1, bot.mesh.position.x));
-    bot.mesh.position.z = Math.max(-FIELD_HALF_WIDTH+1, Math.min(FIELD_HALF_WIDTH-1, bot.mesh.position.z));
-
-    if(dir.lengthSq() > 0.001){
-      const targetRot = Math.atan2(dir.x, dir.z);
-      bot.mesh.rotation.y = THREE.MathUtils.lerp(bot.mesh.rotation.y, targetRot, 0.2);
-      animateRun(bot.mesh, bot.walkT, bot.state==='chase'?1.3:0.7);
-    }
-
-    // tackle check
+    // tackle check — only the ball carrier can be tackled
     if(!isTackled && state.hasBall && !isDodging){
-      const tackleDist = new THREE.Vector3(player.position.x-bot.mesh.position.x,0,player.position.z-bot.mesh.position.z).length();
-      if(tackleDist < 1.15){
-        doTackle();
+      const tDist = new THREE.Vector3(carrier.mesh.position.x-d.mesh.position.x,0,carrier.mesh.position.z-d.mesh.position.z).length();
+      if(tDist < 1.15){
+        doTackle(carrier);
       }
     }
   });
