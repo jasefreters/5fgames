@@ -7,120 +7,98 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&family=Nunito:wght@400;700;800&display=swap');
 
-  :root {
-    --cream: #FFF5E6;
-    --pink: #FFB3C6;
-    --mint: #B5EAD7;
-    --lavender: #C7B2E0;
-    --yellow: #FFE999;
-    --peach: #FFCBA4;
-    --red: #FF6B6B;
-    --sky: #AED9F5;
-    --dark: #3D2B4A;
-    --card-back: #C7B2E0;
-    --shadow: rgba(61,43,74,0.15);
-  }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Nunito', sans-serif;
-    background: var(--cream);
     min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 15% 20%, rgba(255,179,198,0.3) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(181,234,215,0.3) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(199,178,224,0.2) 0%, transparent 60%);
     overflow-x: hidden;
+    transition: background 1s ease;
   }
 
-  /* ── HEADER ── */
   header {
     text-align: center;
-    padding: 18px 16px 10px;
-    position: relative;
+    padding: 16px 16px 8px;
   }
   .game-title {
     font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 800;
-    color: var(--dark);
-    letter-spacing: -0.5px;
+    color: #3D2B4A;
     line-height: 1;
   }
-  .game-title span { color: var(--red); }
+  .game-title span { color: #FF6B6B; }
   .subtitle {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #8c6fa8;
     margin-top: 2px;
     letter-spacing: 1px;
     text-transform: uppercase;
   }
 
-  /* ── HUD ── */
+  /* HUD */
   .hud {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    padding: 8px 16px 12px;
+    gap: 8px;
+    padding: 6px 12px 8px;
     flex-wrap: wrap;
   }
   .hud-pill {
     background: white;
-    border: 2px solid var(--dark);
+    border: 2px solid #3D2B4A;
     border-radius: 999px;
-    padding: 5px 16px;
+    padding: 4px 14px;
     font-weight: 800;
-    font-size: 0.85rem;
-    color: var(--dark);
+    font-size: 0.82rem;
+    color: #3D2B4A;
     display: flex;
     align-items: center;
-    gap: 5px;
-    box-shadow: 3px 3px 0 var(--dark);
+    gap: 4px;
+    box-shadow: 3px 3px 0 #3D2B4A;
   }
-  .hud-pill.points { background: var(--yellow); }
-  .hud-pill.level  { background: var(--mint); }
-  .hud-pill.pairs  { background: var(--pink); }
+  .hud-pill.points { background: #FFE999; }
+  .hud-pill.level  { background: #B5EAD7; }
+  .hud-pill.pairs  { background: #FFB3C6; }
+  .hud-pill.timer  { background: #AED9F5; }
+  .hud-pill.timer.urgent { background: #FF6B6B; color: white; animation: pulse 0.5s infinite alternate; }
 
-  /* ── HINT BUTTON ── */
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+  /* HINT */
   .hint-area {
     text-align: center;
-    margin-bottom: 8px;
-    min-height: 36px;
+    margin-bottom: 6px;
+    min-height: 32px;
   }
   #hint-btn {
     display: none;
-    background: var(--peach);
-    border: 2px solid var(--dark);
+    background: #FFCBA4;
+    border: 2px solid #3D2B4A;
     border-radius: 999px;
-    padding: 6px 20px;
+    padding: 5px 18px;
     font-family: 'Nunito', sans-serif;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     cursor: pointer;
-    box-shadow: 3px 3px 0 var(--dark);
+    box-shadow: 3px 3px 0 #3D2B4A;
     transition: transform 0.1s, box-shadow 0.1s;
   }
-  #hint-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--dark); }
-  #hint-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--dark); }
-  #hint-msg {
-    font-size: 0.8rem;
-    color: #8c6fa8;
-    margin-top: 4px;
-    font-style: italic;
-  }
+  #hint-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #3D2B4A; }
+  #hint-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #3D2B4A; }
+  #hint-msg { font-size: 0.76rem; color: #8c6fa8; margin-top: 3px; font-style: italic; }
 
-  /* ── GRID ── */
+  /* BOARD */
   #board {
     display: grid;
-    gap: 10px;
-    padding: 10px 16px 20px;
-    max-width: 700px;
+    gap: 8px;
+    padding: 8px 12px 16px;
+    max-width: 720px;
     margin: 0 auto;
     justify-items: center;
   }
 
-  /* ── CARD ── */
+  /* CARDS */
   .card {
     width: 100%;
     aspect-ratio: 1;
@@ -128,142 +106,127 @@
     cursor: pointer;
   }
   .card-inner {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.45s cubic-bezier(.4,.2,.2,1);
-    border-radius: 14px;
+    transition: transform 0.42s cubic-bezier(.4,.2,.2,1);
+    border-radius: 12px;
   }
-  .card.flipped .card-inner  { transform: rotateY(180deg); }
-  .card.matched .card-inner  { transform: rotateY(180deg); }
-  .card.matched .card-front  { border-color: #2ecc71 !important; box-shadow: 0 0 0 3px #2ecc71, 3px 3px 0 var(--dark); }
-  .card.hint-glow .card-back { box-shadow: 0 0 0 4px gold, 3px 3px 0 var(--dark) !important; }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-front { border-color: #2ecc71 !important; box-shadow: 0 0 0 3px #2ecc71, 3px 3px 0 #3D2B4A; }
+  .card.hint-glow .card-back { box-shadow: 0 0 0 4px gold, 3px 3px 0 #3D2B4A !important; }
 
   .card-front, .card-back {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     backface-visibility: hidden;
-    border-radius: 14px;
-    border: 2.5px solid var(--dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 3px 3px 0 var(--dark);
+    border-radius: 12px;
+    border: 2.5px solid #3D2B4A;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 3px 3px 0 #3D2B4A;
   }
-  .card-back {
-    background: var(--card-back);
-    font-size: 1.8rem;
-  }
-  .card-front {
-    transform: rotateY(180deg);
-    background: white;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .card-emoji { font-size: 2.2rem; line-height: 1; }
-  .card-label { font-size: 0.6rem; font-weight: 700; color: var(--dark); text-align: center; }
+  .card-back { background: #C7B2E0; font-size: 1.6rem; flex-direction: column; gap: 2px; }
+  .card-back-emoji { font-size: 1.5rem; }
+  .card-back-label { font-size: 0.5rem; font-weight: 800; color: #3D2B4A; text-align: center; letter-spacing: 0.5px; }
+  .card-front { transform: rotateY(180deg); background: white; flex-direction: column; gap: 3px; }
+  .card-emoji { font-size: 2rem; line-height: 1; }
+  .card-label { font-size: 0.55rem; font-weight: 700; color: #3D2B4A; text-align: center; }
 
-  /* ── LEVEL BANNER ── */
+  /* BONUS round card back */
+  .card-back.bonus-back { background: linear-gradient(135deg, #1a1a2e, #16213e); border-color: gold; }
+  .card-back.bonus-back .card-back-label { color: gold; }
+
+  /* LEVEL BANNER */
   #level-banner {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(61,43,74,0.6);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
+    display: none; position: fixed; inset: 0;
+    background: rgba(61,43,74,0.65);
+    z-index: 100; align-items: center; justify-content: center;
   }
   #level-banner.show { display: flex; }
   .banner-box {
-    background: white;
-    border: 3px solid var(--dark);
-    border-radius: 24px;
-    padding: 40px 50px;
-    text-align: center;
-    box-shadow: 8px 8px 0 var(--dark);
+    background: white; border: 3px solid #3D2B4A;
+    border-radius: 24px; padding: 36px 44px;
+    text-align: center; box-shadow: 8px 8px 0 #3D2B4A;
     animation: popIn 0.4s cubic-bezier(.17,.67,.35,1.4);
-    max-width: 360px;
-    width: 90%;
+    max-width: 360px; width: 90%;
   }
-  .banner-emoji { font-size: 3.5rem; }
-  .banner-title {
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin: 8px 0 4px;
+  .banner-box.bonus-box {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-color: gold; box-shadow: 8px 8px 0 gold;
   }
-  .banner-sub { font-size: 0.9rem; color: #8c6fa8; margin-bottom: 16px; }
+  .banner-box.bonus-box .banner-title { color: gold; }
+  .banner-box.bonus-box .banner-sub { color: #ccc; }
+  .banner-emoji { font-size: 3rem; }
+  .banner-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 1.5rem; font-weight: 800; color: #3D2B4A; margin: 6px 0 3px; }
+  .banner-sub { font-size: 0.88rem; color: #8c6fa8; margin-bottom: 14px; }
   #banner-btn {
-    background: var(--mint);
-    border: 2.5px solid var(--dark);
-    border-radius: 999px;
-    padding: 10px 30px;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 800;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 4px 4px 0 var(--dark);
+    background: #B5EAD7; border: 2.5px solid #3D2B4A;
+    border-radius: 999px; padding: 9px 28px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem;
+    cursor: pointer; box-shadow: 4px 4px 0 #3D2B4A;
     transition: transform 0.1s, box-shadow 0.1s;
   }
-  #banner-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--dark); }
+  #banner-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 #3D2B4A; }
+  #banner-btn.bonus-start-btn { background: gold; border-color: gold; color: #1a1a2e; box-shadow: 4px 4px 0 gold; }
 
-  /* ── WIN SCREEN ── */
+  /* TIMEOUT SCREEN */
+  #timeout-screen {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,0,0,0.8); z-index: 150;
+    align-items: center; justify-content: center;
+  }
+  #timeout-screen.show { display: flex; }
+  .timeout-box {
+    background: #1a1a2e; border: 3px solid #FF6B6B;
+    border-radius: 24px; padding: 40px 44px;
+    text-align: center; box-shadow: 8px 8px 0 #FF6B6B;
+    animation: popIn 0.4s cubic-bezier(.17,.67,.35,1.4);
+    max-width: 360px; width: 90%;
+  }
+  .timeout-emoji { font-size: 3rem; }
+  .timeout-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 1.6rem; font-weight: 800; color: #FF6B6B; margin: 8px 0 4px; }
+  .timeout-sub { font-size: 0.88rem; color: #ccc; margin-bottom: 16px; }
+  #retry-bonus-btn {
+    background: #FF6B6B; border: 2.5px solid #FF6B6B; color: white;
+    border-radius: 999px; padding: 10px 28px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem;
+    cursor: pointer; box-shadow: 4px 4px 0 #a00; margin-right: 8px;
+    transition: transform 0.1s;
+  }
+  #retry-bonus-btn:hover { transform: translate(-1px,-1px); }
+
+  /* WIN SCREEN */
   #win-screen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(61,43,74,0.7);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
+    display: none; position: fixed; inset: 0;
+    background: rgba(61,43,74,0.75); z-index: 200;
+    align-items: center; justify-content: center;
   }
   #win-screen.show { display: flex; }
   .win-box {
-    background: linear-gradient(135deg, var(--pink), var(--lavender), var(--mint));
-    border: 3px solid var(--dark);
-    border-radius: 28px;
-    padding: 50px 40px;
-    text-align: center;
-    box-shadow: 10px 10px 0 var(--dark);
+    background: linear-gradient(135deg, #FFB3C6, #C7B2E0, #B5EAD7);
+    border: 3px solid #3D2B4A; border-radius: 28px;
+    padding: 46px 36px; text-align: center;
+    box-shadow: 10px 10px 0 #3D2B4A;
     animation: popIn 0.5s cubic-bezier(.17,.67,.35,1.4);
-    max-width: 380px;
-    width: 90%;
+    max-width: 380px; width: 90%;
   }
-  .win-emoji { font-size: 4rem; }
-  .win-title {
-    font-family: 'M PLUS Rounded 1c', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin: 10px 0 6px;
-  }
-  .win-score { font-size: 1.1rem; color: var(--dark); font-weight: 700; margin-bottom: 20px; }
+  .win-emoji { font-size: 3.5rem; }
+  .win-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 1.9rem; font-weight: 800; color: #3D2B4A; margin: 8px 0 5px; }
+  .win-score { font-size: 1rem; color: #3D2B4A; font-weight: 700; margin-bottom: 18px; }
   #restart-btn {
-    background: var(--yellow);
-    border: 2.5px solid var(--dark);
-    border-radius: 999px;
-    padding: 12px 36px;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 800;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 4px 4px 0 var(--dark);
+    background: #FFE999; border: 2.5px solid #3D2B4A;
+    border-radius: 999px; padding: 11px 32px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem;
+    cursor: pointer; box-shadow: 4px 4px 0 #3D2B4A;
     transition: transform 0.1s, box-shadow 0.1s;
   }
-  #restart-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--dark); }
+  #restart-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 #3D2B4A; }
 
-  /* ── CONFETTI ── */
+  /* CONFETTI */
   .confetti-piece {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    top: -20px;
+    position: fixed; border-radius: 2px; top: -20px;
     animation: confettiFall linear forwards;
-    z-index: 300;
-    pointer-events: none;
+    z-index: 300; pointer-events: none;
   }
   @keyframes confettiFall {
     0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
@@ -274,29 +237,21 @@
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* ── CAPYBARA DECO ── */
-  .capy-deco {
-    position: fixed;
-    bottom: 10px;
-    right: 14px;
-    font-size: 2rem;
-    opacity: 0.5;
-    pointer-events: none;
-    user-select: none;
-  }
+  .capy-deco { position: fixed; bottom: 10px; right: 14px; font-size: 1.8rem; opacity: 0.45; pointer-events: none; user-select: none; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="game-title">Bibija's <span>Memory</span> Game 🐾</div>
-  <div class="subtitle">Heisei Retro Edition · Match the Animals!</div>
+  <div class="subtitle">Heisei Retro Edition · Match the Cards!</div>
 </header>
 
 <div class="hud">
   <div class="hud-pill points">⭐ <span id="score-display">0</span> pts</div>
-  <div class="hud-pill level">🌸 Level <span id="level-display">1</span> / 10</div>
-  <div class="hud-pill pairs">🃏 <span id="pairs-display">0</span> / <span id="total-pairs">0</span> pairs</div>
+  <div class="hud-pill level">🌸 Level <span id="level-display">1</span> / 30</div>
+  <div class="hud-pill pairs">🃏 <span id="pairs-display">0</span> / <span id="total-pairs">0</span></div>
+  <div class="hud-pill timer" id="timer-pill" style="display:none">⏱ <span id="timer-display">3:00</span></div>
 </div>
 
 <div class="hint-area">
@@ -308,7 +263,7 @@
 
 <!-- Level Complete Banner -->
 <div id="level-banner">
-  <div class="banner-box">
+  <div class="banner-box" id="banner-box">
     <div class="banner-emoji" id="banner-emoji">🎉</div>
     <div class="banner-title" id="banner-title">Level 1 Complete!</div>
     <div class="banner-sub" id="banner-sub">You matched all the cards!</div>
@@ -316,11 +271,21 @@
   </div>
 </div>
 
+<!-- Timeout Screen (Bonus Round) -->
+<div id="timeout-screen">
+  <div class="timeout-box">
+    <div class="timeout-emoji">⏰</div>
+    <div class="timeout-title">Time's Up!</div>
+    <div class="timeout-sub">The bonus round is extremely hard — try again!</div>
+    <button id="retry-bonus-btn">Try Again 🔥</button>
+  </div>
+</div>
+
 <!-- Win Screen -->
 <div id="win-screen">
   <div class="win-box">
     <div class="win-emoji">🏆</div>
-    <div class="win-title">You Did It!</div>
+    <div class="win-title">LEGENDARY!</div>
     <div class="win-score" id="win-score-text">Final Score: 0 pts</div>
     <button id="restart-btn">Play Again 🔄</button>
   </div>
@@ -329,90 +294,206 @@
 <div class="capy-deco">🦫</div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────
-const ALL_ANIMALS = [
-  { emoji: '🐘', name: 'Elephant' },
-  { emoji: '🦁', name: 'Lion' },
-  { emoji: '🐧', name: 'Penguin' },
-  { emoji: '🦊', name: 'Fox' },
-  { emoji: '🐸', name: 'Frog' },
-  { emoji: '🦋', name: 'Butterfly' },
-  { emoji: '🐢', name: 'Turtle' },
-  { emoji: '🦒', name: 'Giraffe' },
-  { emoji: '🐳', name: 'Whale' },
-  { emoji: '🦜', name: 'Parrot' },
-  { emoji: '🦔', name: 'Hedgehog' },
-  { emoji: '🐺', name: 'Wolf' },
-  { emoji: '🦈', name: 'Shark' },
-  { emoji: '🐨', name: 'Koala' },
-  { emoji: '🦩', name: 'Flamingo' },
+// ── CARD CONTENT ──────────────────────────────────────────────────────────
+// Mix of animals and Disney-style characters (emoji)
+const ALL_CARDS = [
+  // Animals
+  { emoji: '🐘', name: 'Elephant',   type: 'animal' },
+  { emoji: '🦁', name: 'Lion',       type: 'animal' },
+  { emoji: '🐧', name: 'Penguin',    type: 'animal' },
+  { emoji: '🦊', name: 'Fox',        type: 'animal' },
+  { emoji: '🐸', name: 'Frog',       type: 'animal' },
+  { emoji: '🦋', name: 'Butterfly',  type: 'animal' },
+  { emoji: '🐢', name: 'Turtle',     type: 'animal' },
+  { emoji: '🦒', name: 'Giraffe',    type: 'animal' },
+  { emoji: '🐳', name: 'Whale',      type: 'animal' },
+  { emoji: '🦜', name: 'Parrot',     type: 'animal' },
+  { emoji: '🦔', name: 'Hedgehog',   type: 'animal' },
+  { emoji: '🐺', name: 'Wolf',       type: 'animal' },
+  { emoji: '🦈', name: 'Shark',      type: 'animal' },
+  { emoji: '🐨', name: 'Koala',      type: 'animal' },
+  { emoji: '🦩', name: 'Flamingo',   type: 'animal' },
+  { emoji: '🐙', name: 'Octopus',    type: 'animal' },
+  { emoji: '🦦', name: 'Otter',      type: 'animal' },
+  { emoji: '🦥', name: 'Sloth',      type: 'animal' },
+  { emoji: '🐆', name: 'Cheetah',    type: 'animal' },
+  { emoji: '🦚', name: 'Peacock',    type: 'animal' },
+  // Disney Characters (emoji representations)
+  { emoji: '🧚', name: 'Tinker Bell', type: 'disney' },
+  { emoji: '🧜', name: 'The Mermaid', type: 'disney' },
+  { emoji: '🧝', name: 'Elsa',        type: 'disney' },
+  { emoji: '🧙', name: 'Merlin',      type: 'disney' },
+  { emoji: '👸', name: 'Princess',    type: 'disney' },
+  { emoji: '🤴', name: 'Prince',      type: 'disney' },
+  { emoji: '🧟', name: 'Zombie Pirate', type: 'disney' },
+  { emoji: '🧞', name: 'Genie',       type: 'disney' },
+  { emoji: '🐭', name: 'Mickey',      type: 'disney' },
+  { emoji: '🦆', name: 'Donald',      type: 'disney' },
+  { emoji: '🐶', name: 'Pluto',       type: 'disney' },
+  { emoji: '🐻', name: 'Baloo',       type: 'disney' },
+  { emoji: '🦌', name: 'Bambi',       type: 'disney' },
+  { emoji: '🐟', name: 'Nemo',        type: 'disney' },
+  { emoji: '🦏', name: 'Rhino Guard', type: 'disney' },
 ];
 
-// Pairs per level: 3,4,5,6,7,8,9,10,12,15
-const PAIRS_PER_LEVEL = [3,4,5,6,7,8,9,10,12,15];
-const CARD_BACK_SYMBOLS = ['🌸','⭐','🌈','🎀','✨','💫','🎐','🎑','🍡','🌺'];
-const CONFETTI_COLOURS = ['#FFB3C6','#B5EAD7','#C7B2E0','#FFE999','#FFCBA4','#AED9F5','#FF6B6B','#fff'];
-const HINT_COST = 10;
-const LEVEL_5_CLUES = [
+// Card BACKS: different animals/characters shown on the back each level
+const BACK_ICONS = [
+  { emoji: '🌸', label: 'Level 1'  },
+  { emoji: '⭐', label: 'Level 2'  },
+  { emoji: '🌈', label: 'Level 3'  },
+  { emoji: '🎀', label: 'Level 4'  },
+  { emoji: '✨', label: 'Level 5'  },
+  { emoji: '💫', label: 'Level 6'  },
+  { emoji: '🎐', label: 'Level 7'  },
+  { emoji: '🍡', label: 'Level 8'  },
+  { emoji: '🌺', label: 'Level 9'  },
+  { emoji: '🎑', label: 'Level 10' },
+  { emoji: '🦄', label: 'Level 11' },
+  { emoji: '🌙', label: 'Level 12' },
+  { emoji: '🍀', label: 'Level 13' },
+  { emoji: '🎆', label: 'Level 14' },
+  { emoji: '🌊', label: 'Level 15' },
+  { emoji: '🔮', label: 'Level 16' },
+  { emoji: '🍭', label: 'Level 17' },
+  { emoji: '🎠', label: 'Level 18' },
+  { emoji: '🌴', label: 'Level 19' },
+  { emoji: '🎪', label: 'Level 20' },
+  { emoji: '🌋', label: 'Level 21' },
+  { emoji: '🏝', label: 'Level 22' },
+  { emoji: '🦋', label: 'Level 23' },
+  { emoji: '🎭', label: 'Level 24' },
+  { emoji: '🌠', label: 'Level 25' },
+  { emoji: '🎡', label: 'Level 26' },
+  { emoji: '🌸', label: 'Level 27' },
+  { emoji: '🎇', label: 'Level 28' },
+  { emoji: '🏆', label: 'Level 29' },
+  { emoji: '⚡', label: 'Level 30' },
+];
+
+// Background colours that change each level
+const BG_THEMES = [
+  { bg: '#FFF5E6', blob1: 'rgba(255,179,198,0.35)', blob2: 'rgba(181,234,215,0.35)' },
+  { bg: '#F0FFF4', blob1: 'rgba(181,234,215,0.4)',  blob2: 'rgba(199,178,224,0.3)'  },
+  { bg: '#FFF0FB', blob1: 'rgba(199,178,224,0.4)',  blob2: 'rgba(255,233,153,0.3)'  },
+  { bg: '#FFFBE6', blob1: 'rgba(255,233,153,0.45)', blob2: 'rgba(174,217,245,0.35)' },
+  { bg: '#E6F7FF', blob1: 'rgba(174,217,245,0.45)', blob2: 'rgba(255,179,198,0.3)'  },
+  { bg: '#FFF5F5', blob1: 'rgba(255,107,107,0.2)',  blob2: 'rgba(181,234,215,0.4)'  },
+  { bg: '#F5F0FF', blob1: 'rgba(199,178,224,0.45)', blob2: 'rgba(255,203,164,0.3)'  },
+  { bg: '#F0FFFC', blob1: 'rgba(181,234,215,0.5)',  blob2: 'rgba(255,233,153,0.3)'  },
+  { bg: '#FFF8F0', blob1: 'rgba(255,203,164,0.45)', blob2: 'rgba(199,178,224,0.3)'  },
+  { bg: '#F8F0FF', blob1: 'rgba(199,178,224,0.5)',  blob2: 'rgba(174,217,245,0.35)' },
+  { bg: '#E8FFE8', blob1: 'rgba(46,204,113,0.2)',   blob2: 'rgba(255,179,198,0.3)'  },
+  { bg: '#FFF0E8', blob1: 'rgba(255,152,0,0.2)',    blob2: 'rgba(181,234,215,0.4)'  },
+  { bg: '#E8F4FF', blob1: 'rgba(33,150,243,0.2)',   blob2: 'rgba(255,233,153,0.4)'  },
+  { bg: '#FFE8F4', blob1: 'rgba(233,30,99,0.15)',   blob2: 'rgba(181,234,215,0.4)'  },
+  { bg: '#F4FFE8', blob1: 'rgba(139,195,74,0.2)',   blob2: 'rgba(199,178,224,0.35)' },
+  { bg: '#E8FFFF', blob1: 'rgba(0,188,212,0.2)',    blob2: 'rgba(255,179,198,0.3)'  },
+  { bg: '#FFFFE8', blob1: 'rgba(255,235,59,0.3)',   blob2: 'rgba(199,178,224,0.35)' },
+  { bg: '#F4E8FF', blob1: 'rgba(156,39,176,0.15)',  blob2: 'rgba(181,234,215,0.4)'  },
+  { bg: '#E8FFF4', blob1: 'rgba(0,150,136,0.2)',    blob2: 'rgba(255,233,153,0.3)'  },
+  { bg: '#FFE8E8', blob1: 'rgba(244,67,54,0.15)',   blob2: 'rgba(174,217,245,0.4)'  },
+  // Darker/richer for higher levels
+  { bg: '#EDE0FF', blob1: 'rgba(103,58,183,0.2)',   blob2: 'rgba(255,179,198,0.3)'  },
+  { bg: '#D4F5E9', blob1: 'rgba(0,200,83,0.2)',     blob2: 'rgba(199,178,224,0.3)'  },
+  { bg: '#FFE5CC', blob1: 'rgba(255,109,0,0.2)',    blob2: 'rgba(181,234,215,0.3)'  },
+  { bg: '#CCF0FF', blob1: 'rgba(0,145,234,0.2)',    blob2: 'rgba(255,233,153,0.3)'  },
+  { bg: '#FFD6F5', blob1: 'rgba(171,71,188,0.2)',   blob2: 'rgba(181,234,215,0.3)'  },
+  { bg: '#D6FFE4', blob1: 'rgba(0,230,118,0.2)',    blob2: 'rgba(199,178,224,0.3)'  },
+  { bg: '#FFF3CC', blob1: 'rgba(255,214,0,0.3)',    blob2: 'rgba(174,217,245,0.3)'  },
+  { bg: '#FFD6D6', blob1: 'rgba(255,23,68,0.15)',   blob2: 'rgba(181,234,215,0.35)' },
+  { bg: '#D6F0FF', blob1: 'rgba(100,181,246,0.3)',  blob2: 'rgba(255,233,153,0.3)'  },
+  // Level 30 — dramatic dark gold
+  { bg: '#1a1a2e', blob1: 'rgba(255,200,0,0.12)',   blob2: 'rgba(255,100,100,0.1)'  },
+];
+
+// Pairs per level (30 levels, level 30 = bonus extreme)
+function pairsForLevel(lvl) {
+  if (lvl <= 5)  return 3 + lvl - 1;          // 3–7
+  if (lvl <= 10) return 7 + lvl - 5;           // 8–12
+  if (lvl <= 15) return 12 + lvl - 10;         // 13–17
+  if (lvl <= 20) return 17 + lvl - 15;         // 18–22
+  if (lvl <= 25) return 22 + lvl - 20;         // 23–27
+  if (lvl <= 29) return 27 + lvl - 25;         // 28–30 (but capped)
+  return 35; // Level 30 bonus: max cards
+}
+
+const BONUS_LEVEL = 30;
+const BONUS_TIME  = 180; // 3 minutes
+const HINT_COST   = 10;
+const CONFETTI_COLOURS = ['#FFB3C6','#B5EAD7','#C7B2E0','#FFE999','#FFCBA4','#AED9F5','#FF6B6B','#fff','gold'];
+const CLUES = [
   'One pair is hiding in the top-left corner! 👀',
   'Look in the bottom-right — two cards match there! 🔍',
   'Try the middle row — a pair is waiting! 🌸',
-  'The rarest animal is somewhere near the top! ✨',
+  'A sneaky pair is near the top! ✨',
+  'Check the left side — two cards are twins! 🌟',
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-let level = 1;
-let score = 0;
-let pairsFound = 0;
-let totalPairs = 0;
-let flipped = [];
-let locked = false;
-let matchedCount = 0;
-let hintsUsed = 0;
-let currentAnimals = [];
+let level = 1, score = 0, pairsFound = 0, totalPairs = 0;
+let flipped = [], locked = false, matchedCount = 0, hintsUsed = 0;
+let timerInterval = null, timeLeft = 0;
+let isBonusRound = false;
 
-// ── INIT ──────────────────────────────────────────────────────────────────
+// ── BACKGROUND ────────────────────────────────────────────────────────────
+function applyBackground(lvl) {
+  const t = BG_THEMES[(lvl - 1) % BG_THEMES.length];
+  if (lvl === BONUS_LEVEL) {
+    document.body.style.background = t.bg;
+    document.body.style.backgroundImage = `radial-gradient(circle at 20% 30%, ${t.blob1} 0%, transparent 50%), radial-gradient(circle at 80% 70%, ${t.blob2} 0%, transparent 50%)`;
+  } else {
+    document.body.style.background = t.bg;
+    document.body.style.backgroundImage = `radial-gradient(circle at 15% 20%, ${t.blob1} 0%, transparent 40%), radial-gradient(circle at 85% 80%, ${t.blob2} 0%, transparent 40%), radial-gradient(circle at 50% 50%, rgba(199,178,224,0.15) 0%, transparent 60%)`;
+  }
+}
+
+// ── START LEVEL ───────────────────────────────────────────────────────────
 function startLevel(lvl) {
   level = lvl;
-  pairsFound = 0;
-  flipped = [];
-  locked = false;
-  matchedCount = 0;
-  hintsUsed = 0;
+  pairsFound = 0; flipped = []; locked = false; matchedCount = 0; hintsUsed = 0;
+  isBonusRound = (lvl === BONUS_LEVEL);
 
-  const numPairs = PAIRS_PER_LEVEL[lvl - 1];
+  clearTimer();
+  applyBackground(lvl);
+
+  const numPairs = Math.min(pairsForLevel(lvl), ALL_CARDS.length);
   totalPairs = numPairs;
 
-  // Pick animals (cycle if needed)
-  const pool = [...ALL_ANIMALS];
-  shuffle(pool);
-  currentAnimals = pool.slice(0, numPairs);
+  // Shuffle and pick cards
+  const pool = shuffle([...ALL_CARDS]);
+  const chosen = pool.slice(0, numPairs);
 
-  // Build card deck
-  const cards = [];
-  currentAnimals.forEach((a, i) => {
-    cards.push({ id: i*2,   animal: a, pairId: i });
-    cards.push({ id: i*2+1, animal: a, pairId: i });
+  // Build deck
+  const deck = [];
+  chosen.forEach((c, i) => {
+    deck.push({ animal: c, pairId: i });
+    deck.push({ animal: c, pairId: i });
   });
-  shuffle(cards);
+  shuffle(deck);
 
-  // Determine columns
-  const cols = numPairs <= 4 ? 3 : numPairs <= 6 ? 4 : numPairs <= 9 ? 4 : numPairs <= 12 ? 5 : 5;
-  const cardSize = Math.min(110, Math.floor((Math.min(window.innerWidth, 700) - 32 - (cols-1)*10) / cols));
+  // Grid columns
+  const totalCards = numPairs * 2;
+  const cols = totalCards <= 8 ? 4 : totalCards <= 16 ? 5 : totalCards <= 24 ? 6 : totalCards <= 36 ? 6 : 7;
+  const maxW = Math.min(window.innerWidth, 720);
+  const cardSize = Math.min(100, Math.floor((maxW - 24 - (cols-1)*8) / cols));
 
   const board = document.getElementById('board');
   board.innerHTML = '';
   board.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
 
-  cards.forEach((c, idx) => {
-    const backSym = CARD_BACK_SYMBOLS[(lvl - 1) % CARD_BACK_SYMBOLS.length];
+  const backIcon = BACK_ICONS[(lvl - 1) % BACK_ICONS.length];
+  const isBonus  = isBonusRound;
+
+  deck.forEach((c, idx) => {
     const el = document.createElement('div');
     el.className = 'card';
     el.dataset.pair = c.pairId;
-    el.dataset.uid = idx;
     el.innerHTML = `
       <div class="card-inner">
-        <div class="card-back">${backSym}</div>
+        <div class="card-back ${isBonus ? 'bonus-back' : ''}">
+          <div class="card-back-emoji">${backIcon.emoji}</div>
+          <div class="card-back-label">${backIcon.label}</div>
+        </div>
         <div class="card-front">
           <div class="card-emoji">${c.animal.emoji}</div>
           <div class="card-label">${c.animal.name}</div>
@@ -424,20 +505,63 @@ function startLevel(lvl) {
 
   updateHUD();
 
-  // Hint button visibility (Level 5+)
-  const hintBtn = document.getElementById('hint-btn');
-  hintBtn.style.display = lvl >= 5 ? 'inline-block' : 'none';
+  // Hint button: level 5+
+  document.getElementById('hint-btn').style.display = lvl >= 5 ? 'inline-block' : 'none';
   document.getElementById('hint-msg').textContent = '';
+
+  // Timer for bonus round
+  const timerPill = document.getElementById('timer-pill');
+  if (isBonusRound) {
+    timeLeft = BONUS_TIME;
+    timerPill.style.display = 'flex';
+    updateTimerDisplay();
+    timerInterval = setInterval(tickTimer, 1000);
+  } else {
+    timerPill.style.display = 'none';
+  }
 }
 
 function updateHUD() {
-  document.getElementById('score-display').textContent = score;
-  document.getElementById('level-display').textContent = level;
-  document.getElementById('pairs-display').textContent = pairsFound;
-  document.getElementById('total-pairs').textContent = totalPairs;
+  document.getElementById('score-display').textContent  = score;
+  document.getElementById('level-display').textContent  = level;
+  document.getElementById('pairs-display').textContent  = pairsFound;
+  document.getElementById('total-pairs').textContent    = totalPairs;
 }
 
-// ── CLICK ─────────────────────────────────────────────────────────────────
+// ── TIMER ─────────────────────────────────────────────────────────────────
+function tickTimer() {
+  timeLeft--;
+  updateTimerDisplay();
+  if (timeLeft <= 0) {
+    clearTimer();
+    onBonusTimeout();
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  const pill = document.getElementById('timer-pill');
+  if (timeLeft <= 30) pill.classList.add('urgent');
+  else pill.classList.remove('urgent');
+}
+
+function clearTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function onBonusTimeout() {
+  locked = true;
+  document.getElementById('timeout-screen').classList.add('show');
+}
+
+document.getElementById('retry-bonus-btn').addEventListener('click', () => {
+  document.getElementById('timeout-screen').classList.remove('show');
+  startLevel(BONUS_LEVEL);
+});
+
+// ── CARD CLICK ────────────────────────────────────────────────────────────
 function onCardClick(card) {
   if (locked) return;
   if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
@@ -450,26 +574,18 @@ function onCardClick(card) {
     locked = true;
     const [a, b] = flipped;
     if (a.dataset.pair === b.dataset.pair) {
-      // Match!
-      score += 5;
-      pairsFound++;
-      matchedCount++;
+      score += 5; pairsFound++; matchedCount++;
       setTimeout(() => {
-        a.classList.add('matched');
-        b.classList.add('matched');
-        flipped = [];
-        locked = false;
+        a.classList.add('matched'); b.classList.add('matched');
+        flipped = []; locked = false;
         updateHUD();
         if (matchedCount === totalPairs) onLevelComplete();
-      }, 400);
+      }, 350);
     } else {
-      // No match
       setTimeout(() => {
-        a.classList.remove('flipped');
-        b.classList.remove('flipped');
-        flipped = [];
-        locked = false;
-      }, 900);
+        a.classList.remove('flipped'); b.classList.remove('flipped');
+        flipped = []; locked = false;
+      }, 850);
     }
   }
 }
@@ -477,54 +593,60 @@ function onCardClick(card) {
 // ── HINT ──────────────────────────────────────────────────────────────────
 document.getElementById('hint-btn').addEventListener('click', () => {
   if (score < HINT_COST) {
-    document.getElementById('hint-msg').textContent = `You need at least ${HINT_COST} pts to buy a hint!`;
+    document.getElementById('hint-msg').textContent = `Need at least ${HINT_COST} pts to buy a hint!`;
     return;
   }
-  score -= HINT_COST;
-  updateHUD();
+  score -= HINT_COST; updateHUD();
 
-  // Find an unmatched pair and briefly glow one card
   const unmatched = [...document.querySelectorAll('.card:not(.matched):not(.flipped)')];
-  const pairGroups = {};
-  unmatched.forEach(c => {
-    const p = c.dataset.pair;
-    if (!pairGroups[p]) pairGroups[p] = [];
-    pairGroups[p].push(c);
-  });
-  const validPairs = Object.values(pairGroups).filter(g => g.length === 2);
-  if (validPairs.length === 0) return;
+  const groups = {};
+  unmatched.forEach(c => { const p = c.dataset.pair; if (!groups[p]) groups[p] = []; groups[p].push(c); });
+  const valid = Object.values(groups).filter(g => g.length === 2);
+  if (!valid.length) return;
 
-  const pair = validPairs[Math.floor(Math.random() * validPairs.length)];
-  pair.forEach(c => {
-    c.classList.add('hint-glow');
-    setTimeout(() => c.classList.remove('hint-glow'), 1200);
-  });
-
-  const clue = LEVEL_5_CLUES[hintsUsed % LEVEL_5_CLUES.length];
-  hintsUsed++;
-  document.getElementById('hint-msg').textContent = `💡 ${clue}`;
+  const pair = valid[Math.floor(Math.random() * valid.length)];
+  pair.forEach(c => { c.classList.add('hint-glow'); setTimeout(() => c.classList.remove('hint-glow'), 1400); });
+  document.getElementById('hint-msg').textContent = `💡 ${CLUES[hintsUsed++ % CLUES.length]}`;
 });
 
-// ── LEVEL COMPLETE ─────────────────────────────────────────────────────────
+// ── LEVEL COMPLETE ────────────────────────────────────────────────────────
 function onLevelComplete() {
-  launchConfetti(60);
+  clearTimer();
+  launchConfetti(isBonusRound ? 200 : 60);
 
-  const isLast = level === 10;
-  document.getElementById('banner-emoji').textContent = isLast ? '🏆' : '🎉';
-  document.getElementById('banner-title').textContent = isLast ? 'You Beat All 10 Levels!' : `Level ${level} Complete!`;
-  document.getElementById('banner-sub').textContent = isLast
-    ? `Amazing! Final score: ${score} pts`
-    : `You matched all ${totalPairs} pairs! Score: ${score} pts`;
-  document.getElementById('banner-btn').textContent = isLast ? 'See Results 🏆' : 'Next Level →';
+  const bannerBox = document.getElementById('banner-box');
+  const isLast    = level === BONUS_LEVEL;
+  const nextIsBonus = level === BONUS_LEVEL - 1;
 
-  setTimeout(() => {
-    document.getElementById('level-banner').classList.add('show');
-  }, 600);
+  if (isLast) {
+    bannerBox.className = 'banner-box bonus-box';
+    document.getElementById('banner-emoji').textContent = '🏆';
+    document.getElementById('banner-title').textContent = 'BONUS COMPLETE!';
+    document.getElementById('banner-sub').textContent   = `LEGENDARY! Final Score: ${score} pts`;
+    const btn = document.getElementById('banner-btn');
+    btn.textContent = 'See Results 🏆'; btn.className = '';
+  } else if (nextIsBonus) {
+    bannerBox.className = 'banner-box bonus-box';
+    document.getElementById('banner-emoji').textContent = '⚡';
+    document.getElementById('banner-title').textContent = `Level ${level} Complete!`;
+    document.getElementById('banner-sub').textContent   = `BONUS ROUND UNLOCKED! 3-minute time limit — extremely hard!`;
+    const btn = document.getElementById('banner-btn');
+    btn.textContent = 'Enter Bonus Round ⚡'; btn.className = 'bonus-start-btn';
+  } else {
+    bannerBox.className = 'banner-box';
+    document.getElementById('banner-emoji').textContent = '🎉';
+    document.getElementById('banner-title').textContent = `Level ${level} Complete!`;
+    document.getElementById('banner-sub').textContent   = `${pairsFound} pairs matched! Score: ${score} pts`;
+    const btn = document.getElementById('banner-btn');
+    btn.textContent = 'Next Level →'; btn.className = '';
+  }
+
+  setTimeout(() => document.getElementById('level-banner').classList.add('show'), 600);
 }
 
 document.getElementById('banner-btn').addEventListener('click', () => {
   document.getElementById('level-banner').classList.remove('show');
-  if (level >= 10) {
+  if (level >= BONUS_LEVEL) {
     showWin();
   } else {
     startLevel(level + 1);
@@ -534,13 +656,12 @@ document.getElementById('banner-btn').addEventListener('click', () => {
 function showWin() {
   document.getElementById('win-score-text').textContent = `Final Score: ${score} pts`;
   document.getElementById('win-screen').classList.add('show');
-  launchConfetti(120);
+  launchConfetti(180);
 }
 
 document.getElementById('restart-btn').addEventListener('click', () => {
   document.getElementById('win-screen').classList.remove('show');
-  score = 0;
-  startLevel(1);
+  score = 0; startLevel(1);
 });
 
 // ── CONFETTI ──────────────────────────────────────────────────────────────
@@ -551,14 +672,14 @@ function launchConfetti(n) {
       el.className = 'confetti-piece';
       el.style.left = Math.random() * 100 + 'vw';
       el.style.background = CONFETTI_COLOURS[Math.floor(Math.random() * CONFETTI_COLOURS.length)];
-      el.style.width = (8 + Math.random() * 10) + 'px';
+      el.style.width  = (8 + Math.random() * 10) + 'px';
       el.style.height = (8 + Math.random() * 10) + 'px';
       el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-      const dur = 1.5 + Math.random() * 2;
+      const dur = 1.5 + Math.random() * 2.5;
       el.style.animationDuration = dur + 's';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), dur * 1000);
-    }, i * 30);
+    }, i * 25);
   }
 }
 
@@ -571,7 +692,7 @@ function shuffle(arr) {
   return arr;
 }
 
-// ── START ─────────────────────────────────────────────────────────────────
+// ── GO! ───────────────────────────────────────────────────────────────────
 startLevel(1);
 </script>
 </body>
