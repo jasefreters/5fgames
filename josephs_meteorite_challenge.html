@@ -23,9 +23,9 @@ body{background:#000;display:flex;align-items:center;justify-content:center;heig
 .sr:last-child{border-bottom:none}
 .sv{color:#fff;font-weight:600}
 /* Blast zone */
-#bz{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;border:3px solid #5533ff;z-index:10}
-#bz.open{border-color:#ffff00;box-shadow:0 0 22px #ffff00}
-#bz.bad{border-color:#ff2222;box-shadow:0 0 22px #ff2222}
+#bz{position:absolute;left:50%;bottom:105px;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;border:4px solid #ff2222;box-shadow:0 0 12px #ff2222, inset 0 0 12px rgba(255,0,0,0.15);z-index:10}
+#bz.open{border-color:#ffff00;box-shadow:0 0 22px #ffff00, inset 0 0 12px rgba(255,255,0,0.15)}
+#bz.bad{border-color:#ff2222;box-shadow:0 0 30px #ff2222, inset 0 0 20px rgba(255,0,0,0.3)}
 /* Dog */
 #dog{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:80px;height:80px;z-index:15}
 /* Meteorite */
@@ -158,9 +158,9 @@ let fallDur   = 1800; // ms for meteorite to reach zone centre
 
 // Zone geometry (fixed layout)
 const GC_H    = 640;
-const BZ_BOT  = 105;          // bottom CSS offset
-const BZ_SIZE = 90;
-const ZONE_CY = GC_H - BZ_BOT - BZ_SIZE/2;  // = 490
+const BZ_BOT  = 90;           // bottom CSS offset
+const BZ_SIZE = 120;          // height of rectangle
+const ZONE_CY = GC_H - BZ_BOT - BZ_SIZE/2;  // centre of rectangle
 
 function tempo(){ return 1+(set-1)*0.09; }
 function getFallDur(){ return Math.round(1800/tempo()); }
@@ -226,7 +226,7 @@ function scheduleNext(){
   met.style.cssText=`display:block;position:absolute;width:${metSize}px;height:${metSize}px;`
     +`left:${metCX-metSize/2}px;top:${metCY-metSize/2}px;pointer-events:none;`;
 
-  fallDur  = getFallDur();
+  fallDur  = isBoss ? getFallDur() * 2.2 : getFallDur();
   fallStart= performance.now();
   phase    = 'falling';
   updateHUD();
@@ -246,7 +246,7 @@ function loop(now){
 
   const dist = Math.abs(metCY - ZONE_CY);
 
-  if(dist < 36){
+  if(dist < 70){
     if(phase==='falling'){
       phase='inzone';
       bz.className='open';
