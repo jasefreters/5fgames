@@ -69,10 +69,17 @@
   .stats span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 
   /* ---------- Goal Five (Wordle) ---------- */
-  .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 6px; margin: 0 auto; }
+  .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 6px; margin: 0 auto; position: relative; cursor: text; }
+  #w-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; caret-color: transparent; color: transparent; background: transparent; pointer-events: none; }
+  .w-tools { display: flex; justify-content: center; margin: -4px 0 10px; }
+  .kb-toggle { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
+  .kb-toggle:hover { background: var(--soft); }
+  #view-wordle .game-head { margin-bottom: 8px; }
+  #view-wordle .game-head h2 { font-size: 22px; }
+  #view-wordle .game-head p { font-size: 13px; margin-top: 2px; }
   .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .row.shake { animation: shake .45s; }
-  .cell { width: min(60px, calc((100vw - 64px) / 5)); aspect-ratio: 1; border: 2px solid var(--line); display: grid; place-items: center; font-size: 30px; font-weight: 700; text-transform: uppercase; user-select: none; }
+  .cell { width: var(--cell, min(60px, calc((100vw - 64px) / 5))); aspect-ratio: 1; border: 2px solid var(--line); display: grid; place-items: center; font-size: calc(var(--cell, 60px) * 0.5); font-weight: 700; text-transform: uppercase; user-select: none; }
   .cell.filled { border-color: #878a8c; animation: pop .1s; }
   .cell.flip { animation: flip .5s ease forwards; }
   .cell.correct, .cell.present, .cell.absent { color: #fff; border-color: transparent; }
@@ -80,9 +87,10 @@
   .cell.present { background: var(--w-yellow); }
   .cell.absent { background: var(--w-gray); }
   .row.win .cell { animation: bounce .6s ease; }
-  .keyboard { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+  .keyboard { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .native .keyboard { display: none; }
   .krow { display: flex; gap: 5px; justify-content: center; }
-  .key { flex: 1; max-width: 44px; height: 56px; border: none; border-radius: 5px; background: var(--key); font-weight: 700; font-size: 14px; color: var(--ink); text-transform: uppercase; }
+  .key { flex: 1; max-width: 44px; height: var(--key-h, 54px); border: none; border-radius: 5px; background: var(--key); font-weight: 700; font-size: 14px; color: var(--ink); text-transform: uppercase; }
   .key.wide { max-width: 68px; flex: 1.5; font-size: 12px; }
   .key.correct { background: var(--w-green); color: #fff; }
   .key.present { background: var(--w-yellow); color: #fff; }
@@ -181,9 +189,10 @@
   <section class="view" id="view-wordle">
     <div class="game-head">
       <h2>Goal Five</h2>
-      <p>Guess the 5-letter footy word. <b style="color:var(--w-green)">Green</b> = right spot,
-        <b style="color:var(--w-yellow)">gold</b> = wrong spot, grey = not in the word.</p>
+      <p>Guess the footy word in 6 tries. <b style="color:var(--w-green)">Green</b> = right spot,
+        <b style="color:var(--w-yellow)">gold</b> = wrong spot.</p>
     </div>
+    <div class="w-tools"><button class="kb-toggle" id="kbToggle">⌨️ Use phone keyboard</button></div>
     <div class="board" id="board"></div>
     <div class="result" id="w-result"></div>
     <div class="keyboard" id="keyboard"></div>
@@ -513,6 +522,7 @@ function show(view) {
   current = view;
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + view));
   if (view === "conn") fitTiles();
+  if (view === "wordle") sizeWordle(); else if ($("w-native")) $("w-native").blur();
   $("backBtn").classList.toggle("hidden", view === "hub");
   if (view === "hub") updateHub();
   window.scrollTo(0, 0);
@@ -567,6 +577,14 @@ function evaluate(guess, answer) {
 
 function buildBoard() {
   const b = $("board"); b.innerHTML = "";
+  // Hidden text box so the phone's own keyboard can be used as well.
+  const native = document.createElement("input");
+  Object.assign(native, { id: "w-native", type: "text", autocomplete: "off", spellcheck: false, maxLength: 5 });
+  native.setAttribute("autocapitalize", "characters");
+  native.setAttribute("autocorrect", "off");
+  native.setAttribute("enterkeyhint", "go");
+  native.setAttribute("aria-label", "Type your guess");
+  b.appendChild(native);
   for (let r = 0; r < 6; r++) {
     const row = document.createElement("div"); row.className = "row";
     for (let c = 0; c < 5; c++) { const cell = document.createElement("div"); cell.className = "cell"; row.appendChild(cell); }
@@ -588,7 +606,7 @@ function buildBoard() {
 }
 
 function paintRow(r, guess, animate) {
-  const row = $("board").children[r];
+  const row = boardRow(r);
   const res = evaluate(guess, ANSWER);
   [...row.children].forEach((cell, i) => {
     cell.textContent = guess[i];
@@ -615,7 +633,8 @@ function paintKeys() {
 function renderTyped() {
   const r = S.w.guesses.length;
   if (r >= 6) return;
-  [...$("board").children[r].children].forEach((cell, i) => {
+  if ($("w-native").value !== typed) $("w-native").value = typed;
+  [...boardRow(r).children].forEach((cell, i) => {
     cell.textContent = typed[i] || "";
     cell.className = "cell" + (typed[i] ? " filled" : "");
   });
@@ -631,6 +650,8 @@ function wordleResult() {
   el.innerHTML += `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
   el.classList.add("show");
   $("keyboard").style.display = "none";
+  $("kbToggle").style.display = "none";
+  $("w-native").blur();
 }
 
 function wordleInput(k) {
@@ -641,10 +662,10 @@ function wordleInput(k) {
 }
 
 function submitWord() {
-  const row = $("board").children[S.w.guesses.length];
+  const row = boardRow(S.w.guesses.length);
   if (typed.length < 5) { toast("Not enough letters"); shakeEl(row); return; }
   if (!VALID.has(typed)) { toast("Not in word list"); shakeEl(row); return; }
-  const guess = typed; typed = "";
+  const guess = typed; typed = ""; $("w-native").value = "";
   S.w.guesses.push(guess);
   const res = paintRow(S.w.guesses.length - 1, guess, true);
   busy = true;
@@ -665,15 +686,70 @@ function submitWord() {
 
 function shakeEl(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
 
+const boardRow = r => $("board").querySelectorAll(".row")[r];
+
 document.addEventListener("keydown", e => {
   if (current !== "wordle" || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.id === "w-native") return; // handled by the input's own events
   if (e.key === "Enter") { e.preventDefault(); wordleInput("ENTER"); }
   else if (e.key === "Backspace") wordleInput("BACK");
   else if (/^[a-zA-Z]$/.test(e.key)) wordleInput(e.key.toUpperCase());
 });
 
+// ---- Phone keyboard support ----
+function setupNative() {
+  const native = $("w-native");
+  const view = $("view-wordle");
+  native.addEventListener("input", () => {
+    if (S.w.done || busy) { native.value = typed; return; }
+    typed = native.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
+    renderTyped();
+  });
+  native.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); wordleInput("ENTER"); }
+  });
+  native.addEventListener("focus", () => {
+    view.classList.add("native");
+    $("kbToggle").textContent = "🔤 Use on-screen keys";
+    sizeWordle();
+  });
+  native.addEventListener("blur", () => {
+    view.classList.remove("native");
+    $("kbToggle").textContent = "⌨️ Use phone keyboard";
+    sizeWordle();
+  });
+  // Tapping the board or the toggle opens the phone keyboard (must happen inside the tap).
+  $("board").addEventListener("click", () => { if (!S.w.done) native.focus(); });
+  $("kbToggle").addEventListener("pointerdown", e => e.preventDefault()); // keep focus state stable
+  $("kbToggle").addEventListener("click", () => {
+    if (document.activeElement === native) native.blur(); else native.focus();
+  });
+}
+
+// Fit the board and keys inside the visible screen (which shrinks when the phone keyboard opens).
+function sizeWordle() {
+  if (current !== "wordle") return;
+  const view = $("view-wordle");
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const keyH = vh < 640 ? 44 : vh < 760 ? 50 : 56;
+  const kbShown = !view.classList.contains("native") && !S.w.done;
+  const used = document.querySelector("header").offsetHeight
+    + view.querySelector(".game-head").offsetHeight + 8
+    + view.querySelector(".w-tools").offsetHeight + 6
+    + (kbShown ? keyH * 3 + 6 * 2 + 12 : 0)
+    + 32; // main padding top + bottom
+  const byHeight = (vh - used - 5 * 6) / 6;
+  const byWidth = (Math.min(window.innerWidth, 560) - 32 - 4 * 6) / 5;
+  const cell = Math.max(28, Math.min(62, byHeight, byWidth));
+  view.style.setProperty("--cell", cell + "px");
+  view.style.setProperty("--key-h", keyH + "px");
+}
+window.addEventListener("resize", sizeWordle);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", sizeWordle);
+
 function initWordle() {
   buildBoard();
+  setupNative();
   S.w.guesses.forEach((g, r) => paintRow(r, g, false));
   paintKeys();
   if (S.w.done) wordleResult();
