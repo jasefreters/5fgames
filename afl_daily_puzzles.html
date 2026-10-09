@@ -210,7 +210,7 @@
   <section class="view" id="view-club">
     <div class="game-head">
       <h2>Club Clues</h2>
-      <p>Which AFL club is it? Each wrong guess reveals another clue. You get six guesses.</p>
+      <p>Which AFL club is it? The clues start tricky and get easier — each wrong guess reveals another. You get six guesses.</p>
     </div>
     <div class="clues" id="clues"></div>
     <div class="guess-left" id="k-left"></div>
@@ -282,133 +282,138 @@ const CONNECTIONS = [
     ["___ Song", ["SWAN","THEME","LOVE","FOLK"]] ],
 ];
 
-// Club Clues — six clues per club, from vague to giveaway.
+// Club Clues — six clues per club. The first clues deliberately fit several
+// clubs (e.g. "a city with two AFL clubs"); colours and nicknames come last.
+const MELB_10 = "A Melbourne-based club that has won more than 10 premierships.";
+const TWO_CITY = "Plays in a city that has exactly two AFL clubs.";
+const FOUNDER = "One of the eight founding VFL clubs of 1897.";
+const NEWEST = "One of the two newest clubs in the league.";
 const CLUBS = [
   { name: "Adelaide", short: "Adelaide", clues: [
-    "Joined the AFL in 1991.",
-    "Plays home games at Adelaide Oval.",
+    TWO_CITY,
+    "Won its first premiership in only its seventh season.",
+    "Its first coach was Graham Cornes.",
     "Won back-to-back premierships in 1997 and 1998.",
-    "Contests the Showdown against its cross-town rival.",
     "Colours: navy, red and gold.",
     "Nickname: the Crows." ] },
   { name: "Brisbane Lions", short: "Brisbane", clues: [
-    "Played its first season as a merged club in 1997.",
-    "One half of that merger was Fitzroy.",
+    "Plays outside Victoria and has won more than one premiership.",
+    "Its history includes a club that played in the very first VFL season of 1897.",
+    "Was formed by a merger, with its first season in 1997.",
     "Won three premierships in a row: 2001, 2002 and 2003.",
     "Home ground: the Gabba.",
-    "Colours: maroon, blue and gold.",
     "Nickname: the Lions." ] },
   { name: "Carlton", short: "Carlton", clues: [
-    "One of the eight founding VFL clubs of 1897.",
-    "Has won 16 VFL/AFL premierships.",
-    "Won the 1995 premiership.",
+    MELB_10,
+    "Came back from 44 points down at half-time to win the 1970 Grand Final.",
     "Traditional home: Princes Park.",
-    "Colours: navy blue.",
+    "Won the 1995 premiership, losing only two games all year.",
+    "Wears a navy guernsey with a white monogram.",
     "Nickname: the Blues." ] },
   { name: "Collingwood", short: "Collingwood", clues: [
-    "One of the eight founding VFL clubs of 1897.",
+    MELB_10,
+    "Played in a drawn Grand Final in 2010, then won the replay.",
     "Holds the record of four premierships in a row (1927–1930).",
-    "Won the 2023 premiership.",
     "Traditional home: Victoria Park.",
-    "Colours: black and white.",
+    "Won the 2023 Grand Final by just four points.",
     "Nickname: the Magpies." ] },
   { name: "Essendon", short: "Essendon", clues: [
-    "One of the eight founding VFL clubs of 1897.",
-    "Has won 16 VFL/AFL premierships.",
+    MELB_10,
+    "Won back-to-back premierships in 1984 and 1985.",
     "Lost only one game in 2000 on the way to the flag.",
     "Traditional home: Windy Hill.",
     "Wears a red sash on a black guernsey.",
     "Nickname: the Bombers." ] },
   { name: "Fremantle", short: "Fremantle", clues: [
-    "Joined the AFL in 1995.",
+    TWO_CITY,
+    "Entered the league in the mid-1990s.",
     "Played Hawthorn in the 2013 Grand Final.",
-    "Home ground: Optus Stadium in Perth.",
-    "Contests the Western Derby.",
+    "Its logo features an anchor — a nod to its port city.",
     "Main colour: purple.",
     "Nickname: the Dockers." ] },
   { name: "Geelong", short: "Geelong", clues: [
-    "One of the eight founding VFL clubs of 1897.",
-    "Won the 2007, 2009, 2011 and 2022 premierships.",
-    "Home ground: Kardinia Park.",
+    FOUNDER,
+    "Won the 1963 premiership, then waited 44 years for the next one.",
+    "Won the 2007, 2009 and 2011 premierships.",
     "Based in Victoria, but not in Melbourne.",
-    "Colours: navy blue and white hoops.",
+    "Home ground: Kardinia Park.",
     "Nickname: the Cats." ] },
   { name: "Gold Coast", short: "Gold Coast", clues: [
-    "Joined the AFL in 2011.",
-    "One of two Queensland clubs.",
-    "Contests the Q-Clash.",
+    NEWEST,
+    "Its first captain was Gary Ablett Jr.",
     "Home ground is at Carrara.",
+    "Contests the Q-Clash.",
     "Colours: red and gold.",
     "Nickname: the Suns." ] },
   { name: "GWS Giants", short: "GWS", clues: [
-    "Joined the AFL in 2012.",
+    NEWEST,
+    "Its first coach was Kevin Sheedy.",
+    "Plays some home games in Canberra.",
     "Played Richmond in the 2019 Grand Final.",
-    "Plays home games in Sydney and Canberra.",
-    "Contests the Sydney Derby.",
     "Main colour: orange.",
     "Nickname: the Giants." ] },
   { name: "Hawthorn", short: "Hawthorn", clues: [
-    "Joined the VFL in 1925.",
-    "Won three premierships in a row: 2013, 2014 and 2015.",
-    "Also won the 2008 premiership under Alastair Clarkson.",
+    MELB_10,
+    "Joined the VFL in 1925, but didn't win a premiership until 1961.",
     "Traditional home: Glenferrie Oval.",
+    "Won three premierships in a row: 2013, 2014 and 2015.",
     "Colours: brown and gold.",
     "Nickname: the Hawks." ] },
   { name: "Melbourne", short: "Melbourne", clues: [
-    "One of the eight founding VFL clubs of 1897.",
+    MELB_10,
     "Formed in 1858 — one of the oldest football clubs in the world.",
-    "Won the 2021 premiership in Perth.",
-    "That flag ended a drought dating back to 1964.",
+    "Won six premierships under coach Norm Smith.",
+    "Won the 2021 premiership in Perth, ending a drought dating back to 1964.",
     "Colours: red and navy blue.",
     "Nickname: the Demons." ] },
   { name: "North Melbourne", short: "North Melb.", clues: [
     "Joined the VFL in 1925.",
-    "Won its first premiership in 1975.",
-    "Won premierships in 1996 and 1999.",
+    "Waited 50 years for its first premiership.",
     "Traditional home: Arden Street.",
+    "Won premierships in 1996 and 1999.",
     "Colours: royal blue and white stripes.",
     "Nickname: the Kangaroos." ] },
   { name: "Port Adelaide", short: "Port Adelaide", clues: [
+    TWO_CITY,
+    "Founded in 1870 — long before it joined the AFL.",
     "Joined the AFL in 1997.",
-    "Had a long, successful history in the SANFL first.",
     "Won the 2004 premiership.",
-    "Contests the Showdown against its cross-town rival.",
     "Colours: black, white and teal.",
     "Nickname: the Power." ] },
   { name: "Richmond", short: "Richmond", clues: [
+    MELB_10,
     "Joined the VFL in 1908.",
-    "Won the 2017, 2019 and 2020 premierships.",
+    "Ended a 37-year premiership drought in 2017.",
     "Traditional home: Punt Road Oval.",
-    "Wears a diagonal sash on its guernsey.",
-    "Colours: yellow and black.",
+    "Wears a yellow diagonal sash on a black guernsey.",
     "Nickname: the Tigers." ] },
   { name: "St Kilda", short: "St Kilda", clues: [
-    "One of the eight founding VFL clubs of 1897.",
+    FOUNDER,
+    "Played in a drawn Grand Final in 2010.",
     "Won its first premiership in 1966 — by a single point.",
     "Former home ground: Moorabbin.",
-    "Based near Melbourne's bayside.",
     "Colours: red, white and black.",
     "Nickname: the Saints." ] },
   { name: "Sydney", short: "Sydney", clues: [
+    TWO_CITY,
     "One of the eight founding VFL clubs of 1897 — under a different name.",
     "Relocated interstate in 1982.",
-    "Was previously known as South Melbourne.",
-    "Won the 2005 and 2012 premierships.",
+    "Won the 2005 premiership, ending a 72-year drought.",
     "Home ground: the SCG.",
     "Nickname: the Swans." ] },
   { name: "West Coast", short: "West Coast", clues: [
+    TWO_CITY,
     "Joined the league in 1987.",
     "First club from outside Victoria to win a premiership (1992).",
-    "Won premierships in 1992, 1994, 2006 and 2018.",
-    "Contests the Western Derby.",
+    "Beat Collingwood in the 2018 Grand Final.",
     "Colours: royal blue and gold.",
     "Nickname: the Eagles." ] },
   { name: "Western Bulldogs", short: "Bulldogs", clues: [
     "Joined the VFL in 1925.",
+    "Its only premiership before 2016 came in 1954.",
     "Changed its name in 1997.",
     "Won the 2016 premiership after finishing seventh on the ladder.",
     "Was previously known as Footscray.",
-    "Colours: red, white and blue.",
     "Nickname: the Bulldogs." ] },
 ];
 
