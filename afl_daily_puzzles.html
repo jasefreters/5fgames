@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AFL Daily — Footy Puzzles</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #121212; --muted: #6b6b6b; --line: #d3d6da; --soft: #f3f3f1;
+    --w-green: #3f8f4a; --w-yellow: #c9a227; --w-gray: #787c7e; --key: #d3d6da;
+    --c-yellow: #f9df6d; --c-green: #a0c35a; --c-blue: #b0c4ef; --c-purple: #ba81c5;
+    --tile: #efefe6; --tile-sel: #5a594e;
+    --navy: #0b2a5b; --red: #d6262f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  button { font-family: inherit; cursor: pointer; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+
+  header { width: 100%; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header .title { font-family: Georgia, serif; font-weight: 700; font-size: 24px; letter-spacing: -0.5px; }
+  header .title span { color: var(--red); }
+  .icon-btn { background: none; border: none; font-size: 22px; width: 40px; height: 40px; border-radius: 8px; color: var(--ink); }
+  .icon-btn:hover { background: var(--soft); }
+  .icon-btn.hidden { visibility: hidden; }
+
+  main { width: 100%; max-width: 560px; padding: 16px; flex: 1; display: flex; flex-direction: column; }
+  .view { display: none; flex-direction: column; flex: 1; }
+  .view.active { display: flex; }
+
+  /* ---------- Hub ---------- */
+  .hero { text-align: center; padding: 18px 0 8px; }
+  .hero .ball { font-size: 46px; }
+  .hero h1 { font-family: Georgia, serif; font-size: 34px; margin: 6px 0 4px; letter-spacing: -0.5px; }
+  .hero p { color: var(--muted); font-size: 15px; }
+  .hero .date { font-weight: 700; color: var(--ink); margin-top: 8px; }
+  .cards { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+  .card { display: flex; align-items: center; gap: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); text-align: left; transition: transform .1s, box-shadow .15s; width: 100%; }
+  .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+  .card .badge { width: 56px; height: 56px; border-radius: 12px; display: grid; place-items: center; font-size: 28px; flex-shrink: 0; }
+  .card .info { flex: 1; }
+  .card .info b { display: block; font-family: Georgia, serif; font-size: 19px; }
+  .card .info small { color: var(--muted); font-size: 13px; }
+  .card .status { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: var(--ink); color: #fff; white-space: nowrap; }
+  .card .status.done { background: var(--w-green); }
+  .card .status.lost { background: var(--w-gray); }
+  .card .status.prog { background: var(--w-yellow); }
+  .hub-foot { text-align: center; margin-top: 22px; color: var(--muted); font-size: 14px; }
+  .hub-foot .count { font-size: 22px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .share-all { margin: 14px auto 0; display: block; }
+
+  .btn { border: 1px solid var(--ink); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 12px 22px; font-size: 15px; font-weight: 700; }
+  .btn.dark { background: var(--ink); color: #fff; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+
+  .game-head { text-align: center; margin-bottom: 12px; }
+  .game-head h2 { font-family: Georgia, serif; font-size: 26px; }
+  .game-head p { color: var(--muted); font-size: 14px; margin-top: 4px; line-height: 1.4; }
+
+  .result { text-align: center; margin-top: 16px; padding: 16px; border-radius: 12px; background: var(--soft); display: none; }
+  .result.show { display: block; }
+  .result h3 { font-family: Georgia, serif; font-size: 22px; margin-bottom: 6px; }
+  .result p { color: var(--muted); font-size: 14px; }
+  .stats { display: flex; justify-content: center; gap: 18px; margin: 12px 0 4px; }
+  .stats div { text-align: center; }
+  .stats b { display: block; font-size: 24px; }
+  .stats span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  /* ---------- Goal Five (Wordle) ---------- */
+  .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 6px; margin: 0 auto; }
+  .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .row.shake { animation: shake .45s; }
+  .cell { width: min(60px, calc((100vw - 64px) / 5)); aspect-ratio: 1; border: 2px solid var(--line); display: grid; place-items: center; font-size: 30px; font-weight: 700; text-transform: uppercase; user-select: none; }
+  .cell.filled { border-color: #878a8c; animation: pop .1s; }
+  .cell.flip { animation: flip .5s ease forwards; }
+  .cell.correct, .cell.present, .cell.absent { color: #fff; border-color: transparent; }
+  .cell.correct { background: var(--w-green); }
+  .cell.present { background: var(--w-yellow); }
+  .cell.absent { background: var(--w-gray); }
+  .row.win .cell { animation: bounce .6s ease; }
+  .keyboard { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+  .krow { display: flex; gap: 5px; justify-content: center; }
+  .key { flex: 1; max-width: 44px; height: 56px; border: none; border-radius: 5px; background: var(--key); font-weight: 700; font-size: 14px; color: var(--ink); text-transform: uppercase; }
+  .key.wide { max-width: 68px; flex: 1.5; font-size: 12px; }
+  .key.correct { background: var(--w-green); color: #fff; }
+  .key.present { background: var(--w-yellow); color: #fff; }
+  .key.absent { background: var(--w-gray); color: #fff; }
+
+  /* ---------- Connections ---------- */
+  .solved, .grid { display: grid; gap: 8px; }
+  .grid { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }
+  .solved { margin-top: 0; }
+  .group-bar { border-radius: 8px; padding: 14px 8px; text-align: center; animation: pop .25s; }
+  .group-bar b { display: block; font-size: 15px; text-transform: uppercase; letter-spacing: .3px; }
+  .group-bar span { font-size: 14px; }
+  .lvl0 { background: var(--c-yellow); } .lvl1 { background: var(--c-green); } .lvl2 { background: var(--c-blue); } .lvl3 { background: var(--c-purple); }
+  .tile { background: var(--tile); border: none; border-radius: 8px; min-height: 72px; padding: 4px; font-weight: 800; font-size: clamp(10px, 3.1vw, 15px); text-transform: uppercase; color: var(--ink); line-height: 1.15; overflow-wrap: normal; word-break: normal; overflow: hidden; transition: background .12s, transform .1s; }
+  .tile.sel { background: var(--tile-sel); color: #fff; }
+  .tile:active { transform: scale(.96); }
+  .grid.shake .tile.sel { animation: shake .45s; }
+  .mistakes { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 14px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--tile-sel); transition: transform .3s, opacity .3s; }
+  .dot.gone { transform: scale(0); opacity: 0; }
+
+  /* ---------- Club Clues ---------- */
+  .clues { display: flex; flex-direction: column; gap: 8px; }
+  .clue { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15px; display: flex; gap: 10px; align-items: flex-start; animation: pop .25s; }
+  .clue .n { background: var(--navy); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .clue.locked { color: var(--muted); background: var(--soft); border-style: dashed; }
+  .clue.locked .n { background: var(--line); color: var(--muted); }
+  .clubs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 16px; }
+  .club { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 10px 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .club:hover:not(:disabled) { background: var(--soft); }
+  .club.wrong { background: #f3d4d4; color: #8a2020; text-decoration: line-through; border-color: transparent; }
+  .club.right { background: var(--w-green); color: #fff; border-color: transparent; }
+  .club:disabled { cursor: default; }
+  .guess-left { text-align: center; color: var(--muted); font-size: 14px; margin-top: 10px; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+  #toast.show { opacity: 1; }
+
+  @media (max-width: 360px) {
+    main { padding: 12px 8px; }
+    .grid, .solved { gap: 5px; }
+    .tile { padding: 2px; min-height: 64px; }
+  }
+
+  @keyframes pop { 0% { transform: scale(.9); } 100% { transform: scale(1); } }
+  @keyframes flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+  @keyframes shake { 10%,90% { transform: translateX(-2px); } 20%,80% { transform: translateX(4px); } 30%,50%,70% { transform: translateX(-6px); } 40%,60% { transform: translateX(6px); } }
+  @keyframes bounce { 0%,20% { transform: translateY(0); } 40% { transform: translateY(-18px); } 60% { transform: translateY(4px); } 80% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="icon-btn hidden" id="backBtn" aria-label="Back">←</button>
+  <div class="title">AFL <span>Daily</span></div>
+  <button class="icon-btn" id="shareBtn" aria-label="Share">⇪</button>
+</header>
+
+<div id="toast"></div>
+
+<main>
+  <!-- ================= HUB ================= -->
+  <section class="view active" id="view-hub">
+    <div class="hero">
+      <div class="ball">🏉</div>
+      <h1>AFL Daily</h1>
+      <p>Three footy puzzles. New ones every day.</p>
+      <p class="date" id="hubDate"></p>
+    </div>
+    <div class="cards">
+      <button class="card" data-go="wordle">
+        <div class="badge" style="background:#3f8f4a;color:#fff">🥅</div>
+        <div class="info"><b>Goal Five</b><small>Guess the footy word in 6 shots.</small></div>
+        <div class="status" id="st-wordle">Play</div>
+      </button>
+      <button class="card" data-go="conn">
+        <div class="badge" style="background:#ba81c5;color:#fff">🧩</div>
+        <div class="info"><b>Footy Connections</b><small>Find four groups of four.</small></div>
+        <div class="status" id="st-conn">Play</div>
+      </button>
+      <button class="card" data-go="club">
+        <div class="badge" style="background:#0b2a5b;color:#fff">🕵️</div>
+        <div class="info"><b>Club Clues</b><small>Name the club from as few clues as you can.</small></div>
+        <div class="status" id="st-club">Play</div>
+      </button>
+    </div>
+    <div class="hub-foot">
+      <div>Next puzzles in</div>
+      <div class="count" id="countdown">--:--:--</div>
+      <button class="btn dark share-all" id="shareAll">Share today's results</button>
+    </div>
+  </section>
+
+  <!-- ================= GOAL FIVE ================= -->
+  <section class="view" id="view-wordle">
+    <div class="game-head">
+      <h2>Goal Five</h2>
+      <p>Guess the 5-letter footy word. <b style="color:var(--w-green)">Green</b> = right spot,
+        <b style="color:var(--w-yellow)">gold</b> = wrong spot, grey = not in the word.</p>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="result" id="w-result"></div>
+    <div class="keyboard" id="keyboard"></div>
+  </section>
+
+  <!-- ================= CONNECTIONS ================= -->
+  <section class="view" id="view-conn">
+    <div class="game-head">
+      <h2>Footy Connections</h2>
+      <p>Create four groups of four! Pick four tiles and hit Submit. Watch out for red herrings.</p>
+    </div>
+    <div class="solved" id="solved"></div>
+    <div class="grid" id="grid"></div>
+    <div class="mistakes" id="mistakes"></div>
+    <div class="btn-row" id="c-controls">
+      <button class="btn" id="c-shuffle">Shuffle</button>
+      <button class="btn" id="c-clear">Deselect all</button>
+      <button class="btn dark" id="c-submit" disabled>Submit</button>
+    </div>
+    <div class="result" id="c-result"></div>
+  </section>
+
+  <!-- ================= CLUB CLUES ================= -->
+  <section class="view" id="view-club">
+    <div class="game-head">
+      <h2>Club Clues</h2>
+      <p>Which AFL club is it? Each wrong guess reveals another clue. You get six guesses.</p>
+    </div>
+    <div class="clues" id="clues"></div>
+    <div class="guess-left" id="k-left"></div>
+    <div class="clubs" id="clubs"></div>
+    <div class="result" id="k-result"></div>
+  </section>
+</main>
+
+<script>
+// =====================================================================
+//  DATA
+// =====================================================================
+
+// Goal Five answers — all AFL / footy-flavoured 5-letter words.
+const ANSWERS = ("GOALS POINT MARKS KICKS SPOIL FLANK WINGS ROVER SIREN BOOTS FOOTY COACH DRAFT " +
+  "TRADE FINAL ROUND SCORE CLASH OVALS TIGER EAGLE HAWKS SWANS CROWS LIONS BLUES POWER GIANT " +
+  "DEMON SAINT PACKS CREST MEDAL FLAGS PUNTS SNAPS BUMPS CHEER ARENA STAND MATCH FIELD BENCH " +
+  "SQUAD CHANT SCARF SKILL SPEED TOUGH BLOCK POSTS HANDS CHEST STATS LEADS RUCKS").split(" ");
+
+// Footy Connections — level 0 (easiest, yellow) to 3 (trickiest, purple).
+const CONNECTIONS = [
+  [ ["Bird nicknames", ["CROWS","MAGPIES","HAWKS","EAGLES"]],
+    ["AFL awards", ["BROWNLOW","COLEMAN","NORM SMITH","RISING STAR"]],
+    ["One-percenters", ["SPOIL","SMOTHER","SHEPHERD","BUMP"]],
+    ["___ Power", ["HORSE","GIRL","FLOWER","WILL"]] ],
+  [ ["Mammal nicknames", ["TIGERS","LIONS","CATS","KANGAROOS"]],
+    ["Positions", ["RUCK","ROVER","WING","POCKET"]],
+    ["Types of kick", ["TORPEDO","BANANA","GRUBBER","DROP PUNT"]],
+    ["Tiger ___", ["WOODS","BALM","SNAKE","PRAWN"]] ],
+  [ ["Umpire calls", ["HOLDING THE BALL","THROW","TOO HIGH","PLAY ON"]],
+    ["Footy grounds", ["MCG","SCG","GABBA","ADELAIDE OVAL"]],
+    ["Footy slang", ["SAUSAGE ROLL","SHIRTFRONT","SPECKY","MONGREL PUNT"]],
+    ["Black and white things", ["ZEBRA","PANDA","PIANO KEYS","MAGPIE"]] ],
+  [ ["Former club names", ["FITZROY","FOOTSCRAY","SOUTH MELBOURNE","BRISBANE BEARS"]],
+    ["Clubs that wear navy", ["CARLTON","GEELONG","MELBOURNE","ADELAIDE"]],
+    ["Free kicks", ["PUSH IN THE BACK","DELIBERATE","HOLDING THE MAN","TRIPPING"]],
+    ["___ Square", ["TIMES","FEDERATION","TOWN","CENTRE"]] ],
+  [ ["Player gear", ["BOOTS","GUERNSEY","SOCKS","MOUTHGUARD"]],
+    ["Joined the league 1987–1997", ["WEST COAST","ADELAIDE","FREMANTLE","PORT ADELAIDE"]],
+    ["___ Kick", ["FREE","DROP","PLACE","SIDE"]],
+    ["Grand ___", ["FINAL","PIANO","CANYON","PRIX"]] ],
+  [ ["Positions", ["FULL BACK","HALF FORWARD","BACK POCKET","WING"]],
+    ["Ground markings", ["GOAL SQUARE","CENTRE CIRCLE","50-METRE ARC","BOUNDARY LINE"]],
+    ["Footy snacks", ["PIE","HOT DOG","HOT CHIPS","DIM SIM"]],
+    ["___ Ball", ["HAND","DODGE","MEAT","SNOW"]] ],
+  [ ["Founding VFL clubs (1897)", ["CARLTON","COLLINGWOOD","ESSENDON","ST KILDA"]],
+    ["Match-day rituals", ["BANNER","COIN TOSS","CLUB SONG","BOUNCE"]],
+    ["Player stats", ["DISPOSALS","CLEARANCES","INSIDE 50S","HITOUTS"]],
+    ["Hidden CAT", ["EDUCATE","LOCATION","VACATION","DELICATE"]] ],
+  [ ["Queensland & NSW clubs", ["BRISBANE","GOLD COAST","SYDNEY","GWS"]],
+    ["Types of mark", ["CHEST","CONTESTED","OVERHEAD","PACK"]],
+    ["Free kick for…", ["HIGH CONTACT","CHARGING","THROWING","INTERFERENCE"]],
+    ["___ Star", ["RISING","SHOOTING","ROCK","LONE"]] ],
+  [ ["At the ground", ["SCOREBOARD","SIREN","GOALPOSTS","INTERCHANGE"]],
+    ["Ways to restart play", ["BOUNCE","BALL-UP","THROW-IN","KICK-IN"]],
+    ["Names of the Docklands stadium", ["COLONIAL","TELSTRA DOME","ETIHAD","MARVEL"]],
+    ["___ King", ["LION","BURGER","STEPHEN","B.B."]] ],
+  [ ["Traditional club homes", ["WINDY HILL","PUNT ROAD","ARDEN STREET","VICTORIA PARK"]],
+    ["Other football codes", ["RUGBY","SOCCER","GRIDIRON","GAELIC"]],
+    ["Parts of the season", ["PRE-SEASON","ROUND","BYE","FINALS"]],
+    ["___ Park", ["JURASSIC","CENTRAL","HYDE","SOUTH"]] ],
+  [ ["WA & SA clubs", ["WEST COAST","FREMANTLE","ADELAIDE","PORT ADELAIDE"]],
+    ["Kicking for goal", ["SNAP","SET SHOT","CHECKSIDE","TORPEDO"]],
+    ["___ Final", ["PRELIMINARY","SEMI","ELIMINATION","QUALIFYING"]],
+    ["___ Fish", ["CAT","SWORD","GOLD","STAR"]] ],
+  [ ["Nicknames that aren't animals", ["DEMONS","SAINTS","GIANTS","DOCKERS"]],
+    ["Skills with your hands", ["HANDBALL","MARK","SPOIL","TAP"]],
+    ["Local derbies", ["SHOWDOWN","WESTERN DERBY","Q-CLASH","SYDNEY DERBY"]],
+    ["___ Song", ["SWAN","THEME","LOVE","FOLK"]] ],
+];
+
+// Club Clues — six clues per club, from vague to giveaway.
+const CLUBS = [
+  { name: "Adelaide", short: "Adelaide", clues: [
+    "Joined the AFL in 1991.",
+    "Plays home games at Adelaide Oval.",
+    "Won back-to-back premierships in 1997 and 1998.",
+    "Contests the Showdown against its cross-town rival.",
+    "Colours: navy, red and gold.",
+    "Nickname: the Crows." ] },
+  { name: "Brisbane Lions", short: "Brisbane", clues: [
+    "Played its first season as a merged club in 1997.",
+    "One half of that merger was Fitzroy.",
+    "Won three premierships in a row: 2001, 2002 and 2003.",
+    "Home ground: the Gabba.",
+    "Colours: maroon, blue and gold.",
+    "Nickname: the Lions." ] },
+  { name: "Carlton", short: "Carlton", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Has won 16 VFL/AFL premierships.",
+    "Won the 1995 premiership.",
+    "Traditional home: Princes Park.",
+    "Colours: navy blue.",
+    "Nickname: the Blues." ] },
+  { name: "Collingwood", short: "Collingwood", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Holds the record of four premierships in a row (1927–1930).",
+    "Won the 2023 premiership.",
+    "Traditional home: Victoria Park.",
+    "Colours: black and white.",
+    "Nickname: the Magpies." ] },
+  { name: "Essendon", short: "Essendon", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Has won 16 VFL/AFL premierships.",
+    "Lost only one game in 2000 on the way to the flag.",
+    "Traditional home: Windy Hill.",
+    "Wears a red sash on a black guernsey.",
+    "Nickname: the Bombers." ] },
+  { name: "Fremantle", short: "Fremantle", clues: [
+    "Joined the AFL in 1995.",
+    "Played Hawthorn in the 2013 Grand Final.",
+    "Home ground: Optus Stadium in Perth.",
+    "Contests the Western Derby.",
+    "Main colour: purple.",
+    "Nickname: the Dockers." ] },
+  { name: "Geelong", short: "Geelong", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Won the 2007, 2009, 2011 and 2022 premierships.",
+    "Home ground: Kardinia Park.",
+    "Based in Victoria, but not in Melbourne.",
+    "Colours: navy blue and white hoops.",
+    "Nickname: the Cats." ] },
+  { name: "Gold Coast", short: "Gold Coast", clues: [
+    "Joined the AFL in 2011.",
+    "One of two Queensland clubs.",
+    "Contests the Q-Clash.",
+    "Home ground is at Carrara.",
+    "Colours: red and gold.",
+    "Nickname: the Suns." ] },
+  { name: "GWS Giants", short: "GWS", clues: [
+    "Joined the AFL in 2012.",
+    "Played Richmond in the 2019 Grand Final.",
+    "Plays home games in Sydney and Canberra.",
+    "Contests the Sydney Derby.",
+    "Main colour: orange.",
+    "Nickname: the Giants." ] },
+  { name: "Hawthorn", short: "Hawthorn", clues: [
+    "Joined the VFL in 1925.",
+    "Won three premierships in a row: 2013, 2014 and 2015.",
+    "Also won the 2008 premiership under Alastair Clarkson.",
+    "Traditional home: Glenferrie Oval.",
+    "Colours: brown and gold.",
+    "Nickname: the Hawks." ] },
+  { name: "Melbourne", short: "Melbourne", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Formed in 1858 — one of the oldest football clubs in the world.",
+    "Won the 2021 premiership in Perth.",
+    "That flag ended a drought dating back to 1964.",
+    "Colours: red and navy blue.",
+    "Nickname: the Demons." ] },
+  { name: "North Melbourne", short: "North Melb.", clues: [
+    "Joined the VFL in 1925.",
+    "Won its first premiership in 1975.",
+    "Won premierships in 1996 and 1999.",
+    "Traditional home: Arden Street.",
+    "Colours: royal blue and white stripes.",
+    "Nickname: the Kangaroos." ] },
+  { name: "Port Adelaide", short: "Port Adelaide", clues: [
+    "Joined the AFL in 1997.",
+    "Had a long, successful history in the SANFL first.",
+    "Won the 2004 premiership.",
+    "Contests the Showdown against its cross-town rival.",
+    "Colours: black, white and teal.",
+    "Nickname: the Power." ] },
+  { name: "Richmond", short: "Richmond", clues: [
+    "Joined the VFL in 1908.",
+    "Won the 2017, 2019 and 2020 premierships.",
+    "Traditional home: Punt Road Oval.",
+    "Wears a diagonal sash on its guernsey.",
+    "Colours: yellow and black.",
+    "Nickname: the Tigers." ] },
+  { name: "St Kilda", short: "St Kilda", clues: [
+    "One of the eight founding VFL clubs of 1897.",
+    "Won its first premiership in 1966 — by a single point.",
+    "Former home ground: Moorabbin.",
+    "Based near Melbourne's bayside.",
+    "Colours: red, white and black.",
+    "Nickname: the Saints." ] },
+  { name: "Sydney", short: "Sydney", clues: [
+    "One of the eight founding VFL clubs of 1897 — under a different name.",
+    "Relocated interstate in 1982.",
+    "Was previously known as South Melbourne.",
+    "Won the 2005 and 2012 premierships.",
+    "Home ground: the SCG.",
+    "Nickname: the Swans." ] },
+  { name: "West Coast", short: "West Coast", clues: [
+    "Joined the league in 1987.",
+    "First club from outside Victoria to win a premiership (1992).",
+    "Won premierships in 1992, 1994, 2006 and 2018.",
+    "Contests the Western Derby.",
+    "Colours: royal blue and gold.",
+    "Nickname: the Eagles." ] },
+  { name: "Western Bulldogs", short: "Bulldogs", clues: [
+    "Joined the VFL in 1925.",
+    "Changed its name in 1997.",
+    "Won the 2016 premiership after finishing seventh on the ladder.",
+    "Was previously known as Footscray.",
+    "Colours: red, white and blue.",
+    "Nickname: the Bulldogs." ] },
+];
+
+// Allowed Goal Five guesses (plus every answer). Filled in at the bottom of the file.
+let VALID = new Set();
+
+// =====================================================================
+//  DAILY SELECTION
+// =====================================================================
+const EPOCH = new Date(2026, 0, 1);
+function dayNumber(d) {
+  const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((local - EPOCH) / 86400000);
+}
+const TODAY = new Date();
+const DAY = dayNumber(TODAY);
+const PUZZLE_NO = DAY + 1;
+const DATE_KEY = TODAY.getFullYear() + "-" + (TODAY.getMonth() + 1) + "-" + TODAY.getDate();
+
+function rng(seed) { // mulberry32
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seededShuffle(arr, seed) {
+  const a = arr.slice(), r = rng(seed);
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const mod = (n, m) => ((n % m) + m) % m;
+// Cycle through each list in a fixed shuffled order; a new order every full cycle.
+function pickDaily(list, salt) {
+  const cycle = Math.floor(DAY / list.length);
+  return seededShuffle(list, salt * 1000 + cycle)[mod(DAY, list.length)];
+}
+
+const ANSWER = pickDaily(ANSWERS, 7);
+const PUZZLE = pickDaily(CONNECTIONS, 11);
+const CLUB = pickDaily(CLUBS, 13);
+
+// =====================================================================
+//  STORAGE
+// =====================================================================
+const STORE = "afl-daily-v1";
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; }
+}
+const DB = load();
+DB.days = DB.days || {};
+DB.stats = DB.stats || {};
+const S = DB.days[DATE_KEY] = DB.days[DATE_KEY] || {};
+S.w = S.w || { guesses: [], done: false, won: false };
+S.c = S.c || { solved: [], mistakes: 0, history: [], done: false, won: false };
+S.k = S.k || { guesses: [], done: false, won: false };
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) { /* storage unavailable */ }
+}
+function recordResult(game, won) {
+  const st = DB.stats[game] = DB.stats[game] || { played: 0, wins: 0, streak: 0, max: 0, last: null };
+  st.played++;
+  if (won) {
+    st.wins++;
+    st.streak = st.last === DAY - 1 ? st.streak + 1 : 1;
+    st.max = Math.max(st.max, st.streak);
+    st.last = DAY;
+  } else {
+    st.streak = 0;
+  }
+  save();
+}
+function statsHTML(game) {
+  const st = DB.stats[game] || { played: 0, wins: 0, streak: 0, max: 0 };
+  const pct = st.played ? Math.round(100 * st.wins / st.played) : 0;
+  return `<div class="stats">
+    <div><b>${st.played}</b><span>Played</span></div>
+    <div><b>${pct}</b><span>Win %</span></div>
+    <div><b>${st.streak}</b><span>Streak</span></div>
+    <div><b>${st.max}</b><span>Best</span></div></div>`;
+}
+
+// =====================================================================
+//  UI HELPERS
+// =====================================================================
+const $ = id => document.getElementById(id);
+let toastTimer;
+function toast(msg, ms = 1600) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+}
+let current = "hub";
+function show(view) {
+  current = view;
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + view));
+  if (view === "conn") fitTiles();
+  $("backBtn").classList.toggle("hidden", view === "hub");
+  if (view === "hub") updateHub();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
+  show(b.dataset.go);
+  history.pushState({ view: b.dataset.go }, "");
+}));
+$("backBtn").addEventListener("click", () => history.state && history.state.view ? history.back() : show("hub"));
+window.addEventListener("popstate", e => show(e.state && e.state.view ? e.state.view : "hub"));
+
+function updateHub() {
+  $("hubDate").textContent = TODAY.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · #" + PUZZLE_NO;
+  const set = (id, g, started) => {
+    const el = $(id);
+    el.className = "status";
+    if (g.done) { el.textContent = g.won ? "Solved ✓" : "See answer"; el.classList.add(g.won ? "done" : "lost"); }
+    else if (started) { el.textContent = "Continue"; el.classList.add("prog"); }
+    else el.textContent = "Play";
+  };
+  set("st-wordle", S.w, S.w.guesses.length > 0);
+  set("st-conn", S.c, S.c.history.length > 0);
+  set("st-club", S.k, S.k.guesses.length > 0);
+}
+function tickCountdown() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const s = Math.max(0, Math.floor((next - now) / 1000));
+  if (dayNumber(now) !== DAY) { location.reload(); return; }
+  const p = n => String(n).padStart(2, "0");
+  $("countdown").textContent = p(Math.floor(s / 3600)) + ":" + p(Math.floor(s / 60) % 60) + ":" + p(s % 60);
+}
+
+// =====================================================================
+//  GOAL FIVE (Wordle)
+// =====================================================================
+let typed = "";
+let busy = false;
+
+function evaluate(guess, answer) {
+  const res = Array(5).fill("absent");
+  const counts = {};
+  for (let i = 0; i < 5; i++) {
+    if (guess[i] === answer[i]) res[i] = "correct";
+    else counts[answer[i]] = (counts[answer[i]] || 0) + 1;
+  }
+  for (let i = 0; i < 5; i++) {
+    if (res[i] !== "correct" && counts[guess[i]] > 0) { res[i] = "present"; counts[guess[i]]--; }
+  }
+  return res;
+}
+
+function buildBoard() {
+  const b = $("board"); b.innerHTML = "";
+  for (let r = 0; r < 6; r++) {
+    const row = document.createElement("div"); row.className = "row";
+    for (let c = 0; c < 5; c++) { const cell = document.createElement("div"); cell.className = "cell"; row.appendChild(cell); }
+    b.appendChild(row);
+  }
+  const k = $("keyboard"); k.innerHTML = "";
+  ["QWERTYUIOP", "ASDFGHJKL", "+ZXCVBNM-"].forEach(line => {
+    const row = document.createElement("div"); row.className = "krow";
+    for (const ch of line) {
+      const key = document.createElement("button"); key.className = "key";
+      if (ch === "+") { key.textContent = "Enter"; key.classList.add("wide"); key.dataset.k = "ENTER"; }
+      else if (ch === "-") { key.textContent = "⌫"; key.classList.add("wide"); key.dataset.k = "BACK"; }
+      else { key.textContent = ch; key.dataset.k = ch; }
+      key.addEventListener("click", () => wordleInput(key.dataset.k));
+      row.appendChild(key);
+    }
+    k.appendChild(row);
+  });
+}
+
+function paintRow(r, guess, animate) {
+  const row = $("board").children[r];
+  const res = evaluate(guess, ANSWER);
+  [...row.children].forEach((cell, i) => {
+    cell.textContent = guess[i];
+    if (!animate) { cell.className = "cell " + res[i]; return; }
+    cell.style.animationDelay = (i * 250) + "ms";
+    cell.classList.add("flip");
+    setTimeout(() => { cell.className = "cell flip " + res[i]; cell.style.animationDelay = "0ms"; }, i * 250 + 250);
+  });
+  return res;
+}
+
+function paintKeys() {
+  const rank = { absent: 1, present: 2, correct: 3 };
+  const best = {};
+  S.w.guesses.forEach(g => evaluate(g, ANSWER).forEach((s, i) => {
+    if (!best[g[i]] || rank[s] > rank[best[g[i]]]) best[g[i]] = s;
+  }));
+  document.querySelectorAll(".key").forEach(k => {
+    k.classList.remove("correct", "present", "absent");
+    if (best[k.dataset.k]) k.classList.add(best[k.dataset.k]);
+  });
+}
+
+function renderTyped() {
+  const r = S.w.guesses.length;
+  if (r >= 6) return;
+  [...$("board").children[r].children].forEach((cell, i) => {
+    cell.textContent = typed[i] || "";
+    cell.className = "cell" + (typed[i] ? " filled" : "");
+  });
+}
+
+function wordleResult() {
+  const el = $("w-result");
+  const n = S.w.guesses.length;
+  const praise = ["Torpedo from 60! 🤯", "Specky! 🚀", "Straight through the middle!", "Kicked truly 👏", "Got there!", "Phew — after the siren!"];
+  el.innerHTML = S.w.won
+    ? `<h3>${praise[n - 1]}</h3><p>You found <b>${ANSWER}</b> in ${n}/6.</p>${statsHTML("wordle")}`
+    : `<h3>Out on the full</h3><p>The word was <b>${ANSWER}</b>.</p>${statsHTML("wordle")}`;
+  el.innerHTML += `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
+  el.classList.add("show");
+  $("keyboard").style.display = "none";
+}
+
+function wordleInput(k) {
+  if (S.w.done || busy) return;
+  if (k === "BACK") { typed = typed.slice(0, -1); renderTyped(); return; }
+  if (k === "ENTER") return submitWord();
+  if (/^[A-Z]$/.test(k) && typed.length < 5) { typed += k; renderTyped(); }
+}
+
+function submitWord() {
+  const row = $("board").children[S.w.guesses.length];
+  if (typed.length < 5) { toast("Not enough letters"); shakeEl(row); return; }
+  if (!VALID.has(typed)) { toast("Not in word list"); shakeEl(row); return; }
+  const guess = typed; typed = "";
+  S.w.guesses.push(guess);
+  const res = paintRow(S.w.guesses.length - 1, guess, true);
+  busy = true;
+  setTimeout(() => {
+    busy = false;
+    paintKeys();
+    const won = res.every(s => s === "correct");
+    if (won || S.w.guesses.length === 6) {
+      S.w.done = true; S.w.won = won;
+      recordResult("wordle", won);
+      if (won) row.classList.add("win");
+      setTimeout(wordleResult, won ? 700 : 300);
+    }
+    save();
+  }, 5 * 250 + 300);
+  save();
+}
+
+function shakeEl(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+
+document.addEventListener("keydown", e => {
+  if (current !== "wordle" || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "Enter") { e.preventDefault(); wordleInput("ENTER"); }
+  else if (e.key === "Backspace") wordleInput("BACK");
+  else if (/^[a-zA-Z]$/.test(e.key)) wordleInput(e.key.toUpperCase());
+});
+
+function initWordle() {
+  buildBoard();
+  S.w.guesses.forEach((g, r) => paintRow(r, g, false));
+  paintKeys();
+  if (S.w.done) wordleResult();
+}
+
+// =====================================================================
+//  FOOTY CONNECTIONS
+// =====================================================================
+// Each tile: { word, g } where g is the group index (0..3 = difficulty).
+const TILES = seededShuffle(PUZZLE.flatMap(([, words], g) => words.map(word => ({ word, g }))), DAY * 31 + 5);
+let order = TILES.map((_, i) => i);
+let selected = new Set();
+
+function renderConn() {
+  const solved = $("solved"); solved.innerHTML = "";
+  S.c.solved.forEach(g => {
+    const [cat, words] = PUZZLE[g];
+    const bar = document.createElement("div");
+    bar.className = "group-bar lvl" + g;
+    bar.innerHTML = `<b>${cat}</b><span>${words.join(", ")}</span>`;
+    solved.appendChild(bar);
+  });
+
+  const grid = $("grid"); grid.innerHTML = "";
+  order.filter(i => !S.c.solved.includes(TILES[i].g)).forEach(i => {
+    const t = document.createElement("button");
+    t.className = "tile" + (selected.has(i) ? " sel" : "");
+    t.textContent = TILES[i].word;
+    t.addEventListener("click", () => toggleTile(i));
+    grid.appendChild(t);
+  });
+  fitTiles();
+
+  const m = $("mistakes");
+  m.innerHTML = "Mistakes remaining: " + [0, 1, 2, 3].map(n => `<span class="dot${n < 4 - S.c.mistakes ? "" : " gone"}"></span>`).join("");
+  $("c-submit").disabled = selected.size !== 4;
+  $("c-clear").disabled = selected.size === 0;
+  const over = S.c.done;
+  $("c-controls").style.display = over ? "none" : "flex";
+  m.style.display = over ? "none" : "flex";
+}
+
+// Shrink long words (e.g. COLLINGWOOD) so they never break mid-word.
+function fitTiles() {
+  document.querySelectorAll("#grid .tile").forEach(t => {
+    t.style.fontSize = "";
+    let size = parseFloat(getComputedStyle(t).fontSize);
+    while (size > 8 && (t.scrollWidth > t.clientWidth || t.scrollHeight > t.clientHeight)) {
+      size -= 0.5; t.style.fontSize = size + "px";
+    }
+  });
+}
+window.addEventListener("resize", () => { if (current === "conn") fitTiles(); });
+
+function toggleTile(i) {
+  if (S.c.done) return;
+  if (selected.has(i)) selected.delete(i);
+  else if (selected.size < 4) selected.add(i);
+  renderConn();
+}
+
+function submitConn() {
+  if (selected.size !== 4 || S.c.done) return;
+  const picks = [...selected].map(i => TILES[i].g);
+  const sig = [...selected].map(i => TILES[i].word).sort().join("|");
+  if (S.c.history.some(h => h.sig === sig)) { toast("Already guessed!"); return; }
+  S.c.history.push({ sig, groups: picks });
+
+  const counts = {};
+  picks.forEach(g => counts[g] = (counts[g] || 0) + 1);
+  const best = Math.max(...Object.values(counts));
+  if (best === 4) {
+    S.c.solved.push(picks[0]);
+    selected.clear();
+    if (S.c.solved.length === 4) finishConn(true);
+  } else {
+    S.c.mistakes++;
+    if (best === 3) toast("One away…");
+    else toast(["Not quite", "Nope — keep going", "Have another look"][S.c.mistakes % 3]);
+    const grid = $("grid"); grid.classList.remove("shake"); void grid.offsetWidth; grid.classList.add("shake");
+    if (S.c.mistakes >= 4) {
+      setTimeout(() => {
+        // Reveal the remaining groups, easiest first.
+        [0, 1, 2, 3].forEach(g => { if (!S.c.solved.includes(g)) S.c.solved.push(g); });
+        selected.clear();
+        finishConn(false);
+        renderConn();
+      }, 700);
+    }
+  }
+  save();
+  renderConn();
+}
+
+function finishConn(won) {
+  S.c.done = true; S.c.won = won;
+  recordResult("conn", won);
+  save();
+  connResult();
+}
+
+function connResult() {
+  const el = $("c-result");
+  el.innerHTML = (S.c.won
+    ? `<h3>${S.c.mistakes === 0 ? "Perfect game! 🏆" : "Premiers! 🏉"}</h3><p>Solved with ${S.c.mistakes} mistake${S.c.mistakes === 1 ? "" : "s"}.</p>`
+    : `<h3>Next time!</h3><p>Here's how the groups fit together.</p>`) + statsHTML("conn") +
+    `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
+  el.classList.add("show");
+}
+
+$("c-shuffle").addEventListener("click", () => { order = seededShuffle(order, Date.now() & 0xffff); renderConn(); });
+$("c-clear").addEventListener("click", () => { selected.clear(); renderConn(); });
+$("c-submit").addEventListener("click", submitConn);
+
+function initConn() {
+  renderConn();
+  if (S.c.done) connResult();
+}
+
+// =====================================================================
+//  CLUB CLUES
+// =====================================================================
+function renderClub() {
+  const shown = S.k.done ? 6 : Math.min(6, S.k.guesses.length + 1);
+  $("clues").innerHTML = CLUB.clues.map((c, i) => i < shown
+    ? `<div class="clue"><span class="n">${i + 1}</span><span>${c}</span></div>`
+    : `<div class="clue locked"><span class="n">${i + 1}</span><span>Locked — revealed after a wrong guess</span></div>`).join("");
+
+  const left = 6 - S.k.guesses.length;
+  $("k-left").textContent = S.k.done ? "" : `${left} guess${left === 1 ? "" : "es"} left`;
+
+  $("clubs").innerHTML = "";
+  CLUBS.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "club";
+    b.textContent = c.short;
+    if (S.k.guesses.includes(c.name)) b.classList.add(c.name === CLUB.name ? "right" : "wrong");
+    if (S.k.done && c.name === CLUB.name) b.classList.add("right");
+    b.disabled = S.k.done || S.k.guesses.includes(c.name);
+    b.addEventListener("click", () => guessClub(c.name));
+    $("clubs").appendChild(b);
+  });
+}
+
+function guessClub(name) {
+  if (S.k.done || S.k.guesses.includes(name)) return;
+  S.k.guesses.push(name);
+  const won = name === CLUB.name;
+  if (won || S.k.guesses.length >= 6) {
+    S.k.done = true; S.k.won = won;
+    recordResult("club", won);
+    clubResult();
+  } else {
+    toast("Not " + name + " — here's another clue");
+  }
+  save();
+  renderClub();
+}
+
+function clubResult() {
+  const n = S.k.guesses.length;
+  const el = $("k-result");
+  el.innerHTML = (S.k.won
+    ? `<h3>${n === 1 ? "One clue! Brownlow stuff 🥇" : "Got it! 🎉"}</h3><p>It was <b>${CLUB.name}</b> — found in ${n}/6.</p>`
+    : `<h3>Unlucky!</h3><p>It was <b>${CLUB.name}</b>.</p>`) + statsHTML("club") +
+    `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
+  el.classList.add("show");
+}
+
+function initClub() {
+  renderClub();
+  if (S.k.done) clubResult();
+}
+
+// =====================================================================
+//  SHARE
+// =====================================================================
+function shareText() {
+  const lines = [`AFL Daily #${PUZZLE_NO} 🏉`];
+  if (S.w.guesses.length) {
+    lines.push("", `Goal Five ${S.w.done ? (S.w.won ? S.w.guesses.length : "X") : "…"}/6`);
+    S.w.guesses.forEach(g => lines.push(evaluate(g, ANSWER).map(s => s === "correct" ? "🟩" : s === "present" ? "🟨" : "⬜").join("")));
+  }
+  if (S.c.history.length) {
+    const sq = ["🟨", "🟩", "🟦", "🟪"];
+    lines.push("", "Footy Connections");
+    S.c.history.forEach(h => lines.push(h.groups.map(g => sq[g]).join("")));
+  }
+  if (S.k.guesses.length) {
+    lines.push("", `Club Clues ${S.k.done ? (S.k.won ? S.k.guesses.length : "X") : "…"}/6`);
+    lines.push(S.k.guesses.map(g => g === CLUB.name ? "🟩" : "🟥").join(""));
+  }
+  if (lines.length === 1) lines.push("", "Haven't played yet — have you?");
+  return lines.join("\n");
+}
+function share() {
+  const text = shareText();
+  if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+    navigator.share({ text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => toast("Results copied to clipboard"), () => toast("Couldn't copy"));
+  } else {
+    toast("Sharing isn't available here");
+  }
+}
+$("shareBtn").addEventListener("click", share);
+$("shareAll").addEventListener("click", share);
+
+// =====================================================================
+//  BOOT
+// =====================================================================
+function boot() {
+  VALID = new Set(WORDS.split(" ").map(w => w.toUpperCase()).concat(ANSWERS));
+  initWordle();
+  initConn();
+  initClub();
+  updateHub();
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+}
+</script>
+<script>
+// Allowed 5-letter guesses.
+const WORDS = "about their there which would other after first think could these where right years being going still never those world great while every state three since under thing house place again found might money night until doing group women start times today point music power water based small white later order party thank using black makes whole maybe story games least means early local video young court given level often death hours south known large wrong along needs class close comes looks cause happy human woman leave north watch light short taken third among check heart asked child major media phone gonna quite works final front ready bring heard march study clear month words board field seems wants fight force issue price shows space total above share april sense weeks break event sorry takes girls guess learn added alone hands movie press tried worth areas books sound value lives round stand stuff david drive green match model trust range trade chief james lower style blood china stage terms title enjoy cover legal seven staff super union began built crazy daily knows paper parts voice whose earth rules below offer sleep table truth build cases india piece visit wanna wrote gives river shall speak write album eight funny peace sales spent store track ahead allow brown moved plans radio cross focus loved miles speed jesus extra quick agree clean photo scene spend teams coach costs heavy train claim goals gotta hotel judge lines named brain floor image meant reach civil dance stock trump worst beach ended older calls color dream grand names sweet touch doubt drink feels shown basic carry crime fully japan plant smith texas worse award block lived peter rates avoid catch coast trial truly obama queen stars broke glass prior royal serve types begin ideas notes plays songs twice worry brand count fresh mouth owner scale score smart throw views click faith louis metal paris agent apply basis chris enter prime waste weird adult grade stone users apart aware fifth items proud tells birth drugs labor lucky prove tough units alive apple bitch cards dress horse liked magic owned stick turns cells frank guide raise treat yours youth funds helps henry sites exist forms guard jones likes shoot sides solid sport steps taste facts harry hello links plane scott shape upper cheap joint signs steel steve tired crowd enemy fixed limit ocean proof asian banks chair homes honor noted trees email stuck sugar drama entry grant grown heads keeps lying route saved shoes smoke squad teach tests abuse angry italy laugh loves lunch storm actor chain equal korea leads posts quiet split taxes urban fault films mixed phase smile truck votes blame dying falls false fired novel shirt shots cream giant mayor minor pages theme usual voted walls draft drunk finds spoke talks upset birds cycle goods holds wales armed aside deals empty faces folks kinda moves prize rural spain tools admit favor frame guest teeth bunch fruit index shift stood tight crown grace kevin rooms chose crash depth dirty error noise panel plate roads shame ships bible cable dates doors irish multi print sight broad drawn motor seats solar tries balls bills blind brief chest debut paint pilot steam thats clubs exact kinds loans quote swear trend yards bread greek inner reply roman tower wheel davis faced filed marks pride rough santa smell topic latin lewis pants sarah sharp simon trick audio brian chart miami mount occur tears argue awful bound cloud files hills jason loose moral shock thick threw angel bonus egypt flash gross minds refer trail uncle woods badly chase ideal jimmy kelly roles wings clock label naked opens pitch pizza plain anger comic ghost https islam newly skill solve trash vegas virus boost crack dutch foods hired kings knife saint steal trans buddy cares delay elite forth hopes layer marry nurse rugby sheet stops syria bench idiot medal roger shell silly towns allen angle clark firms forum gifts grass hence lists races rapid rocks sixth sucks valid vital bands creek fraud honey lands ratio scary spell sword waves wayne begun cents daddy diego drove glory juice logic meets strip dozen fancy holes input knock ought risks bears blues boxes bruce flood kills maria rally roots shops swing texts alert arena billy boots brave drops fleet jokes parks rings robin shake shore spots stats blast bones pound punch walks fewer grave mouse oscar piano saudi slave craft devil gates hurts rated ruled sauce slide tiger alien beast candy cited dated delhi fifty relax acted alarm globe hoped larry moore seeds spare bonds chaos corps opera quest sized tanks tokyo alice anime barry coins fails jerry lover panic scope stays adams aimed alpha boats brick danny gains mercy outer reads screw suits venue wages wells burns habit laura naval noble picks pussy robot susan terry toxic wider wound aaron asset baker brush essay hosts jacob maker mario ranks rolls snake tasks trips ultra usage beats bobby canal climb evans fever fluid loads mills nasty perry twist unity winds blown chips fence males sorts souls stole swiss bored dealt flesh forty hated laser loyal patch radar villa adopt blade bucks camps cargo cried helen humor marie meals nerve sandy sheep trace bases chill codes craig didnt grain grows knees lions liver metro mines rifle rival sadly sizes slept spray suite verse acres bless chuck couch crush fears fires genre jamie keith lease shine tweet tyler blake inter maine react rocky shade teens tommy vocal yield bacon bombs burst costa hates salad sends stake swift twins welsh awake beans blank curve eddie emily farms flows genes harsh hurry lakes mason nancy organ pearl sweat tours alike arrow cabin eagle eaten guilt haven kenya putin seeks theft valve charm cruel delta julia ridge tends tribe zones canon cared loses pairs poems stamp voter witch array backs belly booth cliff derby draws fatal lemon outta polls ralph shark tales colin dairy diary drill edges flags flies jeans julie karen lucas meter olive safer sells setup skull smash basin breed bride chick dubai fairy freak grief lined lodge lords merit micro raped rebel tooth viral wears widow wives beard curse drain flame intel kicks ninth penny petty ports reign rises saves scare sunny cheat cheer chile demon elder fiber fried heels linda pulse realm rides shout alter brass crops dylan ellen graph milan penis pills shook stack aging audit blows clips dried jesse joins logan nails singh spite burnt buyer cease cloth eager elect kenny lloyd lobby orbit ranch socks tires trunk badge buses carol diana ferry gauge paths peers rider ruins shelf width derek leeds legit loser pulls roses sheer stark thumb urged wheat wrist acute blair civic clerk crude drone exams flour hindu indie minus pause puppy slice spurs vinyl debts linux mates probe remix sneak spark steep straw weigh adapt bryan cohen cyber dense kitty moses whale amber ankle armor berry brady bulls clash glenn grasp handy lanes lungs manga poker sally scout steak sweep tumor casey cheek curry drake janet katie modes polar skirt spike toast waist wreck blend blogs brake cough czech depot drank dudes ellis feast frost iraqi pipes purse shane tense vegan annie chess float grind grove hobby lance locks lynch nazis newer packs risky sided sober spice swept towel tubes arise ashes bloom clown cries cuban dodge downs drums guild isaac perth prone satan seoul siege sixty sonic spine admin baked betty crane donor essex honda marco pasta randy tampa tenth batch idaho mitch nixon paste plaza ricky skies stare beers bells blunt boobs champ ditch ducks fucks ghana lasts quinn riley scrap shaft slope snack stern stiff sudan sworn unite vault vince wagon allah bikes crews feeds hawks homer jenny lacks lanka midst mommy onion raids rogue sings abbey baron bunny choir fools holly karma leaks masks poles shiny spoon teddy thief whats yemen alley boris bully burke hayes marsh messy molly ninja peaks pools riots roast salon tuned vague biden brett coral covid dough hardy irony joyce jumps maple relay risen stunt whore wiped yahoo youre acids aired andre cakes flaws freed halls hints ivory kerry niche porch seals utter walsh wires cairo creep devon donna elbow exile felix goose grill johns nobel pains poets rains ruler sperm spill swamp tasty urine wendy ahmed calif cyrus decay diane flown floyd imply mafia merry nepal pumps reset shave slots stems vodka clues drift fuels grams hatch hindi libya niece scent slate surge tapes token tracy tunes woody yacht anglo bruno dolls fries intro manor posed promo pupil sands shawn spoil venus allan altar atlas clara combo fatty flush hairy horns ounce pablo seize spicy sting trent wines wired asses belle bites deeds edgar horny jared lopez megan poses rails raven rehab rhode skins stall strap watts bliss daisy disco doses elvis euros faint fines flynn forge hears nodes notch omega qatar queue trout worms bravo crawl digit flats flint hairs jelly kanye lunar messi nigel peach plots silva tesla arabs beams cedar dunno heath lifts metre norms paulo pinch queer rover scars syrup tamil tones traps veins atoms bowls chloe congo dwarf elena leigh liner maths memes merge moron myths naive opted paula pedro rigid vivid aided bella belts boxer brook coats cured doyle gavin hedge icons joker jonas laden limbs payne rainy salty scots serum skate sofia stray tempo torch turbo arose blink carey chang chili dixon excel faded gangs gases genus glove grabs greed greet lamps myers negro owing proxy renew retro rumor stoke thigh troll warns aisle amino bleed brace choke clyde damon goats haiti monks motto onset pixel props prose razor steer versa ample bingo brock cubic ebook fills irene klein macro romeo shady slack slick stove tiles tract vista vogue adore corey creed crisp crust ethan fined flora gamma grape hangs juicy moody prank salem spear spies stain tidal wrath beads blaze brent carlo caves chalk flock hides hyper meyer moist monte rabbi scoop scrub shale titan trait troop urges wasnt byron clone drown jewel obese piper scarf skype sushi tails timer tying waits wakes zhang baths borne dusty fibre focal gears kathy nikki noisy notre snail tutor verge yeast abdul aston diets erase kumar manly nokia oxide pence percy perez repay ropes rouge shove snaps turks basil booze bronx chord clare cooks crest decor edwin fetch fuzzy gibbs hague herbs hooks jules kirby loops naomi nexus nicer optic panda qaeda sasha slash stein ahmad bates baton camel chefs chunk cocoa comet dread dummy flank flare forex lagos leone lever marty nolan pedal query rests sewer shits smack sonny swell wards align angus anita assad attic await becky cache comfy condo dicks fiona flick funky groom hamas hogan hydro knots lyric nigga owens plead slams tyson bolts clive debit denis ebola ellie gamer gerry lotus mails malik paddy paved perks scans tally timed wedge alloy cites colts crank dante decks fares linen moose motel omaha resin rosie rusty slips stint weary wills willy agony avery benny binge bumps caste chant colon curly discs famed fargo fetus mound muddy prick sammy tents weber abide anton avail booty fixes hanna highs lydia madam mayer nanny piles poppy pratt raced sacks tease bluff casts cindy coded doris facto flyer geoff giles gomez isles miner needy patty rents roofs royce saxon shaun socio swipe tango agnes blitz burma cigar circa cloak dover dwell edith fiery gimme goofy hicks irwin jolly jorge mccoy mummy peggy purge rhino soils venom vines windy wraps blush claws docks earns erica frogs furry lamar leafs mango miley oasis oddly osaka overs paced pagan psalm rhyme savvy spree thugs vapor witty woven wyatt aires amend bloke blond bowel bulbs cater deity edged finch gypsy monty palms sedan slang vibes zelda algae ariel bowie brits cathy dolly dryer ethic flair haunt hazel hyped jaime jenna kylie lilly malta slain sonia specs stash viola waved yummy adobe brawl bryce butts chevy clint comin exits franz jonah locke logos quota quran salsa swore vomit weave alexa arent baden boyle caleb cores dared denim erect fauna flirt flute henri matte mixes morse paige sails sayin stool taxed tibet tread truce typed tyres unfit weeds aloud bauer boast bowen brink cecil cobra conor ernst heirs inbox jamal piers pleas porto sigma spins usher weiss wiley annex barge birch bland bribe canoe cider eliot equip foley havoc humid klaus kuala litre manny mckay milky mixer nicky pivot ryder suing taped arbor cisco cling fella getty icing idols jihad lapse login mimic mural nasal oprah patel quasi reese reich sears shuts byrne cameo claus deter diner eliza envoy fungi gravy haley hires meats psych rinse scalp sheds spans squat sunni thorn toned tulsa volvo wharf wiser yates crate crave crows fanny freud gloss graft grips guise leash mater plugs ramos rodeo shire sinks swung taboo tides visas alias annoy cocks grail kappa liars liter lyons opium penal plank ponds privy rubio siren smear snowy soooo stalk stink swine tryin adele bangs carts clamp clans ernie forks hacks hoops inlet kudos lucia mains mould niger noses quake racer recap shaky sinai stout stump wally yells berth carla dewey edits gould heidi lenin malls mania menus orion parry patio pepsi pines prism renal rites roach sioux sloan sniff squid steph swarm taxis terra vance verbs yikes abbot aspen bleak bogus cages cubes daryl dizzy enact fists folds gregg haram hound mourn nests pouch rican sachs sexes shack stale tacos tummy wager whack wilde basel betsy blanc boone broom brute buffy chung curls cyril della dhabi eater eaton elias foxes fritz froze hitch julio medic muted nylon ozone papua rotor vitro wigan abbas agile aides barca carve conan crook darts diver duffy fades fedex filth genie glued heats hubby jacks kyoto ledge levin lgbtq melts mined momma moran natal pests piled salts starr torah torso wolfe abyss alvin arson basal crabs demos dildo elves ether fetal finer fused gorge judah kabul latex modem motif necks paolo papal peril polly pores rosen rossi shear snoop tenor wipes zebra babes broth cocky cones desks disks elton evade fairs germs hanoi heist huang malay maxim misty pinky quits robes samoa satin slows stacy tonic twain vowed binds chops cooke denny ditto gland jumbo kraft louie mecca moons olsen semen sighs slime spawn tanya ticks tomas towed upton waltz adolf biker butch carly chats cheng ching crore dixie dunes haste jolie judas kinky lenny mandy mcgee moods otter plato racks relic reuse reyes scams vicar welch woken adler apron avant baird boise carbs coils exert glare hefty kurds leaps lends leroy nerds porno rahul rapes reefs santo slump akron angie azure braun cadet cords craze dumps evils faked geese grimm gupta hella hunts lmfao lowry mikey nadal novak phony pluto ramen ramon renee rolex rubin synth tammy vicky vijay bends boxed brows coupe cures davey ebony folly fumes garde hikes hymns itchy junta latch libel lofty maize mazda picky poole prima regal shalt sheen sleek sling studs tombs adept bowed brody cafes cunts doggy eerie ethel farce fling flung fudge gemma glide gucci jonny maher nikon norma ofthe plaid plush serie shiva smoky solos spade swans temps vowel buggy cutie darcy dodgy ethos gmail heals hinge intra irons mamma manic melon msnbc nicki roche rowan seams shred synod tatum tesco titus vents comey donut garry garth gloom heaps hydra kyrie limbo lousy olson ortiz overt pious reins rufus scuba shite thine timmy turin viper asean beige bosch bubba bulky busch debra dives emery esque flops incur latte leafy nadia ollie piggy shrug sonar stony taper tolls toxin tudor wanda wasps akbar assam boils cello cesar detox feral flips harms hasty husky laced lipid marin marta osama palin perch sorta sykes truss undue vader verde vinci wacky aches assay bihar clair cuomo dalai fishy frail glaze insta jerks joked macau ramps rhine sinus stung waldo whine abort aidan amish banjo beech comma devin dogma emory evoke geeks hodge johan lacey leans lexus lowly lucid makin mosul petit petra polio saver shrek snuck timor tweak angst bayer bison bytes dolan elise ewing expel fitch frown godly groin helix homie hover knack kodak libby lured macho magna missy nouns potty sadie silky stair brood chemo colby dandy donny eased gowns keane kilos leach lefty luigi mabel maids quilt robyn sauna scrum slade snare stomp suede tiers timid tweed uncut widen braid bulge cuffs drags fonts forte fours greer greta hobbs kayak kneel maori nudes orton paleo recon russo soros susie trays vigil waive weibo alain annum aroma astro budge clegg clout corny darth droid dukes dyson emoji fakes feats forts gated girly healy hoard horde koran lambs looms lotto lukas lynne mateo myles nitro norse pesos poked proto shone sissy taker triad valor wight wolff bathe cosby dares doesn feces giddy hamid hanks heinz kiddo melee merch nudge ovens payer pints pours regan serge tempt terri uttar vicki whiff aryan aunts bling boner bouts chico flake goons halle hasan herds ionic lawns lorry lovin matty moths mover prada rowdy sassy silas takin tonne tramp wield youll akira alfie brisk bundy celia crete cupid danes defer dhaka dries fabio fidel flaps flask fluff giver gnome hades haute jails lange lotta lupus lymph mahal milne nehru palsy patti polka regis repel rohan salah skier slabs slums swoop tahoe telly volts waged whoop amaze beale bragg chute daley derry drier duane elmer epoch faber farts fated femme foggy gator josef lemme livin lumps magma nutty ogden plume plump shrub sluts soaps stead vests vidal warms whips yukon alton asher bagel bigot britt bumpy codex conte cowan crowe facet fates firth floss frees genoa heres ibiza josie karim kinks locus meade moors playa posse saber samba slant soles spelt tacky tessa texan tulip wares xanax alden buick busts combs cosmo croft darby elgin erika felon grate guido hilly horne howie huron hyatt leech madly nerdy nifty paces paine salle seine shawl slaps valet aunty baggy carte emile fable farah gabby gayle imran infer jiang khmer lager laird lorde meryl moyes nelly niall pears pixar pryor ringo strut swirl theta thong zoned abuja anwar awoke axial bette carat chong chore coles crept cults curvy filly footy fouls gents grunt gusts halal hijab masse mucus munro pixie ruben selma sever skips snuff stoic swaps taser woolf actin adnan allie andes artie avert avian barns bayou chime delve faire fluke georg gopro grady growl hater jodie lobes mardi nafta niles nosed nukes pasha potts reece sects soggy stoop ville youve abode aries clams dazed dinah dowry golds grids hails harem hilda hippo inept juror liang luton macon micah minaj moans modal moira nawaz pluck porte potus puffy quail quirk rabid scorn vogel vouch wafer amuse aptly autos becca brunt bucky chaps creme duran ferns groan gunna havin hives hoist laces massa molds morty murky patsy pinto rants reels serbs sikhs slurs smurf tarot twigs abdel botox canes ducts ennis fives fleas folio franc gully ipads karan kayla lilac mayan minsk mules padre pavel quill revel rocco rower spire spout sully vases whisk alibi anand arias aztec clasp crypt deems doves edict epoxy exxon fiend forza glock hawke hoods hurst hyung irina jerky licks mindy mower naacp oiled peeps pesky prays riffs rouse sabha scant sheik skunk sloth soups spoof tonga trope tufts yusuf addis aloha alves arden bafta benji booed butte elisa elsie enoch foyer goers grime heron inert jammu leung lumen lyman piety pinot pogba remit riggs savoy tonal totem uconn acorn aiken alamo aloft amman barre beset bleep boyce comms dobbs duped earle erwin fared gable hahah haiku hines howdy indus inked jayne kilda kyung lakhs leila marge movin munch noone popes puffs reddy seung slimy snout spank spied spits supra tunic waxed beets brine busty churn dolce faust fuses hells higgs hunch loner mogul moles monet morph nagar nicks nomad orson pubic raman revue rigor rizzo roper shank sonya spock swann terre thyme toner tully unify upped virgo aegis aiden ascot brill caged caine capri coney deans diode duval dwyer ester gills hertz hwang idris janis leaky linus lizzy lorna matic mites neuro platt quack raged rages ronan semis tariq trish vedic zeros argus biggs bosom busan cools delia divas famer gallo hasnt kamal leapt lucie maude milly mundo prius quark rarer samir simms slugs stabs swede teeny trams whyte accra anvil anzac argos astra betts cabal cadre cramp decoy diced draco drool fixer foray friar fussy goody gough holed honed hutch jetty kabir khaki koala kohli leith loren merle mocks monde muses petal poise rambo raoul rupee saeed smirk smyth snipe sochi stave swami trove winch amour arjun banco bantu benin ceded crock davos dunne erode karin kebab margo merck rondo saban scion sores ulcer vigor yanks aisha axiom bello buffs chino emits fangs gomes graze hagen jakob janus knobs longs macos mince mints moray nacho reeds sabre saleh speck tobin yadav adorn barks cabot cumin dawes decal execs expat fecal iqbal kanji lingo lohan meaty neill nunes oates parma piero quart robby ruddy sahib salam scala snort swims tamed tempe titty typos vices warts xerox apnea banda booms bower capes celeb coven dials domes duchy engel epsom femur gulls gusto hippy jazzy jeong jeter kiosk klopp pushy quell roost salim shard sieve spore swain tania tenet tiled tunis vials wynne aback aimee aloof bader brews cajun convo croix dorms druid duvet eject erich forgo freer fryer gaius greco gurus hoses kawhi largo larva laude livid lotte mares maury mckee mobil molar pawns primo rayon ronny sable slush smelt stirs thier utica atari axles bezos booby brees brice bushy calms caved clung coals criss dakar dined fonda frick ginny groot hough jaffa lille memos mocha noose parse petri phnom puget punks rhett roddy rohit sagan savor sindh taint tarts tiara tupac vimeo vinny visor volta acton alder bales bossy camry clots colds crumb dames davao diddy dived drury ember emmys erupt evict frida gleam goode gower gummy idiom jaded kafka keyes maddy mehta midas moshe odors oskar panty plums pooch scour snows talon thump truer waite yearn ababa armin ashby bambi bondi buena caddy chasm crass crewe cymru dolby ebert fleur keene kites kline ligue luisa marcy maris odell odour piped prune raton rigby snape strat taunt usaid wentz whirl adage boyer brash chimp dhoni doran edema falco flack forma galen garza haves hiked hiram inuit keats kmart liege llama lynda marko navel payed perky rajiv sansa siena steed usain anson astor bevan boggs chewy cleft clump deuce doped embed freya geeky herod horus jitsu kelso lures mohan mushy nauru ovary palma petro ronda runny saith senna silos simba sonja tacit tilly totes valle vixen waugh whims wreak xviii abbie ahhhh amiss aruba assed bobbi breen bueno cuter dimes eases ethyl glows grads grits heady hmmmm homme hotly huber karla knapp layla layup leona libra lifes modus ooooh osage osman pecan pings pique ponzi punta selby shoal smite socal tasha twine twink voila wylie xxiii yarns aorta ascii beret bogey boron bugle burch buren calum dario errol flier frisk gabon gasps girth mated misha plano plumb pokes porta posey priya sages sinha stowe tebow techs unhcr verne vying walla yeats ziggy amore babel beryl brats calle carta chump clove comte cysts deere ensue epics gasol gecko hagan iliad khloe korra laing lathe leela malia meier micky oaths outed reeve roars sabah santi serra shang sixes sodas spilt sutra sybil tuner wonka abram alina ayres banff bjorn brant defoe frodo ganga gaunt gwent heave idlib infra judea kazan knoll kurtz laila lucio luffy mayne mulch nader nance neuer ohhhh philo pooja rerun sakes saucy servo soyuz suave tamar tibia toads wilds xenon afoot amity artsy avril barra bloch bosco canny claps doggo dumas dykes erick favre feuds gauze ghoul golan hales hamza helms hulls keanu keyed marys masts maura mecha mirza panes pitts ponce powys putty radon runes sacha sewed snell somme stuns swish torre whiny zaire zheng annan ayers bahia banal boned byers camus coeur coors curie deane duper finns flees frock habib katya kauai leahy lumia madre manus maven myron nappy nears pasty pesto plata rafts ricci riser shiro skits slits spook stork swoon thane tithe trina tripp yorke barth bimbo bongo cairn campo coups crepe crocs duels earls emmet flaky gamut haifa hesse irvin jolla kiwis lomax lorne madge magee mavis mikel nicht nieto nymph paler prawn puree sadiq sheng soars talia tipsy topaz waned aetna ahold alana amigo anode argon atone briar burgh cacao caper carer ceres chock comer dalit debug dugan ervin faves garda ghent giggs givin gooey halts hearn hyman innes leary lenox libre lupin mehdi mufti nadir neale pimps proms provo raked razer salvo sodom sofas surat tandy tapas aggie ahmet arnie askin atoll cotta coyle davie domed drips eaves enema fatah foote goran greys gulag horst inset lewes limes lunge mesut prado slung surly topsy trier uzbek veils verve wilma abner agnew bonny bores cline comme const daria eared enron hakim hauls hayek henna hinds indra laker lindy lough lumpy minas neath nines norte olden patna pippa pryce rawls reina riled segal seton spool spurt stahl sunil teary tryna tween wonky yoshi adair adieu asuka azhar bebop bilal bilbo corgi dalek dents dusky fermi gaudy gauss gazed grays grout haydn heros hirst kaine magda mahdi meeks minis mists musty mysql nevis notts okada quito rajan raves riker rogan roped rosso scifi seedy seuss sleet souza spasm stubs swath tinge toure unwin yolks ashok burly celts chara covet dales diggs dingy dolph entre fizzy genji gourd grins jacky jello kenji knopf lazio liber lurks manta marek mores myung noooo peres pilar pliny purdy radha shunt solis stent summa thang verdi wicks acura agate alkyl ansel aster avila barbs canto cinco cynic erred estes faker fjord flume foils fuchs gales gripe gruff hegel helga imams kagan kimmy krebs lolly mired mulan mumps ochoa ortho ozzie reeks salve scaly scold tahir tonya trois vexed voids wiper yarra amped asahi bezel borno conti craps crick dunks filet gonzo graff hunan hyena jordi knelt laval lazar lusty macao manna menlo mille milos nasir norah outro pease peels peeve pinks prong rojas sawed sloop tongs trite tusks vitae whigs winks allot amine batty betta bitty blurb chirp clays clogs conch desai digby dimly duets eames euler golem hares honky horan hoyer jeeps leica leper levee lewin lurch majid mamas mondo oxley probs razed roald saito samar sarin scoot showy silks sills spate stasi tabby tatar tilts truro umass xiang yahya aural blimp chews clary cryin curbs dally delle elude ender frans glade gulch hausa hawes hiker howls irate joshi kelli lapis loony malek mambo merci milfs moped moser nicol popup rocha rowed scoff sepia surya tabor thurs trudy vamos varna vedas warne weeps wuhan zumba amass arian auger ayala botha buoys cardi chica chubb conde credo darpa essen grier jimbo jocks kiran lapel masha maxed meera mowed omens pansy parte parti quads remus ronin rouen safes salma sousa suzie talib tawny trims trott verma willa anima artur awash basra boson brawn carne chapo chien ciara dijon eatin fagan foams ghosh goths grimy hadid islet jaden jaffe janie juris kraus laity legos leyte mauro mcfly medea midge moana najib nuevo nusra otago oxfam padua paley parka parke paton posit puked rahim raina randi realy satya slavs snore stank vidya volga wands wimpy athos berne cacti chaff comps corby crump dingo donne effie elgar froth guile hallo havre homey irked jenni lando lobos loire lovey mainz marla metoo natty pared pikes pinoy ponte prowl quaid quash redox rifts rishi sheba shrew shush sited soapy spiky thiel waver wring ypres zorro adama addie agave beaks beefy berks boars boing coker devos drape evers ferro fords glynn innit jewry kitts laine lasso lemma lexie orcas ouija polis redux rhoda scone shona stans steen tajik tamer vichy vulva wyman zonal amiga bakes bally beaux beeps biome bough casio crony dicky dumbo ecole efron emcee fugue glean gutsy hafiz holtz javed keira kochi kroos laban lanky lurid luzon marti oreos ozark pales pinus reade reals rollo stipe strep toews trill unmet agora asics askew assoc aviva bicep bligh brest corso delft dorky durga eldon elses ganja gooch howes hunky inman jalen jordy kwame linde nhtsa outdo pissy pygmy riven skids spiro tetra towne verso vroom yeung zooms arsed barak bogut casks chard cribs dewar dodds elegy evens fiver folic geary golly gopal gouge haden hmong judeo kilns loins mauve mitts murat negan newry oakes omits oreal pacer phish rabin rakes raqqa ravel scape stade stoll taffy tarek tepid tripe vadim wests wiles yeezy amina anion aslan balmy bards bento bowes caked chand cowen cuppa durst fafsa fatwa fuego gcses glyph gohan gordy gotti gumbo hipaa icann inane jalan kwang labia lazer leeks livia maier mcrae mears meiji milli niels nitty noire paola rogen rolfe saggy seiko septa serfs shari skeet sneer splat touts usman usurp utero yonge adder algal alisa allay arran bhatt bream cadiz chins coder csiro degas dinka dredd ethno feliz ghazi indio keita knick leger lowes mahan mazes menon minty moldy museo navas noida nueva ochre orang paget plows ridin rivet sadat seein sobre tardy twirl vardy wagga walid xhosa abate adios blocs busby corfu daesh dopey ducky easel foles gordo grist grope inlay kerri kesha kirin liszt luxor mandi palau paras pasco pauly poach pubes raine reiss ruger sacra sappy shill shins skank slats sligo speer squaw starz thais throb timon toyed tyrol unger uribe vasco willi zahra zeiss zhong alcoa amato asada bight bilge bonne codec conga coyne daffy darko dicey divya dulce enrol griff halen hoshi jetta jumpy kampf kandi keogh latif lauer liens loath loopy maeve monza mused nunez obeys porky poser pylon refit roomy seeps shhhh spina tegan terse tonto topps viejo wench ander brags casas cerro chaka clank cushy darin dietz diplo drago faris faroe farsi fromm gaffe gavel glens glitz grohl grupo hamad hoppy josep karel ladle mbeki mensa morsi mosby nabil otaku pauli phage pumas punts qaida recep rhone ripon rizal rodin shing shirk solon spiel spunk swank tacks thicc tilda tobey torts trapp tubby tutti twill udall varun yawns agape ailes altho anise ansar auden baits caron cilia cinch colic devel dwelt elway epcot filip fiske frets frome gilda gipsy glint greig halos heine jafar kasey kemal lidar lopes lundy lycra mahon mamie masai mitra mmmmm morin mundy nairn neely nisha ofcom oldie padma parra pelts rajah recur ricks salas sanaa sault shams sired sitka snags snark stews teton trawl tulsi tywin waxes yucca zappa abhor abreu aegon aight alban atmos baidu bared blige carpe chiba choco dawns dilly dings eamon freda gauls ghani govan hynes igloo jiffy kunis lhasa lofts lucan mamba meena mossy murad nagel norad pasts pirlo praia quint raspy ripen sahel serif spiny sturt swabs tangy tarik tuber utley virat welds aamir addon affix afoul amara beebe beyer blyth bunks carew clang coped cyndi decaf dinky djing dobby elven fahey foals gitmo glebe henan hilal hodor ipods kamen karat keefe krill kruse libor liven longo lucca mages mitre moyer munoz naira olney oozes pager peele rance rumba sandi saree shaka skiff sturm tinto trask tsang tucks uhhhh uhuru vivek wrest zynga ahaha alger amira awwww bixby blurs bynum celta clink croke doers dosed dregs expos facie farid fells fenty gloat hokey ibsen jabba joann kaiju kanan karts kyoko layne lisle luger machu malin mammy marlo matti mayes mello mirth morel morey moria natsu noyes oomph patil plebs prost quips ruble seong snarl strom taiga thani tulle tutsi twats velma vikas wowed albus amply aways babar bevel blatt bodhi brava chibi chink cking clack covey crimp debby feely foyle gazes gilly gizmo godot guano guava gwynn hanzo hideo hoyle husks kanto keiko kiara knott kondo lambo magus mikes ocala pacts pauls peppa pithy razak roxas sagas sayed senor soren sucky swamy todos tomes toots unsee washy weill wierd wince yulia zayed bevin birdy biter bloat boden boers bolus bursa busta bylaw chums crone decry downy enugu exalt frith geert godin gronk halve hamer hebei hecht jaunt joong khans knits levis likud louse lucha mezzo musik nawab orrin pangs peeks plies rabat rajya rears rebut rspca saran scrip sheaf skoda snobs surry tanto tater telus thule thunk tiber tints vries wicca advil alway aslam axons berta bests burka byung cally chaim chula cleve corsa cours dejan demar dirac donal dorks douse edson eller epson fedor geeta glick gowdy gusty haber hagar ivana johor juana karol knell kroll locum logie mucho mundi nilly nooks ombre peake perot petco reiki sauer snide sowed tarte telco uriel vamps verna vespa vesta wishy aline amaya baldy bidet blobs bodes bodie braga buell burqa capra cased cates cheri cocos corky darla dinar ditty droll fader feign harps hayne hooch hsiao incas inthe kooky larue lauda leery lobed lolol manon minna minot nanda ovate peasy prude reams scabs soaks staid steyn vocab waded wayyy wirth zooey aaaah alene anjou anova arora bazar bernd bukit corks druze einar engle etude fendi fleck fossa fredo geico geist hanes hocus hosea hsien hymen idgaf inoue irena irfan issac jessi kandy kaoru kazuo knead laney lanza lemur lieut liken loons mance meath missa mumbo narco odeon palme palos peony petey pocus poops potro quant rebar retry ricoh rikki sacco sagar shana sheri sleds smock stags staph theon thins tiago torus uriah vinod wahoo wyeth yalta akram amari artem artis bails bamba bawdy beaut begum brics bruni catty crabb curia eevee fides flagg futon gabor gerda globo hasta hayat hebdo henny holla hulme humps inigo lally laver lyell marne meted miser mises myrrh naidu nazir nikos ozawa pappy peeta pelle plied ponta poppa reedy revis rinks rooks roque saheb sajid sakho sanfl savin segue slurp traci tryst tubal twang waifu whorl wordy zenit arras bandy bendy bogan causa cower crist croat cubby dalia dikes dimer eshop flail garbo gogol hammy herat hoare jamil janes jawed jemma jenks kenai krazy kreme larch milks moxie negev neves nizam nodal nosey pecos radii resto rivas rocca rungs seder selig shiba sicko spake stott taiji toddy turds unser unzip upham vlogs writs allyn altos anker batik bibby bloor borat caius clyne dovey einer evert gyrus hager haile harte hetty hunks isuzu kashi killa klara leann leche miler mirai motta nihon pokey sarge shree smaug snafu sofie spitz surah taupe testy thabo trios twerk usury veers aesop appel belli berra betel betis blume borer brony carle cavan chomp cubed cuddy culpa divan dixit dozed fasts herts hosed ibrox infos irani kadri kante karam liana lorca madhu manet miura muggy passe pawan peppy pepys piotr pucks purer quays queso rebus reims ricki rosin sangh shorn slays srsly synch taman thorp tikka timur tokio treks undid urals valli yesss zaman antsy arlen audra badoo birla boozy boyne bruin chine coons crags crain creak cydia datum delos dinos doric essie exude fanta fazio feint furor goetz gouda illus jerzy karst kenan kunst leong lordy louth mauna mongo nasri nella nevin pater plath prion profs pusha qasim roams rusev sires sivan skimp toons tryon unwed wifey wilco wilks wooed yasir yatra zippy aadmi akers andie bains bayes cammy campy chika decca droop fauci ffxiv flyin forde gente hoffa ignis islay iwata jager jakes jerez kacey katia lamas leste lindo lissa machi manoj marat nigra niqab offal pardo pyrex sabra sambo scowl seema shied shura sooty stagg takei tamir terns tomar tubbs untie vella wifes bajaj barba bares boney brien butyl chars chuan conwy dayne dench dewan dotty droit dunce elope elvin gamal getup haney harpy hight ibaka ipsos kamil karna knave kogan lanny lauds malmo mange marca matey mirna monti moshi motte nanna niamh niven omnia paves poopy preet preys quora rasta raved sakai sayer scrim selim sethi taxon testa tevez tiana tycho unrwa vapid vivre xhaka yunus akita allin anbar annul asami bijou biota bolin canna chaco cheol cobol coves cress cruze damme egged esper eugen flyby galle guppy holst ishii izumi kendo kotor leven lusts marky maxie neigh nessa nikko nimmo odile ogres oriel pekka pires radek raith sabin sager shias shipp sippy sulla suter thanh tippy turvy ummah whelp whizz wooly yorks acker aditi ameer ammar araki ashen augur azeri azusa balsa beady betas blurt bongs borax bruna canis cokes crips croce curds daegu doozy drawl dupes eason evian ewell funko gabba gandy grubs gundy havel hazen hondo kahlo kalam katja kenna kloss lauri leggy lgbti lithe mejia mingo nitin nyssa piney pulis redmi riche romer ryzen seitz sexed sisko snook strum trang tyree vandy whoah yeong yucky zacks zafar zahir aedes alloa amory anhui arses boles bossa cheep colas coote cusco degli djinn dolla emacs ewart faxed haigh hamel heber hofer horta imgur izmir jamey janko joust jutsu kapil krieg lasik lawes letty lonzo manda minto mtdna namco naver nivea nowak origi ovals peaky peale penne penta pollo popov preps pucci pudgy quang ratty renzo satyr sayre spuds ssris timey tosca varga varma waaay xenia yadda yoder zilch zoran afire aggro akali albee amboy ammon amway apace arles becks berea bogie breck buzzy capua chyna combe coops copes dagon deron diehl durch elyse emote gault glial gnats golgi grigg hooke junko kunal layed leben legia lemmy letts levon lifer linky manse melba morro nandi orsay pirie raghu reyna saarc saute shand shinn skied slyly spars tills trine turan uther volte warsi webmd welby winky yusef zetas aipac akane alexi allis ambit avast basta belie bjork cajon calyx cincy codon corns dafuq dayan ekiti erbil faxes filer flynt fonte gauri goner gongs gorky grata gulen haida hersh hogue hoots johny jstor kaley kiddy krabs krupp leake lexis locos mcvey mutes noche novus nubia optus pabst paged papas pappu perce prise purim putts pyotr salva scuff sibyl sikes spats spews sucre unsub viggo voles wails witte yosef zippo adani alles amano amide amjad anika aqaba ariza basso beatz benjy broil bunga carli chowk cilla clapp claro dansk dears didst duomo evita fenix forme frack frere geyer gruel hakan heuer hosni ident idyll janos joule kenzo kissy kneed landy larks lasse leyla limos loach luang lurie lyall lyles megyn morte mungo negra nonce orlov pally param qadri roark robbo roden salud seale sekai selah shami shure sidon syncs syrah tigre timex tuple unlit usagi vanya warps wisps yohan zakir ahern arron aught augie barty belay bloop cotto curio cuzco danni dilma dooku endow falun firma fosse gluck heung ikeda italo janey jessa jokey kaori keren krone lahey laxmi leant lidia livre lugar lysis maeda maggi manes marte mccaw medan migos mooch murph musky nando nimoy noona noosa panna pharm plein preds rager renzi repos robed sated singe sprig spyro stine sways tarry trini truex tseng ummmm voigt zweig afore afzal alena alums alwyn arndt artic aubry awami benue boggy condi conic crier danby datta deena deion dines doane dower ecchi ewald festa ficus fieri fiore frito genet ghats glans glues helle icahn imbue isiah jahan jaina jenga jinks junky kamui kiera kilts lomas loras milla mochi moocs munir mutts myrna noobs orbis oster ovoid perla pitta plait pogue rioja roush roxie seers shyam shyly skint suggs sumer taryn tioga trike trots venmo wispy ached adela alito argan ascap athol basie begat burbs bynes circe clift cohan cutty dafoe deepa dowdy ennui foamy fuqua gimli guang hader hamon hants hissy hsieh hubei jessy klimt kovac libro madea maren meuse miata mitzi nagle nelle numan omani orisa pacey pacha paean perak punic rayed regen sitar smoak smuts sobel solly sonam sonos soule starc suraj tatts thanx totti tsung varus velez venti viber wryly yazoo zandt zesty abell accel adria amaro arman boban bolan botch brite bugsy chafe clued coley coots cowed croak dalby denys dming doren dutta fateh frizz gacha ganda hamed hedda ingle jabez kasim kehoe kevan kiowa kwong lefts logue mache madan mealy mintz naito najaf omagh orban panto paseo payin perma posen purrs ratna rayne ricin rimes rolla samus saris shani shiki slags sotto taber taran trice vanna vieux whist woops woozy akash albin aleph amico aphid areal bakar baste beget biddy binks blare bojan cagey capps cinta citra corse creel cueto daren deets delph doral dorne ducal echos eisen elkin embry feige finra flexi glaad gramm grubb holme jalal janna jimin jonjo jyoti kaito kaleb kanna lacan laure ligne londo maida maxis mehra minos miter nadya nanak natur nobly nuked otero perri phill piste platz polak polyp pried punto reits runic sedge shima smoot staal stile stunk tambo trobe tucci udemy ulnar umber umbra unter vagus wahab wimps yaris afton ahrar atria ayman balor baugh bayan blips buxom cheez colle cylon deniz dirge dowel dozer eldar estee fahad fatih faulk frist fundy gassy gratz humus hurls icbms ingot jammy jeune komen kraut merwe metta misra motes newby nikes nippy nishi nobis patek pavia peron pouty rader reine sahih sammi sence shere slink snead stadt studi talus thoth tinny toefl tonks umami viera wacko webby wikis xcode xxvii yknow acrid ajayi amgen anais arash arima asano asura aswan auras beefs behar benzo bigly bindi burge burks candi caryl clade cleat colum combi dawgs dello dells dross dweeb faure fibro fille fouad fugly fusco gayer grote gruen gutta hanan hanky hayao hemel herne hoang humic lamia legge lilli linea logon maman mando marci marni meows michi morag mylar oliva pepin pervy rummy sainz sheva shira shota shuck sidhu sigil silla sooth stilt swole thots trigg wakey weedy wyden wyler yasin zulus adlai andor arabi arvin avram barts binky breda bussy calla caped ceuta cielo claud corsi corte dacia dasha dayum denby dimas doria edina fanon feder flava funke gadot gaeta gatos gibby hanif horry hulks hyeon iliac impel inger ionia isner jakub johar kapur kawai kiley kursk limon malts messe minho mixon monta mrnas oases oiler onsen osuna otome pella poppe qiang quine reiko reuss rolle sacre sante sergi sider signe soler spurn sunda talal tarps vesey vitor wasim weise welle wrung zilla afrin agron basle brier burro buyin capel cholo clwyd comas cooch coppa cunha defra doble dubbo gagne goldy gorse hafez hagel helio herve hilde iknow ilham ilona islip jeezy kamel kazoo kemba ketch kosta kross kuang lossy matos mauer mechs meigs monad nephi nesta oompa orman phlox picts pupae rando rashi rebbe sanji scram sokka sours strix sylar thein tonka tress tynan varys vikki vinay wiese wilts yukio zohar ameen ameri ardor arial badri baloo batts bexar boehm bomba canst copse cowes cryer dalla datuk dilip endor galls gantt gehry grice gulps halep haman heald ilana isaak izzie jebel joost kajal kells kirov kishi klerk kooks koons lacma lentz libri likey losin magog maron mcnab meine merah mopar mylan naman ngozi notte oozed opals ophir parsi punky raimi rakhi rares reaps rilke rosas rosey ryman salix sanya schon sealy sharm shute skein skool stele sumac szabo telex tisch toole tozer usada venal wanes weems weepy wikia yerba yodel aleks allez altai antic aruna asaph autre ayton bated blane bohol brack cantu chola cissy cogan compo conus copts daraa darya ditka drogo dryly elihu elroy foran gomer haris himym hobos imago jinan kayne khali klass landa lindt lmaoo loris luann macaw manas manos masao masri medio metis nahum naoki norsk nsync pekin priam prods rohde roose ryuji sagna salih sanju seger sinew snubs soong spect stang sulky suman taras thera tilak tines tyron usmnt uspto voxel yoked zaidi zakat zarya ajmal amado amiri bardo barmy beane biles bluth boyes buble buono caffe capex chana cluck coman crean danse donde dumpy egret elson equus fests fubar ginza gorda goyal grizz groth harpo hatta havnt ishaq jeers jukes kakao kamla kanda karyn kozak lavin leena licht loong mamet maroc mazur meads mujer naboo nayak nouri nuovo ogawa owain pawar pedos pinup quali rabia rafah ramey ratan rauch renan rinds rizvi rudra salut scamp shuns sigel sonne soria spams spanx spica swill tanja telos theis toshi tsing washi weare weirs wendt yasuo ahora ahsan aioli akiko aspca badal banca bayne beals beano biked blain boric brita bromo carbo chace corry dongs doody fayre ferri fogel frill gilad gilts golda gorka herzl hobie hovel imani infor jools kaede kriss latam leman lukes lydon macey meany mikko mimes mirko mitty molto monro mulls muzik naina nazca niner nolte ooooo polos poste prout renta royle scree shedd shoah sirte slava sorel subic treme turku vento wacom werth zines abadi abuzz ajith alaba aller alpes amble armes bahar baily beaty blots boren brito burry caddo coked cuoco dente dobie dunst einem extol fabry gummi gunny haben hadnt hamdi hoppe howto hyder hywel idler inaba jango jarod javid joana jorah kaman keele keels kenta lanai layin lochs loess lucic marke mista neary niosh nosql nuova opine ostia paisa picot prana raitt raper rater rerum rinne roshi rumen russe sched seiji showa smote solas solus soppy stupa subsp tepco thiem vanda vanek vanes velar volpe waals weald weitz wendi wogan wylde yogic yuval abled aboot adana agger akuma arjen artes atlus basti beall belen benet bogle bogor boult calvo canby carti caulk coffs coord coram corea cored cowie craic cutts damen delon diwan dzeko einen esher fagin fetid frosh groff grump gyros hoary homos hoody jilly jolts jussi kalle katsu kochs kongo lippi maree marly matin moree morne mucky musee nacht nazar nflpa ohana orhan oshie payee peaty phono poona pulau rafiq redid regia ronde samaj sania scull sella shula sklar sparc squib tapir tengo thome tibor timms toney troon udder ulloa votre waken werke woooo xiong yossi yuuki zeman adina agata ainge ajmer akmal arxiv awacs bache balto bitsy bonar borel cigna devoe durin dusts eagan enola fawad finis finna fount fujii gaels gamba gotha graco grift haase handa icici inbev incan isola jacko jozef kafir karoo koren kress kwara lense linke maire mckim melly mende metra moura mundt nadph nixed ossie owari paled pampa pecks pelly pitty prego rania rayna reena saadi samos sande sanna sarai scarp shoop skews soled somos soupy stato takeo tanis tighe tings tomoe toros uscis votto wazir yogis youse abuts akagi aminu antis balan barat belch birks bulma buona burne canio caton cento cluny dimon doled duque engin fabre gazza glace grodd hacer harts hartz harun innis issei jaune javad jawad josey kaaba klose klotz kvyat lancs lasky lovie lulls lytle manti marts matta meron mette minke mowry musta niang omari oromo panos pawel peice peons petar pffft phils ponty pubis puyol ragan rekha renly rhein rodan rolly roode sasse savio shoji songz sufis swire swizz talos tanga tapia teats theyd tizzy tring twits uddin ulmer vihar wario weisz welts wombs wulff wythe xxxxx zaria aiims alois altaf aphex astin asuna bagan baier bajwa bakri baler berle bocce bokep bourg bunce burps chama chert claes crema dayal deign depts doula eadie ekman elfin elina eskom fazed fking fultz galas gioia gombe grima gurps hanyu hards hatin hilux homan hones hsing jamia jehan josip jovan junie keely lavas loney lotsa lycan mazar meech melia mercs naeem nbcsn negus nunca rajab rossa sahil schur spink suppl taluk tamra taney tibbs upend varro vilma viner wagyu alsop amici andra antti async atten azadi bemis bengt bovis cabos cette clave corvo cronk daigo dando desde dolor domus doyen elric eyrie faria fayed flout fumed galli gamed garam gatto genki grose grrrr haran havok hubba hyoid ifyou jabal jeffs joist kalin kegan kirke klang kohls latta lemay liddy liste lites macan malan mally manoa marfa masih massy moats moniz moult murry nappa nervy osamu paoli parle porgy qadir quand radix raffi repro royer saner sinan snips tante tinie tonio turki ulama veuve wahid wesen whois yancy yuriy abaya abney aeons afaik ailsa amana amani arryn aurum balms bande blass boras borns bulla busey corne creat dakin darke deism dilla ditzy douma edsel eleni exons flinn gansu genii gowan grama hanne hooky isley jamar kahan keung khair kisan kyler leduc lesbo liane liebe loran lorre lubin magik marra mohit naxos necro octet ohara osler padme paise panza pasig pasok paytm perps perse pippi qanon quorn raisa ramis recto reith riyad robie rocko saget sanyo sapir satay sayid segel sewol shadi shahi shehu siang siete sissi slobs sneed taleb tamim tashi teemu tovey trevi unita verte vette zahid aarti abies aliya amare asana atman attar banga basha befor blech blick bokeh bronn byway casco choon clunk croup crunk dippy domme dooby douro duong ebbed erisa faraj fotos frege frond gekko goeth gored guage hadji hansa heyer honks humes ilium jalil jamba juste kadir katey kavya kelis kerns klaas liger loman looky lucci lysol manis mapes mesas momoa mudra navin niemi nobby noyce ogata ooops otway pervs phong presi pudge pujol pulpy ramin ritzy rives roker setae sheed soper sutta suzan taiko tased tench thoma uluru varia vater vitus vizio whooo zarif acces amell andro anent balch beira berke bethe binns bluer bskyb bulli burrs caley carib certs cucks danke davin devas divvy eibar eines elwyn feist flowy freon friel gantz gatti hacky hendo hinch homed hossa hotch ifttt jacek jains jaish jiggy justo kader kamar katha kiely krona krupa leoni leyva lilia limps loamy lumix maior mazel melty mendy minny molle mulla naoko noddy noice nudie panik penna pesci petry podge praha pricy quire randa rawat recce rubes salar salat samui serco sorin strop surfs symes symon tarun tasso terme terps texte tions torry tsars tulum ughhh ulsan umesh vilna wrens yakov yeesh yokai agers aglow akari aphis arius arkin bando banta baran beggs beste blois bluey bogue broun brule brynn byram carty charl chive chugs contr cordy cyclo cynon dacre diogo downe eakin effin eilat eonni essai feuer foots grebe grieg gules guyer halla haque haupt haver huffy hypno idina ilene inder julep khadi kling kolbe kurta laggy laika lazlo lorie lorin marga maule mcvay megas mertz miele nagai naija namur negri newts nisar nomen nonna norge nycfc onthe ordre pepto philp plats ploys posix pssst ragin raila rainn rajoy ramah rasul rhona riles rooke runge saira samad seely sensu serbo sigur slims softy spall stoma swash tamas tauri tello thana thora tokai torii towie troup tyger valls vapes vilas welly weren wimax wrack wurst xylem zabel aaand adora akiba albie amery armas autry avner axing azzam batra batum bball bolsa boons braff briny casus colne croon culls cusps dancy danko dayna denon duals duddy dunya elana feria feted fonds furyk gaily halim handi hatha hirai iftar jinny jubal kabhi kaden kempe kizer knope krist kunta lalit larne lavar lendl levar lippy llano loewe luria mabry madox magoo maint manne marth matzo modoc munna nginx nismo norco nukem nyack omnis pappa pasar patra payet peary perle piezo pored pusan rajat ryong sadhu sahar saida sapna sarri sista stour swope takao tanna tarde techy tenby tinea tuohy tyner vasil veena vidic waker wushu aalto aguas amida annas atkin baber babys balla benes berns biffy bohun bonin borgo brion bruns byrds capon carre chuka coady corel corre daiwa digne ducey dyfed elche fahim fiefs fiori fixin fluor forst froot gally geass goofs gumby gusta hahaa haren helge hemet hiatt hirsh hoofs indic jilin jours junks kanta kasem kates kedah kimba kirti kiryu knorr krsna kutch largs levey lujan macha macht mafic magni majin malus meese miggy molde mudge nampa nihil niobe nucky okoye oleic peart petes pisco pleat prato prinz pukes quien ramzi raver repub ryota sachi samia selva serio simla sisal staci sveta taels tatty tengu tenon thame thaws tilde unido valar valla wades wotan zouma abdur anaya annes arica assis auxin avoca baile bartz boeuf bryon caird caned casca chide chinn chrom cinna cobbs cruse delco depay devan dupre elden fatma fawns fived fowls gavan gerri goren gotze grete hopin houma humph inspo junge kasai korda korps kranz kuzma loona melds mosey mousa mowat moxon muffs mugen mutch nazim nsdap nyman okita ouest pathe peavy petre picea pinal regex renny roane rukia scada shara sieur socom surer tanka tavon todas tomic tothe vande vetch vikes xhtml yayoi yulin abhay aerie alcan aleck amrit antar anzio arsen arwen atlee aubin babak behan boosh bucko bunge carex cayce celso cleef corpo danza devry dirks doted dubey duras emden emerg estar fakir floes flunk foust gainz garay genny goins heian heigl hexes hirsi honan hulse hussy jaber jerri kezia lamer lates lausd lemar malak manju marya mayra mosca murdo naoto nasim nolen nsaid nsclc oline ontop oxbow paltz pares pilaf pongo qubit ramat rudin rumah sahab scald senza shafi shamu shino shuai shuri sokol sower speke swati tabla tammi tansy teena tiene tolle tomei tupou tyagi tyrod ursus usama vicks vives wiebe xxxvi zemin accor agung ahram akeem aldon anish archy babby benda berge billa blase blest bourn brann brims cappy chaya chidi chook dacca dalal deers dione dooms douce ehhhh enuff enver feets gauzy ghose giada gluon gotch guapo hagia hajji havas henne hoban holby huffs ineos ipsum iwobi joffe jokic kanga kasia khadr kratz lande lovat malam masuk matsu megha meles micha milch mixup modis moise mutha nawal omran ozuna parva pavlo ponca preen priti putra quavo rakim ranga reidy reitz revie rumer sedin sheff shiga sloss sneha suomi swale swart tejas tetsu tisha toils tovar tsuki ullah unfpa waqar accts aksel alola antes aoife asari beata beens beery blued bratz bundt bunty chiao chron compa copra cotes dacha dalam daman deeps drang dslrs eland emeli gaetz grado halas hauer henin hewes hythe isang janne jonze joris kegel krull lairs landi lemke liman litle lowen lucho makan marit maung mavic medes muncy nagas natch neave neues orden otley pails panky pemex petyr pewds piven plonk polit puede pupal pyaar rajon saada sango sebum shaul shion";
+boot();
+</script>
+</body>
+</html>
