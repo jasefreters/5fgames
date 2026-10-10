@@ -321,7 +321,7 @@
       </button>
       <button class="card" data-go="player">
         <div class="badge" style="background:#d6262f;color:#fff">🧑‍🦱</div>
-        <div class="info"><b>Player Path</b><small>Name the player from their career path.</small></div>
+        <div class="info"><b>Player Path</b><small>Name the current player from their career path.</small></div>
         <div class="status" id="st-player">Play</div>
       </button>
       <button class="card" data-go="ground">
@@ -411,7 +411,7 @@
   <section class="view" id="view-player">
     <div class="game-head">
       <h2>Player Path</h2>
-      <p>Which retired player had this career? Six guesses — each wrong one unlocks a clue.</p>
+      <p>Which current player has had this career? Their current club is hidden. Six guesses — each wrong one unlocks a clue.</p>
     </div>
     <div class="clues" id="p-clues"></div>
     <div class="guess-left" id="p-left"></div>
@@ -1400,9 +1400,9 @@ function boot() {
 //  MORE GAMES: Player Path, Ground Guess, Order It, Grand Final Year
 // =====================================================================
 
-// ---------- Player Path data (retired players only) ----------
+// ---------- Retired players (used by Order It: debut / final season) ----------
 // path: [club, first season, last season]
-const PLAYERS = [
+const LEGENDS = [
   { name: "Lance Franklin", path: [["Hawthorn", 2005, 2013], ["Sydney", 2014, 2023]], pos: "Key forward",
     facts: ["Taken with pick 5 in the 2004 National Draft.", "Kicked more than 1,000 career goals and won four Coleman Medals."] },
   { name: "Gary Ablett Jr", path: [["Geelong", 2002, 2010], ["Gold Coast", 2011, 2017], ["Geelong", 2018, 2020]], pos: "Midfielder",
@@ -1457,6 +1457,57 @@ const PLAYERS = [
     facts: ["Won three premierships in a row (2001–2003).", "Born in Tasmania."] },
 ];
 
+// ---------- Player Path: current players ----------
+// path: clubs in order, the last one being their current club; joined: year they joined it.
+const PLAYERS = [
+  { name: "Brodie Grundy", path: ["Collingwood", "Melbourne", "Sydney"], joined: 2024, pos: "Ruckman",
+    facts: ["All-Australian ruckman in 2018 and 2019.", "Played just one season at his second club."] },
+  { name: "Lachie Neale", path: ["Fremantle", "Brisbane Lions"], joined: 2019, pos: "Midfielder",
+    facts: ["Won the Brownlow Medal in 2020 and 2023.", "Played in the 2024 premiership."] },
+  { name: "Tim Taranto", path: ["GWS", "Richmond"], joined: 2023, pos: "Midfielder",
+    facts: ["Taken with pick 2 in the 2016 National Draft.", "Won his current club's best and fairest in his first season there."] },
+  { name: "Josh Dunkley", path: ["Western Bulldogs", "Brisbane Lions"], joined: 2023, pos: "Midfielder",
+    facts: ["Traded after the 2022 season.", "Played in the 2024 premiership."] },
+  { name: "Adam Treloar", path: ["GWS", "Collingwood", "Western Bulldogs"], joined: 2022, pos: "Midfielder",
+    facts: ["Started his career at an expansion club.", "Was traded in 2021 so his club could free up salary-cap space."] },
+  { name: "Tom Mitchell", path: ["Sydney", "Hawthorn", "Collingwood"], joined: 2023, pos: "Midfielder",
+    facts: ["Won the 2018 Brownlow Medal.", "Played in the 2023 premiership."] },
+  { name: "Jeremy Cameron", path: ["GWS", "Geelong"], joined: 2021, pos: "Key forward",
+    facts: ["Won the 2019 Coleman Medal.", "Played in the 2022 premiership."] },
+  { name: "Izak Rankine", path: ["Gold Coast", "Adelaide"], joined: 2023, pos: "Small forward",
+    facts: ["Taken with pick 3 in the 2018 National Draft.", "Moved back to his home state of South Australia."] },
+  { name: "Jason Horne-Francis", path: ["North Melbourne", "Port Adelaide"], joined: 2023, pos: "Midfielder",
+    facts: ["The number 1 pick in the 2021 National Draft.", "Played just one season at his first club."] },
+  { name: "Charlie Cameron", path: ["Adelaide", "Brisbane Lions"], joined: 2017, pos: "Small forward",
+    facts: ["Changed clubs at the end of 2016.", "Played in the 2024 premiership."] },
+  { name: "Bailey Smith", path: ["Western Bulldogs", "Geelong"], joined: 2025, pos: "Midfielder",
+    facts: ["Missed the whole 2024 season with a knee injury.", "Traded at the end of 2024."] },
+  { name: "Jade Gresham", path: ["St Kilda", "Essendon"], joined: 2024, pos: "Midfielder / forward",
+    facts: ["Drafted in 2015.", "Moved clubs as a free agent at the end of 2023."] },
+  { name: "Jack Bowes", path: ["Gold Coast", "Geelong"], joined: 2023, pos: "Defender / midfielder",
+    facts: ["Started his career at an expansion club.", "Was traded along with a first-round draft pick to free up salary-cap space."] },
+  { name: "Jack Graham", path: ["Richmond", "West Coast"], joined: 2024, pos: "Midfielder",
+    facts: ["Played in three premierships: 2017, 2019 and 2020.", "Moved clubs as a free agent at the end of 2023."] },
+  { name: "Liam Baker", path: ["Richmond", "West Coast"], joined: 2024, pos: "Defender / midfielder",
+    facts: ["Played in the 2019 and 2020 premierships.", "Moved home to Western Australia."] },
+  { name: "Jordan Dawson", path: ["Sydney", "Adelaide"], joined: 2022, pos: "Midfielder",
+    facts: ["Kicked an after-the-siren winner in his first Showdown.", "Captain of his current club."] },
+  { name: "Luke Jackson", path: ["Melbourne", "Fremantle"], joined: 2023, pos: "Ruckman / forward",
+    facts: ["Won the 2020 Rising Star award.", "Played in the 2021 premiership."] },
+  { name: "Jesse Hogan", path: ["Melbourne", "Fremantle", "GWS"], joined: 2021, pos: "Key forward",
+    facts: ["Won the 2015 Rising Star award.", "Won the 2024 Coleman Medal."] },
+  { name: "Lachie Schultz", path: ["Fremantle", "Collingwood"], joined: 2024, pos: "Small forward",
+    facts: ["Drafted as a mature-age player.", "Moved clubs as a free agent at the end of 2023."] },
+  { name: "Jack Macrae", path: ["Western Bulldogs", "St Kilda"], joined: 2025, pos: "Midfielder",
+    facts: ["Played in the 2016 premiership.", "Traded at the end of 2024."] },
+  { name: "Ollie Henry", path: ["Collingwood", "Geelong"], joined: 2023, pos: "Forward",
+    facts: ["His brother Jack plays for his current club.", "Traded at the end of 2022."] },
+  { name: "Tim Kelly", path: ["Geelong", "West Coast"], joined: 2020, pos: "Midfielder",
+    facts: ["Drafted as a mature-age player.", "Moved home to Western Australia at the end of 2019."] },
+  { name: "Esava Ratugolea", path: ["Geelong", "Port Adelaide"], joined: 2024, pos: "Defender",
+    facts: ["Born in Fiji.", "Traded at the end of 2023."] },
+];
+
 // ---------- Ground Guess data ----------
 const GROUNDS = [
   { name: "MCG", clues: ["Opened in 1853.", "Hosts the Boxing Day cricket Test as well as footy.", "Holds about 100,000 people.",
@@ -1493,45 +1544,45 @@ const GROUNDS = [
     "Located in Carlton North.", "Carlton's traditional home.", "Named after royalty."] },
 ];
 
-// ---------- Grand Final data (winner, score, loser, score, Norm Smith, venue) ----------
+// ---------- Grand Final data (winner, score, loser, score, Norm Smith, premiership coach) ----------
 const GRAND_FINALS = [
-  [1989, "Hawthorn", "21.18 (144)", "Geelong", "21.12 (138)", "Gary Ablett Sr", "MCG"],
-  [1990, "Collingwood", "13.11 (89)", "Essendon", "5.11 (41)", "Tony Shaw", "MCG"],
-  [1991, "Hawthorn", "20.19 (139)", "West Coast", "13.8 (86)", "Paul Dear", "Waverley Park"],
-  [1992, "West Coast", "16.17 (113)", "Geelong", "12.13 (85)", "Peter Matera", "MCG"],
-  [1993, "Essendon", "20.13 (133)", "Carlton", "13.11 (89)", "Michael Long", "MCG"],
-  [1994, "West Coast", "20.23 (143)", "Geelong", "8.15 (63)", "Dean Kemp", "MCG"],
-  [1995, "Carlton", "21.15 (141)", "Geelong", "11.14 (80)", "Greg Williams", "MCG"],
-  [1996, "North Melbourne", "19.17 (131)", "Sydney", "13.10 (88)", "Glenn Archer", "MCG"],
-  [1997, "Adelaide", "19.11 (125)", "St Kilda", "13.16 (94)", "Andrew McLeod", "MCG"],
-  [1998, "Adelaide", "15.15 (105)", "North Melbourne", "8.22 (70)", "Andrew McLeod", "MCG"],
-  [1999, "North Melbourne", "19.10 (124)", "Carlton", "12.17 (89)", "Shannon Grant", "MCG"],
-  [2000, "Essendon", "19.21 (135)", "Melbourne", "11.9 (75)", "James Hird", "MCG"],
-  [2001, "Brisbane Lions", "15.18 (108)", "Essendon", "12.10 (82)", "Shaun Hart", "MCG"],
-  [2002, "Brisbane Lions", "10.15 (75)", "Collingwood", "9.12 (66)", "Nathan Buckley", "MCG"],
-  [2003, "Brisbane Lions", "20.14 (134)", "Collingwood", "12.12 (84)", "Simon Black", "MCG"],
-  [2004, "Port Adelaide", "17.11 (113)", "Brisbane Lions", "10.13 (73)", "Byron Pickett", "MCG"],
-  [2005, "Sydney", "8.10 (58)", "West Coast", "7.12 (54)", "Chris Judd", "MCG"],
-  [2006, "West Coast", "12.13 (85)", "Sydney", "12.12 (84)", "Andrew Embley", "MCG"],
-  [2007, "Geelong", "24.19 (163)", "Port Adelaide", "6.8 (44)", "Steve Johnson", "MCG"],
-  [2008, "Hawthorn", "18.7 (115)", "Geelong", "11.23 (89)", "Luke Hodge", "MCG"],
-  [2009, "Geelong", "12.8 (80)", "St Kilda", "9.14 (68)", "Paul Chapman", "MCG"],
-  [2010, "Collingwood", "16.12 (108)", "St Kilda", "7.10 (52)", "Scott Pendlebury", "MCG (replay)"],
-  [2011, "Geelong", "18.11 (119)", "Collingwood", "12.9 (81)", "Jimmy Bartel", "MCG"],
-  [2012, "Sydney", "14.7 (91)", "Hawthorn", "11.15 (81)", "Ryan O'Keefe", "MCG"],
-  [2013, "Hawthorn", "11.11 (77)", "Fremantle", "8.14 (62)", "Brian Lake", "MCG"],
-  [2014, "Hawthorn", "21.11 (137)", "Sydney", "11.8 (74)", "Luke Hodge", "MCG"],
-  [2015, "Hawthorn", "16.11 (107)", "West Coast", "8.13 (61)", "Cyril Rioli", "MCG"],
-  [2016, "Western Bulldogs", "13.11 (89)", "Sydney", "10.7 (67)", "Jason Johannisen", "MCG"],
-  [2017, "Richmond", "16.12 (108)", "Adelaide", "8.12 (60)", "Dustin Martin", "MCG"],
-  [2018, "West Coast", "11.13 (79)", "Collingwood", "11.8 (74)", "Luke Shuey", "MCG"],
-  [2019, "Richmond", "17.12 (114)", "GWS", "3.7 (25)", "Dustin Martin", "MCG"],
-  [2020, "Richmond", "12.9 (81)", "Geelong", "7.8 (50)", "Dustin Martin", "The Gabba"],
-  [2021, "Melbourne", "21.14 (140)", "Western Bulldogs", "10.6 (66)", "Christian Petracca", "Optus Stadium"],
-  [2022, "Geelong", "20.13 (133)", "Sydney", "8.4 (52)", "Isaac Smith", "MCG"],
-  [2023, "Collingwood", "12.18 (90)", "Brisbane Lions", "13.8 (86)", "Bobby Hill", "MCG"],
-  [2024, "Brisbane Lions", "18.12 (120)", "Sydney", "6.11 (47)", "Will Ashcroft", "MCG"],
-].map(([year, win, ws, lose, ls, norm, venue]) => ({ year, win, ws, lose, ls, norm, venue }));
+  [1989, "Hawthorn", "21.18 (144)", "Geelong", "21.12 (138)", "Gary Ablett Sr", "Allan Jeans"],
+  [1990, "Collingwood", "13.11 (89)", "Essendon", "5.11 (41)", "Tony Shaw", "Leigh Matthews"],
+  [1991, "Hawthorn", "20.19 (139)", "West Coast", "13.8 (86)", "Paul Dear", "Alan Joyce"],
+  [1992, "West Coast", "16.17 (113)", "Geelong", "12.13 (85)", "Peter Matera", "Mick Malthouse"],
+  [1993, "Essendon", "20.13 (133)", "Carlton", "13.11 (89)", "Michael Long", "Kevin Sheedy"],
+  [1994, "West Coast", "20.23 (143)", "Geelong", "8.15 (63)", "Dean Kemp", "Mick Malthouse"],
+  [1995, "Carlton", "21.15 (141)", "Geelong", "11.14 (80)", "Greg Williams", "David Parkin"],
+  [1996, "North Melbourne", "19.17 (131)", "Sydney", "13.10 (88)", "Glenn Archer", "Denis Pagan"],
+  [1997, "Adelaide", "19.11 (125)", "St Kilda", "13.16 (94)", "Andrew McLeod", "Malcolm Blight"],
+  [1998, "Adelaide", "15.15 (105)", "North Melbourne", "8.22 (70)", "Andrew McLeod", "Malcolm Blight"],
+  [1999, "North Melbourne", "19.10 (124)", "Carlton", "12.17 (89)", "Shannon Grant", "Denis Pagan"],
+  [2000, "Essendon", "19.21 (135)", "Melbourne", "11.9 (75)", "James Hird", "Kevin Sheedy"],
+  [2001, "Brisbane Lions", "15.18 (108)", "Essendon", "12.10 (82)", "Shaun Hart", "Leigh Matthews"],
+  [2002, "Brisbane Lions", "10.15 (75)", "Collingwood", "9.12 (66)", "Nathan Buckley", "Leigh Matthews"],
+  [2003, "Brisbane Lions", "20.14 (134)", "Collingwood", "12.12 (84)", "Simon Black", "Leigh Matthews"],
+  [2004, "Port Adelaide", "17.11 (113)", "Brisbane Lions", "10.13 (73)", "Byron Pickett", "Mark Williams"],
+  [2005, "Sydney", "8.10 (58)", "West Coast", "7.12 (54)", "Chris Judd", "Paul Roos"],
+  [2006, "West Coast", "12.13 (85)", "Sydney", "12.12 (84)", "Andrew Embley", "John Worsfold"],
+  [2007, "Geelong", "24.19 (163)", "Port Adelaide", "6.8 (44)", "Steve Johnson", "Mark Thompson"],
+  [2008, "Hawthorn", "18.7 (115)", "Geelong", "11.23 (89)", "Luke Hodge", "Alastair Clarkson"],
+  [2009, "Geelong", "12.8 (80)", "St Kilda", "9.14 (68)", "Paul Chapman", "Mark Thompson"],
+  [2010, "Collingwood", "16.12 (108)", "St Kilda", "7.10 (52)", "Scott Pendlebury", "Mick Malthouse"],
+  [2011, "Geelong", "18.11 (119)", "Collingwood", "12.9 (81)", "Jimmy Bartel", "Chris Scott"],
+  [2012, "Sydney", "14.7 (91)", "Hawthorn", "11.15 (81)", "Ryan O'Keefe", "John Longmire"],
+  [2013, "Hawthorn", "11.11 (77)", "Fremantle", "8.14 (62)", "Brian Lake", "Alastair Clarkson"],
+  [2014, "Hawthorn", "21.11 (137)", "Sydney", "11.8 (74)", "Luke Hodge", "Alastair Clarkson"],
+  [2015, "Hawthorn", "16.11 (107)", "West Coast", "8.13 (61)", "Cyril Rioli", "Alastair Clarkson"],
+  [2016, "Western Bulldogs", "13.11 (89)", "Sydney", "10.7 (67)", "Jason Johannisen", "Luke Beveridge"],
+  [2017, "Richmond", "16.12 (108)", "Adelaide", "8.12 (60)", "Dustin Martin", "Damien Hardwick"],
+  [2018, "West Coast", "11.13 (79)", "Collingwood", "11.8 (74)", "Luke Shuey", "Adam Simpson"],
+  [2019, "Richmond", "17.12 (114)", "GWS", "3.7 (25)", "Dustin Martin", "Damien Hardwick"],
+  [2020, "Richmond", "12.9 (81)", "Geelong", "7.8 (50)", "Dustin Martin", "Damien Hardwick"],
+  [2021, "Melbourne", "21.14 (140)", "Western Bulldogs", "10.6 (66)", "Christian Petracca", "Simon Goodwin"],
+  [2022, "Geelong", "20.13 (133)", "Sydney", "8.4 (52)", "Isaac Smith", "Chris Scott"],
+  [2023, "Collingwood", "12.18 (90)", "Brisbane Lions", "13.8 (86)", "Bobby Hill", "Craig McRae"],
+  [2024, "Brisbane Lions", "18.12 (120)", "Sydney", "6.11 (47)", "Will Ashcroft", "Chris Fagan"],
+].map(([year, win, ws, lose, ls, norm, coach]) => ({ year, win, ws, lose, ls, norm, coach }));
 const GF_MIN = GRAND_FINALS[0].year, GF_MAX = GRAND_FINALS[GRAND_FINALS.length - 1].year;
 
 // ---------- Order It categories ----------
@@ -1539,8 +1590,8 @@ const JOINED = [["Carlton", 1897], ["Richmond", 1908], ["Hawthorn", 1925], ["Wes
   ["Fremantle", 1995], ["Port Adelaide", 1997], ["Gold Coast", 2011], ["GWS", 2012], ["Collingwood", 1897],
   ["North Melbourne", 1925], ["Western Bulldogs", 1925], ["Essendon", 1897], ["Brisbane Bears", 1987]];
 const ORDER_CATS = [
-  { title: "Debut season", hint: "Earliest debut at the top", items: PLAYERS.map(p => [p.name, p.path[0][1]]), fmt: v => v },
-  { title: "Final AFL season", hint: "Earliest retirement at the top", items: PLAYERS.map(p => [p.name, p.path[p.path.length - 1][2]]), fmt: v => v },
+  { title: "Debut season", hint: "Earliest debut at the top", items: LEGENDS.map(p => [p.name, p.path[0][1]]), fmt: v => v },
+  { title: "Final AFL season", hint: "Earliest retirement at the top", items: LEGENDS.map(p => [p.name, p.path[p.path.length - 1][2]]), fmt: v => v },
   { title: "Year the club joined the VFL/AFL", hint: "Earliest at the top", items: JOINED, fmt: v => v },
   { title: "Grand Final year", hint: "Earliest Grand Final at the top", items: GRAND_FINALS.map(g => [`${g.win} d ${g.lose} (Norm Smith: ${g.norm})`, g.year]), fmt: v => v },
 ];
@@ -1648,17 +1699,16 @@ function makeClueGame(cfg) {
 }
 
 function initPlayer() {
-  const path = PLAYER.path;
-  const merged = path.map(p => p[0]);
+  const path = PLAYER.path, now = path[path.length - 1];
   makeClueGame({
     key: "p", state: S.p, answer: PLAYER.name, search: true,
     options: PLAYERS.map(p => p.name).sort((a, b) => a.split(" ").pop().localeCompare(b.split(" ").pop())),
     clues: [
-      "Career path: " + merged.join(" → "),
-      "Seasons: " + path.map(([c, a, b, label]) => `${c} ${label || (a === b ? a : a + "–" + b)}`).join(", "),
+      "Career path: " + path.slice(0, -1).join(" → ") + " → ???",
       "Position: " + PLAYER.pos,
       PLAYER.facts[0],
       PLAYER.facts[1],
+      `Current club: ${now} (since ${PLAYER.joined})`,
       "Initials: " + PLAYER.name.split(" ").filter(w => /^[A-Z]/.test(w) && w !== "Jr" && w !== "Sr").map(w => w[0]).join("."),
     ],
   });
@@ -1742,8 +1792,8 @@ function initGF() {
     `Final score: ${GF.ws} to ${GF.ls}`,
     `The losing team: ${GF.lose}`,
     `Norm Smith Medal: ${GF.norm}`,
+    `Premiership coach: ${GF.coach}`,
     `The premiers: ${GF.win}`,
-    `Venue: ${GF.venue}`,
   ];
   function render() {
     const shown = st.done ? 5 : Math.min(5, st.guesses.length + 1);
