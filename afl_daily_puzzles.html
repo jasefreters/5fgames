@@ -73,7 +73,23 @@
   .card .status.prog { background: var(--w-yellow); }
   .hub-foot { text-align: center; margin-top: 22px; color: var(--muted); font-size: 14px; }
   .hub-foot .count { font-size: 22px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .share-all { margin: 14px auto 0; display: block; }
+  .tz-note { font-size: 12px; margin-top: 2px; }
+  .today-link { display: none; text-decoration: none; margin-top: 4px; }
+  .archive-pill { display: inline-block; background: var(--c-yellow); color: var(--ink); font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 99px; }
+  .archive-note { color: var(--muted); font-size: 13px; margin: 10px 0 2px; }
+  .legend { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .legend .st { margin-left: 6px; }
+  #archiveList .month { font-family: Georgia, serif; font-size: 17px; margin: 16px 0 6px; }
+  .day-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; text-decoration: none; color: var(--ink); }
+  .day-row:active { background: var(--soft); }
+  .day-row.current { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+  .day-row .num { font-weight: 700; width: 46px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .day-row .when { flex: 1; font-weight: 700; }
+  .day-row .sts { display: flex; gap: 5px; }
+  .st { width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid var(--line); display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; }
+  .st.won { background: var(--w-green); border-color: var(--w-green); }
+  .st.lost { background: var(--w-gray); border-color: var(--w-gray); }
+  .st.prog { background: var(--w-yellow); border-color: var(--w-yellow); }
 
   .btn { border: 1px solid var(--ink); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 12px 22px; font-size: 15px; font-weight: 700; }
   .btn.dark { background: var(--ink); color: #fff; }
@@ -212,7 +228,7 @@
     <div class="hero">
       <div class="ball">🏉</div>
       <h1>AFL Daily</h1>
-      <p>Three footy puzzles. New ones every day.</p>
+      <p id="hubTag">Three footy puzzles. New ones every day.</p>
       <p class="date" id="hubDate"></p>
     </div>
     <div class="cards">
@@ -233,10 +249,28 @@
       </button>
     </div>
     <div class="hub-foot">
-      <div>Next puzzles in</div>
-      <div class="count" id="countdown">--:--:--</div>
-      <button class="btn dark share-all" id="shareAll">Share today's results</button>
+      <div id="countdownWrap">
+        <div>Next puzzles in</div>
+        <div class="count" id="countdown">--:--:--</div>
+        <div class="tz-note">New puzzles at midnight, Melbourne time</div>
+      </div>
+      <a class="btn dark today-link" id="todayLink" href="#">← Back to today's puzzles</a>
+      <div class="btn-row">
+        <button class="btn dark" id="shareAll">Share results</button>
+        <button class="btn" data-go="archive">📅 Previous days</button>
+      </div>
     </div>
+  </section>
+
+  <!-- ================= ARCHIVE ================= -->
+  <section class="view" id="view-archive">
+    <div class="game-head">
+      <h2>Previous days</h2>
+      <p>Catch up on any puzzle you missed. Archive puzzles don't count towards streaks.</p>
+    </div>
+    <div class="legend">Columns: 🥅 Goal Five · 🧩 Connections · 🕵️ Club Clues</div>
+    <div class="legend"><span class="st won">✓</span> solved <span class="st lost">✗</span> missed <span class="st prog">…</span> started <span class="st"></span> not played</div>
+    <div id="archiveList"></div>
   </section>
 
   <!-- ================= GOAL FIVE ================= -->
@@ -486,15 +520,36 @@ let VALID = new Set();
 // =====================================================================
 //  DAILY SELECTION
 // =====================================================================
-const EPOCH = new Date(2026, 0, 1);
-function dayNumber(d) {
-  const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  return Math.round((local - EPOCH) / 86400000);
+// Puzzle #1 is 1 January 2026. Days roll over at midnight Melbourne time (AEST/AEDT).
+const TZ = "Australia/Melbourne";
+const EPOCH_UTC = Date.UTC(2026, 0, 1);
+function melbourneNow(d = new Date()) {
+  try {
+    const p = {};
+    new Intl.DateTimeFormat("en-AU", { timeZone: TZ, hourCycle: "h23", year: "numeric", month: "numeric",
+      day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" })
+      .formatToParts(d).forEach(x => { if (x.type !== "literal") p[x.type] = +x.value; });
+    return p;
+  } catch (e) { // very old browsers: fall back to the device's clock
+    return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), hour: d.getHours(), minute: d.getMinutes(), second: d.getSeconds() };
+  }
 }
-const TODAY = new Date();
-const DAY = dayNumber(TODAY);
+function currentDay() {
+  const p = melbourneNow();
+  return Math.round((Date.UTC(p.year, p.month - 1, p.day) - EPOCH_UTC) / 86400000);
+}
+const dateOf = day => new Date(EPOCH_UTC + day * 86400000); // UTC midnight of that puzzle's date
+const dateKeyFor = day => { const d = dateOf(day); return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate(); };
+const formatDay = (day, opts) => dateOf(day).toLocaleDateString("en-AU", Object.assign({ timeZone: "UTC" }, opts));
+
+const TODAY_DAY = currentDay();
+// ?p=N plays puzzle #N from the archive.
+const requested = parseInt(new URLSearchParams(location.search).get("p"), 10);
+const DAY = Number.isFinite(requested) ? Math.min(TODAY_DAY, Math.max(0, requested - 1)) : TODAY_DAY;
+const IS_ARCHIVE = DAY !== TODAY_DAY;
 const PUZZLE_NO = DAY + 1;
-const DATE_KEY = TODAY.getFullYear() + "-" + (TODAY.getMonth() + 1) + "-" + TODAY.getDate();
+const DATE_KEY = dateKeyFor(DAY);
+const puzzleUrl = day => day === TODAY_DAY ? location.pathname : location.pathname + "?p=" + (day + 1);
 
 function rng(seed) { // mulberry32
   return function () {
@@ -538,6 +593,7 @@ function save() {
   try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) { /* storage unavailable */ }
 }
 function recordResult(game, won) {
+  if (IS_ARCHIVE) { save(); return; } // archive puzzles don't affect stats or streaks
   const st = DB.stats[game] = DB.stats[game] || { played: 0, wins: 0, streak: 0, max: 0, last: null };
   st.played++;
   if (won) {
@@ -551,6 +607,7 @@ function recordResult(game, won) {
   save();
 }
 function statsHTML(game) {
+  if (IS_ARCHIVE) return `<p class="archive-note">Archive puzzle #${PUZZLE_NO} — doesn't count towards your stats or streak.</p>`;
   const st = DB.stats[game] || { played: 0, wins: 0, streak: 0, max: 0 };
   const pct = st.played ? Math.round(100 * st.wins / st.played) : 0;
   return `<div class="stats">
@@ -599,6 +656,7 @@ function show(view) {
   if (view === "wordle") sizeWordle(); else if ($("w-native")) $("w-native").blur();
   $("backBtn").classList.toggle("hidden", view === "hub");
   if (view === "hub") updateHub();
+  if (view === "archive") renderArchive();
   window.scrollTo(0, 0);
 }
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
@@ -609,7 +667,11 @@ $("backBtn").addEventListener("click", () => history.state && history.state.view
 window.addEventListener("popstate", e => show(e.state && e.state.view ? e.state.view : "hub"));
 
 function updateHub() {
-  $("hubDate").textContent = TODAY.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · #" + PUZZLE_NO;
+  $("hubDate").textContent = formatDay(DAY, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · #" + PUZZLE_NO;
+  $("hubTag").innerHTML = IS_ARCHIVE ? `<span class="archive-pill">📅 Archive puzzle</span>` : "Three footy puzzles. New ones every day.";
+  $("countdownWrap").style.display = IS_ARCHIVE ? "none" : "";
+  $("todayLink").style.display = IS_ARCHIVE ? "inline-block" : "none";
+  $("todayLink").href = puzzleUrl(TODAY_DAY);
   const set = (id, g, started) => {
     const el = $(id);
     el.className = "status";
@@ -621,11 +683,38 @@ function updateHub() {
   set("st-conn", S.c, S.c.history.length > 0);
   set("st-club", S.k, S.k.guesses.length > 0);
 }
+function gameState(g, started) {
+  if (!g) return "";
+  if (g.done) return g.won ? "won" : "lost";
+  return started ? "prog" : "";
+}
+function renderArchive() {
+  const icon = { won: "✓", lost: "✗", prog: "…", "": "" };
+  let html = "", month = "";
+  for (let d = TODAY_DAY; d >= 0; d--) {
+    const m = formatDay(d, { month: "long", year: "numeric" });
+    if (m !== month) { html += `<h3 class="month">${m}</h3>`; month = m; }
+    const st = DB.days[dateKeyFor(d)] || {};
+    const states = [
+      gameState(st.w, st.w && st.w.guesses.length),
+      gameState(st.c, st.c && st.c.history.length),
+      gameState(st.k, st.k && st.k.guesses.length) ];
+    html += `<a class="day-row${d === DAY ? " current" : ""}" href="${puzzleUrl(d)}">
+      <span class="num">#${d + 1}</span>
+      <span class="when">${d === TODAY_DAY ? "Today" : formatDay(d, { weekday: "short", day: "numeric", month: "short" })}</span>
+      <span class="sts">${states.map((x, i) => `<span class="st ${x}" title="${["Goal Five", "Connections", "Club Clues"][i]}">${icon[x]}</span>`).join("")}</span>
+    </a>`;
+  }
+  $("archiveList").innerHTML = html;
+}
+
 function tickCountdown() {
-  const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  const s = Math.max(0, Math.floor((next - now) / 1000));
-  if (dayNumber(now) !== DAY) { location.reload(); return; }
+  if (currentDay() !== TODAY_DAY) {
+    if (!IS_ARCHIVE) location.reload(); // roll over to the new day's puzzles
+    return;
+  }
+  const t = melbourneNow();
+  const s = Math.max(0, 86400 - (t.hour * 3600 + t.minute * 60 + t.second));
   const p = n => String(n).padStart(2, "0");
   $("countdown").textContent = p(Math.floor(s / 3600)) + ":" + p(Math.floor(s / 60) % 60) + ":" + p(s % 60);
 }
