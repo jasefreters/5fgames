@@ -95,8 +95,8 @@
   .day-row.current { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand) inset; }
   .day-row .num { font-weight: 700; width: 46px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .day-row .when { flex: 1; font-weight: 700; }
-  .day-row .sts { display: flex; gap: 5px; }
-  .st { width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid var(--line); display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; }
+  .day-row .sts { display: flex; gap: 3px; }
+  .st { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--line); display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; }
   .st.won { background: var(--w-green); border-color: var(--w-green); }
   .st.lost { background: var(--w-gray); border-color: var(--w-gray); }
   .st.prog { background: var(--w-yellow); border-color: var(--w-yellow); }
@@ -196,6 +196,36 @@
   .guess-left { text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px; flex-shrink: 0; }
 
   /* ---------- Toast ---------- */
+  /* ---------- Player Path / Ground Guess / Order It / GF Year ---------- */
+  .grounds { grid-template-columns: repeat(3, 1fr); }
+  .grounds .club:nth-last-child(-n+2) { grid-column: auto; }
+  .search { margin-top: 10px; position: relative; }
+  .search input, .y-form input { width: 100%; font-size: 16px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); outline: none; }
+  .search input:focus, .y-form input:focus { border-color: var(--brand); }
+  .suggest { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .suggestion { text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); font-size: 15px; font-weight: 700; }
+  .suggestion:active { background: var(--soft); }
+  .no-match { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+  .tried { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { background: #f3d4d4; color: #8a2020; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 99px; }
+  .extra { margin-top: 6px; }
+  .o-list { display: flex; flex-direction: column; gap: 8px; }
+  .o-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px; min-height: 54px; background: var(--bg); }
+  .o-row.ok { background: var(--w-green); border-color: var(--w-green); color: #fff; }
+  .o-row.bad { background: #f3d4d4; border-color: #f3d4d4; }
+  .o-pos { font-weight: 800; width: 18px; color: var(--muted); }
+  .o-row.ok .o-pos { color: #fff; }
+  .o-name { flex: 1; font-weight: 700; font-size: 15px; line-height: 1.25; }
+  .o-name small { display: block; font-weight: 800; font-size: 13px; opacity: .85; }
+  .o-move { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); font-size: 14px; }
+  .o-move:disabled { opacity: .3; }
+  .y-guesses { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .y-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px; font-size: 15px; color: #fff; }
+  .y-row.right { background: var(--w-green); } .y-row.close { background: var(--w-yellow); } .y-row.far { background: var(--w-gray); }
+  .y-form { display: flex; gap: 8px; margin-top: 12px; }
+  .y-form input { flex: 1; }
+  #view-order .game-head h2 span { color: var(--accent); }
+
   /* ---------- Theme picker ---------- */
   .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: none; align-items: flex-end; justify-content: center; }
   .sheet-bg.open { display: flex; animation: fade .15s; }
@@ -289,6 +319,26 @@
         <div class="info"><b>Club Clues</b><small>Name the club from as few clues as you can.</small></div>
         <div class="status" id="st-club">Play</div>
       </button>
+      <button class="card" data-go="player">
+        <div class="badge" style="background:#d6262f;color:#fff">🧑‍🦱</div>
+        <div class="info"><b>Player Path</b><small>Name the player from their career path.</small></div>
+        <div class="status" id="st-player">Play</div>
+      </button>
+      <button class="card" data-go="ground">
+        <div class="badge" style="background:#1f7a8c;color:#fff">🏟️</div>
+        <div class="info"><b>Ground Guess</b><small>Name the ground from its history and quirks.</small></div>
+        <div class="status" id="st-ground">Play</div>
+      </button>
+      <button class="card" data-go="order">
+        <div class="badge" style="background:#c9a227;color:#fff">🔢</div>
+        <div class="info"><b>Order It</b><small>Sort five footy facts into order.</small></div>
+        <div class="status" id="st-order">Play</div>
+      </button>
+      <button class="card" data-go="gf">
+        <div class="badge" style="background:#5a594e;color:#fff">🏆</div>
+        <div class="info"><b>Grand Final Year</b><small>Name the year from the score and stars.</small></div>
+        <div class="status" id="st-gf">Play</div>
+      </button>
     </div>
     <div class="hub-foot">
       <div id="countdownWrap">
@@ -310,7 +360,7 @@
       <h2>Previous days</h2>
       <p>Catch up on any puzzle you missed. Archive puzzles don't count towards streaks.</p>
     </div>
-    <div class="legend">Columns: 🥅 Goal Five · 🧩 Connections · 🕵️ Club Clues</div>
+    <div class="legend">Columns: 🥅 Goal Five · 🧩 Connections · 🕵️ Club Clues · 🧑‍🦱 Player Path · 🏟️ Ground Guess · 🔢 Order It · 🏆 GF Year</div>
     <div class="legend"><span class="st won">✓</span> solved <span class="st lost">✗</span> missed <span class="st prog">…</span> started <span class="st"></span> not played</div>
     <div id="archiveList"></div>
   </section>
@@ -355,6 +405,62 @@
     <div class="guess-left" id="k-left"></div>
     <div class="clubs" id="clubs"></div>
     <div class="result" id="k-result"></div>
+  </section>
+
+  <!-- ================= PLAYER PATH ================= -->
+  <section class="view" id="view-player">
+    <div class="game-head">
+      <h2>Player Path</h2>
+      <p>Which retired player had this career? Six guesses — each wrong one unlocks a clue.</p>
+    </div>
+    <div class="clues" id="p-clues"></div>
+    <div class="guess-left" id="p-left"></div>
+    <div class="tried" id="p-tried"></div>
+    <div class="search" id="p-search">
+      <input id="p-input" type="search" placeholder="Start typing a player's name…" autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Player name">
+      <div class="suggest" id="p-suggest"></div>
+    </div>
+    <div class="result" id="p-result"></div>
+  </section>
+
+  <!-- ================= GROUND GUESS ================= -->
+  <section class="view" id="view-ground">
+    <div class="game-head">
+      <h2>Ground Guess</h2>
+      <p>Which footy ground is it? Current and classic grounds. Six guesses.</p>
+    </div>
+    <div class="clues" id="g-clues"></div>
+    <div class="guess-left" id="g-left"></div>
+    <div class="clubs grounds" id="g-pick"></div>
+    <div class="result" id="g-result"></div>
+  </section>
+
+  <!-- ================= ORDER IT ================= -->
+  <section class="view" id="view-order">
+    <div class="game-head">
+      <h2>Order It: <span id="o-title"></span></h2>
+      <p id="o-hint"></p>
+    </div>
+    <div class="o-list" id="o-list"></div>
+    <div class="guess-left" id="o-left"></div>
+    <div class="btn-row"><button class="btn dark" id="o-check">Check order</button></div>
+    <div class="result" id="o-result"></div>
+  </section>
+
+  <!-- ================= GRAND FINAL YEAR ================= -->
+  <section class="view" id="view-gf">
+    <div class="game-head">
+      <h2>Grand Final Year</h2>
+      <p>Which year was this Grand Final? Five guesses — you'll be told earlier or later.</p>
+    </div>
+    <div class="clues" id="y-clues"></div>
+    <div class="y-guesses" id="y-guesses"></div>
+    <div class="y-form" id="y-form">
+      <input id="y-input" type="number" inputmode="numeric" placeholder="Year" aria-label="Year" min="1989" max="2024">
+      <button class="btn dark" id="y-go">Guess</button>
+    </div>
+    <div class="guess-left" id="y-left"></div>
+    <div class="result" id="y-result"></div>
   </section>
 </main>
 
@@ -728,6 +834,10 @@ function updateHub() {
   set("st-wordle", S.w, S.w.guesses.length > 0);
   set("st-conn", S.c, S.c.history.length > 0);
   set("st-club", S.k, S.k.guesses.length > 0);
+  set("st-player", S.p, S.p.guesses.length > 0);
+  set("st-ground", S.g, S.g.guesses.length > 0);
+  set("st-order", S.o, S.o.tries.length > 0);
+  set("st-gf", S.y, S.y.guesses.length > 0);
 }
 function gameState(g, started) {
   if (!g) return "";
@@ -744,11 +854,12 @@ function renderArchive() {
     const states = [
       gameState(st.w, st.w && st.w.guesses.length),
       gameState(st.c, st.c && st.c.history.length),
-      gameState(st.k, st.k && st.k.guesses.length) ];
+      gameState(st.k, st.k && st.k.guesses.length),
+      ...EXTRA_GAMES.map(g => gameState(st[g.key], g.started(st[g.key]))) ];
     html += `<a class="day-row${d === DAY ? " current" : ""}" href="${puzzleUrl(d)}">
       <span class="num">#${d + 1}</span>
       <span class="when">${d === TODAY_DAY ? "Today" : formatDay(d, { weekday: "short", day: "numeric", month: "short" })}</span>
-      <span class="sts">${states.map((x, i) => `<span class="st ${x}" title="${["Goal Five", "Connections", "Club Clues"][i]}">${icon[x]}</span>`).join("")}</span>
+      <span class="sts">${states.map((x, i) => `<span class="st ${x}" title="${["Goal Five", "Connections", "Club Clues", ...EXTRA_GAMES.map(g => g.title)][i]}">${icon[x]}</span>`).join("")}</span>
     </a>`;
   }
   $("archiveList").innerHTML = html;
@@ -1161,6 +1272,7 @@ function shareText() {
     lines.push("", `Club Clues ${S.k.done ? (S.k.won ? S.k.guesses.length : "X") : "…"}/6`);
     lines.push(S.k.guesses.map(g => g === CLUB.name ? "🟩" : "🟥").join(""));
   }
+  EXTRA_GAMES.forEach(g => { if (g.started(S[g.key])) lines.push("", ...g.share(S[g.key])); });
   if (lines.length === 1) lines.push("", "Haven't played yet — have you?");
   return lines.join("\n");
 }
@@ -1273,11 +1385,419 @@ function boot() {
   initWordle();
   initConn();
   initClub();
+  initPlayer();
+  initGround();
+  initOrder();
+  initGF();
   updateHub();
   tickCountdown();
   setInterval(tickCountdown, 1000);
   setTimeout(checkForUpdate, 3000);
 }
+</script>
+<script>
+// =====================================================================
+//  MORE GAMES: Player Path, Ground Guess, Order It, Grand Final Year
+// =====================================================================
+
+// ---------- Player Path data (retired players only) ----------
+// path: [club, first season, last season]
+const PLAYERS = [
+  { name: "Lance Franklin", path: [["Hawthorn", 2005, 2013], ["Sydney", 2014, 2023]], pos: "Key forward",
+    facts: ["Taken with pick 5 in the 2004 National Draft.", "Kicked more than 1,000 career goals and won four Coleman Medals."] },
+  { name: "Gary Ablett Jr", path: [["Geelong", 2002, 2010], ["Gold Coast", 2011, 2017], ["Geelong", 2018, 2020]], pos: "Midfielder",
+    facts: ["Recruited under the father–son rule.", "Won the Brownlow Medal in 2009 and 2013."] },
+  { name: "Chris Judd", path: [["West Coast", 2002, 2007], ["Carlton", 2008, 2015]], pos: "Midfielder",
+    facts: ["Taken with pick 3 in the 2001 National Draft.", "Won Brownlow Medals in 2004 and 2010."] },
+  { name: "Luke Hodge", path: [["Hawthorn", 2002, 2017], ["Brisbane Lions", 2018, 2019]], pos: "Defender / midfielder",
+    facts: ["The number 1 pick in the 2001 National Draft.", "Won the Norm Smith Medal in 2008 and 2014."] },
+  { name: "Shaun Burgoyne", path: [["Port Adelaide", 2002, 2009], ["Hawthorn", 2010, 2021]], pos: "Midfielder / defender",
+    facts: ["Played more than 400 AFL games.", "Won four premierships: 2004, 2013, 2014 and 2015."] },
+  { name: "Ben Cousins", path: [["West Coast", 1996, 2007], ["Richmond", 2009, 2010]], pos: "Midfielder",
+    facts: ["Won the 2005 Brownlow Medal.", "Played in a premiership in 2006."] },
+  { name: "Dale Thomas", path: [["Collingwood", 2006, 2013], ["Carlton", 2014, 2019]], pos: "Midfielder / defender",
+    facts: ["Taken with pick 2 in the 2005 National Draft.", "Played in a premiership in 2010."] },
+  { name: "Brendon Goddard", path: [["St Kilda", 2003, 2012], ["Essendon", 2013, 2018]], pos: "Defender / midfielder",
+    facts: ["The number 1 pick in the 2002 National Draft.", "Played in the 2009 Grand Final and both 2010 Grand Finals."] },
+  { name: "Adam Cooney", path: [["Western Bulldogs", 2004, 2014], ["Essendon", 2015, 2016]], pos: "Midfielder",
+    facts: ["The number 1 pick in the 2003 National Draft.", "Won the 2008 Brownlow Medal."] },
+  { name: "Paul Chapman", path: [["Geelong", 2000, 2013], ["Essendon", 2014, 2015]], pos: "Forward / midfielder",
+    facts: ["Won premierships in 2007, 2009 and 2011.", "Won the 2009 Norm Smith Medal."] },
+  { name: "Steve Johnson", path: [["Geelong", 2002, 2015], ["GWS", 2016, 2017]], pos: "Forward",
+    facts: ["Won premierships in 2007, 2009 and 2011.", "Won the 2007 Norm Smith Medal."] },
+  { name: "Brad Ottens", path: [["Richmond", 1998, 2004], ["Geelong", 2005, 2011]], pos: "Ruckman",
+    facts: ["The number 1 pick in the 1997 National Draft.", "Won premierships in 2007, 2009 and 2011."] },
+  { name: "Heath Shaw", path: [["Collingwood", 2005, 2013], ["GWS", 2014, 2019]], pos: "Defender",
+    facts: ["Played in a premiership in 2010.", "His brother Rhyce played at the same first club."] },
+  { name: "Jason Akermanis", path: [["Brisbane Bears", 1995, 1996], ["Brisbane Lions", 1997, 2006], ["Western Bulldogs", 2007, 2010]], pos: "Midfielder / forward",
+    facts: ["Won the 2001 Brownlow Medal.", "Famous for celebrating goals with handstands."] },
+  { name: "Barry Hall", path: [["St Kilda", 1996, 2001], ["Sydney", 2002, 2009], ["Western Bulldogs", 2010, 2011]], pos: "Key forward",
+    facts: ["Kicked more than 700 career goals.", "Was a co-captain of the 2005 premiership team."] },
+  { name: "Tony Lockett", path: [["St Kilda", 1983, 1994], ["Sydney", 1995, 2002, "1995–1999, 2002"]], pos: "Full-forward",
+    facts: ["Won the 1987 Brownlow Medal.", "Kicked a record 1,360 VFL/AFL goals."] },
+  { name: "Wayne Carey", path: [["North Melbourne", 1989, 2001], ["Adelaide", 2003, 2004]], pos: "Centre half-forward",
+    facts: ["Captained premiership teams in 1996 and 1999.", "Nicknamed 'The King'."] },
+  { name: "Gary Ablett Sr", path: [["Hawthorn", 1982, 1982], ["Geelong", 1984, 1996]], pos: "Forward",
+    facts: ["Won the 1989 Norm Smith Medal in a losing team.", "Kicked more than 1,000 career goals."] },
+  { name: "Dayne Beams", path: [["Collingwood", 2010, 2014], ["Brisbane Lions", 2015, 2018], ["Collingwood", 2019, 2020]], pos: "Midfielder",
+    facts: ["Played in a premiership in 2010.", "Was captain of his second club."] },
+  { name: "Paddy Ryder", path: [["Essendon", 2008, 2014], ["Port Adelaide", 2015, 2020], ["St Kilda", 2021, 2022]], pos: "Ruckman",
+    facts: ["Missed the 2016 season through the Essendon supplements ban.", "Named the All-Australian ruckman in 2017."] },
+  { name: "Jack Watts", path: [["Melbourne", 2009, 2017], ["Port Adelaide", 2018, 2019]], pos: "Forward",
+    facts: ["The number 1 pick in the 2008 National Draft.", "Retired after the 2019 season, aged 28."] },
+  { name: "Brett Deledio", path: [["Richmond", 2005, 2016], ["GWS", 2017, 2018]], pos: "Midfielder",
+    facts: ["The number 1 pick in the 2004 National Draft.", "Won the 2005 AFL Rising Star award."] },
+  { name: "Ryan Griffen", path: [["Western Bulldogs", 2005, 2014], ["GWS", 2015, 2018]], pos: "Midfielder",
+    facts: ["Taken with pick 3 in the 2004 National Draft.", "Was captain of his first club before asking to be traded."] },
+  { name: "Dan Hannebery", path: [["Sydney", 2009, 2018], ["St Kilda", 2019, 2021]], pos: "Midfielder",
+    facts: ["Played in a premiership in 2012.", "Changed clubs as a free agent."] },
+  { name: "Tom Rockliff", path: [["Brisbane Lions", 2010, 2017], ["Port Adelaide", 2018, 2020]], pos: "Midfielder",
+    facts: ["Started his AFL career on the rookie list.", "Was captain of his first club."] },
+  { name: "Alastair Lynch", path: [["Fitzroy", 1988, 1993], ["Brisbane Bears", 1994, 1996], ["Brisbane Lions", 1997, 2004]], pos: "Forward",
+    facts: ["Won three premierships in a row (2001–2003).", "Born in Tasmania."] },
+];
+
+// ---------- Ground Guess data ----------
+const GROUNDS = [
+  { name: "MCG", clues: ["Opened in 1853.", "Hosts the Boxing Day cricket Test as well as footy.", "Holds about 100,000 people.",
+    "Has hosted the Grand Final every year except 2020 and 2021 (since 1991).", "Located in Yarra Park, Melbourne.", "Known simply as 'the G'."] },
+  { name: "Marvel Stadium", clues: ["Opened in 2000.", "Has a retractable roof.", "Holds about 53,000 people.",
+    "Has also been called Colonial Stadium, Telstra Dome and Etihad Stadium.", "Located in Docklands, Melbourne.", "Now named after a comic-book brand."] },
+  { name: "Optus Stadium", clues: ["Opened in 2018.", "Hosted the 2021 Grand Final.", "Holds about 60,000 people.",
+    "Sits on the Burswood peninsula by the Swan River.", "Home of West Coast and Fremantle.", "Named after a phone company."] },
+  { name: "Adelaide Oval", clues: ["Opened in 1871.", "Famous for its heritage scoreboard and Moreton Bay fig trees.", "Holds about 53,000 people.",
+    "Became an AFL home ground in 2014.", "Hosts the Showdown.", "Named after its city."] },
+  { name: "The Gabba", clues: ["First used for sport in the 1890s.", "Hosted the first Grand Final played outside Victoria.", "Also a famous Test cricket venue.",
+    "That Grand Final, in 2020, was the first played at night.", "Home of the Brisbane Lions.", "Its nickname is short for Woolloongabba."] },
+  { name: "SCG", clues: ["Has hosted cricket since 1848.", "Famous for its heritage Members' and Ladies' Pavilions.", "Holds about 48,000 people.",
+    "Home of the Swans since 1982.", "Located in Moore Park.", "The 'S' stands for its city."] },
+  { name: "Kardinia Park", clues: ["Its club moved in during the early 1940s.", "Known for being long and narrow.", "A notoriously tough trip for visiting teams.",
+    "Nicknamed 'the Cattery'.", "Now known as GMHBA Stadium.", "Located in Geelong."] },
+  { name: "Carrara Stadium", clues: ["First hosted AFL games in 2011.", "Hosted athletics at the 2018 Commonwealth Games.", "Has been known as Metricon Stadium.",
+    "Its home club joined the AFL in 2011.", "Home of the Suns.", "Located on the Gold Coast."] },
+  { name: "Sydney Showground", clues: ["First hosted AFL games in 2012.", "Sits in the Sydney Olympic Park precinct.", "Its home club joined the AFL in 2012.",
+    "Shares its home club with a ground in Canberra.", "Home of the Giants.", "Has 'Showground' in its name."] },
+  { name: "Manuka Oval", clues: ["A cricket ground in the national capital.", "Hosts the Prime Minister's XI cricket match.", "Hosts several GWS home games each year.",
+    "Located in the suburb of Griffith.", "Canberra's main AFL venue.", "Rhymes with 'bazooka'."] },
+  { name: "Bellerive Oval", clues: ["Overlooks the Derwent River.", "A Test cricket ground.", "Has hosted North Melbourne home games.",
+    "Located on Hobart's eastern shore.", "Now named Blundstone Arena, after a boot brand.", "Shares its name with its suburb."] },
+  { name: "York Park", clues: ["Located in northern Tasmania.", "Hawthorn played home games here for many years.", "Has been called Aurora Stadium.",
+    "Now named after a university.", "Located in Launceston.", "Shares its name with an English city."] },
+  { name: "Waverley Park", clues: ["Opened in 1970.", "Built by the VFL as its own ground.", "Notorious for cold, wet and windy days.",
+    "Hosted the 1991 Grand Final.", "Hosted its last AFL game in 1999.", "Hawthorn later trained there for many years."] },
+  { name: "Subiaco Oval", clues: ["Perth's main AFL venue until 2017.", "Also known as Patersons Stadium and Domain Stadium.", "Hosted the Western Derby for decades.",
+    "Demolished after a new stadium opened in 2018.", "Home of West Coast and Fremantle until 2017.", "Named after its suburb."] },
+  { name: "Football Park", clues: ["Opened in 1974.", "Built by the SANFL at West Lakes.", "Also known as AAMI Stadium.",
+    "Adelaide's home ground from 1991 to 2013.", "Port Adelaide's home ground from 1997 to 2013.", "Its name is just two words — and one is 'Football'."] },
+  { name: "Princes Park", clues: ["Hosted VFL/AFL games until 2005.", "Has been called Optus Oval and Ikon Park.", "Now a home of AFLW.",
+    "Located in Carlton North.", "Carlton's traditional home.", "Named after royalty."] },
+];
+
+// ---------- Grand Final data (winner, score, loser, score, Norm Smith, venue) ----------
+const GRAND_FINALS = [
+  [1989, "Hawthorn", "21.18 (144)", "Geelong", "21.12 (138)", "Gary Ablett Sr", "MCG"],
+  [1990, "Collingwood", "13.11 (89)", "Essendon", "5.11 (41)", "Tony Shaw", "MCG"],
+  [1991, "Hawthorn", "20.19 (139)", "West Coast", "13.8 (86)", "Paul Dear", "Waverley Park"],
+  [1992, "West Coast", "16.17 (113)", "Geelong", "12.13 (85)", "Peter Matera", "MCG"],
+  [1993, "Essendon", "20.13 (133)", "Carlton", "13.11 (89)", "Michael Long", "MCG"],
+  [1994, "West Coast", "20.23 (143)", "Geelong", "8.15 (63)", "Dean Kemp", "MCG"],
+  [1995, "Carlton", "21.15 (141)", "Geelong", "11.14 (80)", "Greg Williams", "MCG"],
+  [1996, "North Melbourne", "19.17 (131)", "Sydney", "13.10 (88)", "Glenn Archer", "MCG"],
+  [1997, "Adelaide", "19.11 (125)", "St Kilda", "13.16 (94)", "Andrew McLeod", "MCG"],
+  [1998, "Adelaide", "15.15 (105)", "North Melbourne", "8.22 (70)", "Andrew McLeod", "MCG"],
+  [1999, "North Melbourne", "19.10 (124)", "Carlton", "12.17 (89)", "Shannon Grant", "MCG"],
+  [2000, "Essendon", "19.21 (135)", "Melbourne", "11.9 (75)", "James Hird", "MCG"],
+  [2001, "Brisbane Lions", "15.18 (108)", "Essendon", "12.10 (82)", "Shaun Hart", "MCG"],
+  [2002, "Brisbane Lions", "10.15 (75)", "Collingwood", "9.12 (66)", "Nathan Buckley", "MCG"],
+  [2003, "Brisbane Lions", "20.14 (134)", "Collingwood", "12.12 (84)", "Simon Black", "MCG"],
+  [2004, "Port Adelaide", "17.11 (113)", "Brisbane Lions", "10.13 (73)", "Byron Pickett", "MCG"],
+  [2005, "Sydney", "8.10 (58)", "West Coast", "7.12 (54)", "Chris Judd", "MCG"],
+  [2006, "West Coast", "12.13 (85)", "Sydney", "12.12 (84)", "Andrew Embley", "MCG"],
+  [2007, "Geelong", "24.19 (163)", "Port Adelaide", "6.8 (44)", "Steve Johnson", "MCG"],
+  [2008, "Hawthorn", "18.7 (115)", "Geelong", "11.23 (89)", "Luke Hodge", "MCG"],
+  [2009, "Geelong", "12.8 (80)", "St Kilda", "9.14 (68)", "Paul Chapman", "MCG"],
+  [2010, "Collingwood", "16.12 (108)", "St Kilda", "7.10 (52)", "Scott Pendlebury", "MCG (replay)"],
+  [2011, "Geelong", "18.11 (119)", "Collingwood", "12.9 (81)", "Jimmy Bartel", "MCG"],
+  [2012, "Sydney", "14.7 (91)", "Hawthorn", "11.15 (81)", "Ryan O'Keefe", "MCG"],
+  [2013, "Hawthorn", "11.11 (77)", "Fremantle", "8.14 (62)", "Brian Lake", "MCG"],
+  [2014, "Hawthorn", "21.11 (137)", "Sydney", "11.8 (74)", "Luke Hodge", "MCG"],
+  [2015, "Hawthorn", "16.11 (107)", "West Coast", "8.13 (61)", "Cyril Rioli", "MCG"],
+  [2016, "Western Bulldogs", "13.11 (89)", "Sydney", "10.7 (67)", "Jason Johannisen", "MCG"],
+  [2017, "Richmond", "16.12 (108)", "Adelaide", "8.12 (60)", "Dustin Martin", "MCG"],
+  [2018, "West Coast", "11.13 (79)", "Collingwood", "11.8 (74)", "Luke Shuey", "MCG"],
+  [2019, "Richmond", "17.12 (114)", "GWS", "3.7 (25)", "Dustin Martin", "MCG"],
+  [2020, "Richmond", "12.9 (81)", "Geelong", "7.8 (50)", "Dustin Martin", "The Gabba"],
+  [2021, "Melbourne", "21.14 (140)", "Western Bulldogs", "10.6 (66)", "Christian Petracca", "Optus Stadium"],
+  [2022, "Geelong", "20.13 (133)", "Sydney", "8.4 (52)", "Isaac Smith", "MCG"],
+  [2023, "Collingwood", "12.18 (90)", "Brisbane Lions", "13.8 (86)", "Bobby Hill", "MCG"],
+  [2024, "Brisbane Lions", "18.12 (120)", "Sydney", "6.11 (47)", "Will Ashcroft", "MCG"],
+].map(([year, win, ws, lose, ls, norm, venue]) => ({ year, win, ws, lose, ls, norm, venue }));
+const GF_MIN = GRAND_FINALS[0].year, GF_MAX = GRAND_FINALS[GRAND_FINALS.length - 1].year;
+
+// ---------- Order It categories ----------
+const JOINED = [["Carlton", 1897], ["Richmond", 1908], ["Hawthorn", 1925], ["West Coast", 1987], ["Adelaide", 1991],
+  ["Fremantle", 1995], ["Port Adelaide", 1997], ["Gold Coast", 2011], ["GWS", 2012], ["Collingwood", 1897],
+  ["North Melbourne", 1925], ["Western Bulldogs", 1925], ["Essendon", 1897], ["Brisbane Bears", 1987]];
+const ORDER_CATS = [
+  { title: "Debut season", hint: "Earliest debut at the top", items: PLAYERS.map(p => [p.name, p.path[0][1]]), fmt: v => v },
+  { title: "Final AFL season", hint: "Earliest retirement at the top", items: PLAYERS.map(p => [p.name, p.path[p.path.length - 1][2]]), fmt: v => v },
+  { title: "Year the club joined the VFL/AFL", hint: "Earliest at the top", items: JOINED, fmt: v => v },
+  { title: "Grand Final year", hint: "Earliest Grand Final at the top", items: GRAND_FINALS.map(g => [`${g.win} d ${g.lose} (Norm Smith: ${g.norm})`, g.year]), fmt: v => v },
+];
+
+// ---------- Daily picks ----------
+const PLAYER = pickDaily(PLAYERS, 17);
+const GROUND = pickDaily(GROUNDS, 19);
+const GF = pickDaily(GRAND_FINALS, 23);
+const ORDER_CAT = pickDaily(ORDER_CATS, 29);
+const ORDER_ITEMS = (() => { // five items with different values, sorted
+  const out = [], seen = new Set();
+  for (const it of seededShuffle(ORDER_CAT.items, DAY * 7 + 3)) {
+    if (seen.has(it[1])) continue;
+    seen.add(it[1]); out.push(it);
+    if (out.length === 5) break;
+  }
+  return out.sort((a, b) => a[1] - b[1]);
+})();
+
+S.p = S.p || { guesses: [], done: false, won: false };
+S.g = S.g || { guesses: [], done: false, won: false };
+S.o = S.o || { arr: null, tries: [], done: false, won: false };
+S.y = S.y || { guesses: [], done: false, won: false };
+
+const resultButtons = `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
+
+// ---------- Generic "guess from clues" game (Player Path, Ground Guess) ----------
+function makeClueGame(cfg) {
+  const st = cfg.state, key = cfg.key;
+  const el = id => $(key + "-" + id);
+  function render() {
+    const shown = st.done ? 6 : Math.min(6, st.guesses.length + 1);
+    const locked = 6 - shown;
+    el("clues").innerHTML = cfg.clues.slice(0, shown).map((c, i) =>
+      `<div class="clue${i === shown - 1 && !st.done && shown > 1 ? " newest" : ""}"><span class="n">${i + 1}</span><span>${c}</span></div>`).join("") +
+      (locked ? `<div class="clue locked summary">🔒 ${locked} more clue${locked === 1 ? "" : "s"} unlock as you guess</div>` : "");
+    const left = 6 - st.guesses.length;
+    el("left").textContent = st.done ? "" : `${left} guess${left === 1 ? "" : "es"} left`;
+    if (cfg.search) renderSearch(); else renderButtons();
+  }
+  function renderButtons() {
+    el("pick").innerHTML = "";
+    cfg.options.forEach(name => {
+      const b = document.createElement("button");
+      b.className = "club";
+      b.textContent = name;
+      if (st.guesses.includes(name) || (st.done && name === cfg.answer)) b.classList.add(name === cfg.answer ? "right" : "wrong");
+      b.disabled = st.done || st.guesses.includes(name);
+      b.addEventListener("click", () => guess(name));
+      el("pick").appendChild(b);
+    });
+  }
+  function renderSearch() {
+    const wrong = st.guesses.filter(g => g !== cfg.answer);
+    el("tried").innerHTML = wrong.map(g => `<span class="chip">✗ ${g}</span>`).join("");
+    el("search").style.display = st.done ? "none" : "";
+    filterSearch();
+  }
+  function filterSearch() {
+    if (!cfg.search) return;
+    const q = el("input").value.trim().toLowerCase();
+    const list = el("suggest");
+    list.innerHTML = "";
+    if (st.done || !q) return;
+    cfg.options.filter(n => n.toLowerCase().includes(q) && !st.guesses.includes(n)).slice(0, 6).forEach(n => {
+      const b = document.createElement("button");
+      b.className = "suggestion";
+      b.textContent = n;
+      b.addEventListener("click", () => { el("input").value = ""; guess(n); });
+      list.appendChild(b);
+    });
+    if (!list.children.length) list.innerHTML = `<div class="no-match">No match in today's player list</div>`;
+  }
+  function guess(name) {
+    if (st.done || st.guesses.includes(name)) return;
+    st.guesses.push(name);
+    const won = name === cfg.answer;
+    if (won || st.guesses.length >= 6) {
+      st.done = true; st.won = won;
+      recordResult(key, won);
+      buzz(won ? [30, 60, 30] : 60);
+      result();
+    } else buzz(60);
+    save();
+    render();
+  }
+  function result() {
+    const n = st.guesses.length;
+    el("result").innerHTML = (st.won
+      ? `<h3>${n === 1 ? "First clue! 🥇" : "Got it! 🎉"}</h3><p>It was <b>${cfg.answer}</b> — found in ${n}/6.</p>`
+      : `<h3>Unlucky!</h3><p>It was <b>${cfg.answer}</b>.</p>`) + (cfg.extra ? `<p class="extra">${cfg.extra}</p>` : "") + statsHTML(key) + resultButtons;
+    revealResult(el("result"));
+  }
+  if (cfg.search) {
+    el("input").addEventListener("input", filterSearch);
+    el("input").addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const first = el("suggest").querySelector(".suggestion");
+      if (first) first.click();
+    });
+  }
+  render();
+  if (st.done) result();
+}
+
+function initPlayer() {
+  const path = PLAYER.path;
+  const merged = path.map(p => p[0]);
+  makeClueGame({
+    key: "p", state: S.p, answer: PLAYER.name, search: true,
+    options: PLAYERS.map(p => p.name).sort((a, b) => a.split(" ").pop().localeCompare(b.split(" ").pop())),
+    clues: [
+      "Career path: " + merged.join(" → "),
+      "Seasons: " + path.map(([c, a, b, label]) => `${c} ${label || (a === b ? a : a + "–" + b)}`).join(", "),
+      "Position: " + PLAYER.pos,
+      PLAYER.facts[0],
+      PLAYER.facts[1],
+      "Initials: " + PLAYER.name.split(" ").filter(w => /^[A-Z]/.test(w) && w !== "Jr" && w !== "Sr").map(w => w[0]).join("."),
+    ],
+  });
+}
+function initGround() {
+  makeClueGame({ key: "g", state: S.g, answer: GROUND.name, options: GROUNDS.map(g => g.name), clues: GROUND.clues });
+}
+
+// ---------- Order It ----------
+function initOrder() {
+  const st = S.o;
+  const correct = ORDER_ITEMS.map(x => x[0]);
+  if (!st.arr || st.arr.length !== 5 || !st.arr.every(n => correct.includes(n))) {
+    let arr = seededShuffle(correct, DAY * 13 + 1);
+    if (arr.every((n, i) => n === correct[i])) arr = arr.reverse();
+    st.arr = arr;
+  }
+  $("o-title").textContent = ORDER_CAT.title;
+  $("o-hint").textContent = ORDER_CAT.hint + ". Correct spots lock in green. You get 4 checks.";
+  const lockedAt = i => st.tries.length && st.tries[st.tries.length - 1][i];
+  const valueOf = name => ORDER_ITEMS.find(x => x[0] === name)[1];
+
+  function render() {
+    $("o-list").innerHTML = st.arr.map((name, i) => {
+      const lock = st.done || lockedAt(i);
+      const cls = st.done ? (st.arr[i] === correct[i] ? "ok" : "bad") : (lockedAt(i) ? "ok" : "");
+      return `<div class="o-row ${cls}">
+        <span class="o-pos">${i + 1}</span>
+        <span class="o-name">${name}${st.done ? `<small>${ORDER_CAT.fmt(valueOf(name))}</small>` : ""}</span>
+        ${lock ? "" : `<button class="o-move" data-i="${i}" data-d="-1" aria-label="Move up" ${i === 0 ? "disabled" : ""}>▲</button>
+        <button class="o-move" data-i="${i}" data-d="1" aria-label="Move down" ${i === 4 ? "disabled" : ""}>▼</button>`}
+      </div>`;
+    }).join("");
+    $("o-left").textContent = st.done ? "" : `${4 - st.tries.length} check${4 - st.tries.length === 1 ? "" : "s"} left`;
+    $("o-check").style.display = st.done ? "none" : "";
+  }
+  $("o-list").addEventListener("click", e => {
+    const b = e.target.closest(".o-move");
+    if (!b || st.done) return;
+    const i = +b.dataset.i, d = +b.dataset.d;
+    let j = i + d; // skip over rows already locked in place
+    while (j >= 0 && j < 5 && lockedAt(j)) j += d;
+    if (j < 0 || j > 4) return;
+    [st.arr[i], st.arr[j]] = [st.arr[j], st.arr[i]];
+    save(); render();
+  });
+  $("o-check").addEventListener("click", () => {
+    if (st.done) return;
+    const res = st.arr.map((n, i) => n === correct[i]);
+    st.tries.push(res);
+    const won = res.every(Boolean);
+    if (won || st.tries.length >= 4) {
+      st.done = true; st.won = won;
+      recordResult("o", won);
+      buzz(won ? [30, 60, 30] : 60);
+      result();
+    } else {
+      const n = res.filter(Boolean).length;
+      toast(`${n} of 5 in the right spot`);
+      buzz(40);
+    }
+    save(); render();
+  });
+  function result() {
+    $("o-result").innerHTML = (st.won ? `<h3>${st.tries.length === 1 ? "Perfect order! 🏆" : "Sorted! 🎉"}</h3><p>Solved in ${st.tries.length}/4.</p>`
+      : `<h3>Not this time</h3><p>The correct order is shown above, with the answers.</p>`) + statsHTML("o") + resultButtons;
+    revealResult($("o-result"));
+  }
+  if (st.done) {
+    // show the right order with values once finished
+    if (!st.won) st.arr = correct.slice();
+    result();
+  }
+  render();
+}
+
+// ---------- Grand Final Year ----------
+function initGF() {
+  const st = S.y;
+  const clues = [
+    `Final score: ${GF.ws} to ${GF.ls}`,
+    `The losing team: ${GF.lose}`,
+    `Norm Smith Medal: ${GF.norm}`,
+    `The premiers: ${GF.win}`,
+    `Venue: ${GF.venue}`,
+  ];
+  function render() {
+    const shown = st.done ? 5 : Math.min(5, st.guesses.length + 1);
+    $("y-clues").innerHTML = clues.slice(0, shown).map((c, i) =>
+      `<div class="clue${i === shown - 1 && !st.done && shown > 1 ? " newest" : ""}"><span class="n">${i + 1}</span><span>${c}</span></div>`).join("") +
+      (5 - shown ? `<div class="clue locked summary">🔒 ${5 - shown} more clue${5 - shown === 1 ? "" : "s"} unlock as you guess</div>` : "");
+    $("y-guesses").innerHTML = st.guesses.map(y => {
+      const diff = GF.year - y;
+      const cls = diff === 0 ? "right" : Math.abs(diff) <= 3 ? "close" : "far";
+      const hint = diff === 0 ? "✓" : diff > 0 ? "Later ↑" : "Earlier ↓";
+      return `<div class="y-row ${cls}"><b>${y}</b><span>${hint}${diff !== 0 && Math.abs(diff) <= 3 ? " · close!" : ""}</span></div>`;
+    }).join("");
+    $("y-form").style.display = st.done ? "none" : "";
+    $("y-left").textContent = st.done ? "" : `${5 - st.guesses.length} guess${5 - st.guesses.length === 1 ? "" : "es"} left · ${GF_MIN}–${GF_MAX}`;
+  }
+  function guess() {
+    if (st.done) return;
+    const y = parseInt($("y-input").value, 10);
+    if (!(y >= GF_MIN && y <= GF_MAX)) { toast(`Enter a year from ${GF_MIN} to ${GF_MAX}`); buzz(40); return; }
+    if (st.guesses.includes(y)) { toast("Already guessed"); return; }
+    $("y-input").value = "";
+    st.guesses.push(y);
+    const won = y === GF.year;
+    if (won || st.guesses.length >= 5) {
+      st.done = true; st.won = won;
+      recordResult("y", won);
+      buzz(won ? [30, 60, 30] : 60);
+      $("y-input").blur();
+      result();
+    } else buzz(40);
+    save(); render();
+  }
+  function result() {
+    $("y-result").innerHTML = (st.won ? `<h3>${st.guesses.length === 1 ? "Straight through the middle! 🏆" : "Premiership quarter! 🎉"}</h3><p>It was <b>${GF.year}</b> — ${GF.win} d ${GF.lose}.</p>`
+      : `<h3>After the siren…</h3><p>It was <b>${GF.year}</b> — ${GF.win} d ${GF.lose}.</p>`) + statsHTML("y") + resultButtons;
+    revealResult($("y-result"));
+  }
+  $("y-go").addEventListener("click", guess);
+  $("y-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); guess(); } });
+  render();
+  if (st.done) result();
+}
+
+// ---------- hooks used by the hub, share and archive ----------
+const EXTRA_GAMES = [
+  { key: "p", title: "Player Path", started: s => s && s.guesses.length,
+    share: s => [`Player Path ${s.done ? (s.won ? s.guesses.length : "X") : "…"}/6`, s.guesses.map(g => g === PLAYER.name ? "🟩" : "🟥").join("")] },
+  { key: "g", title: "Ground Guess", started: s => s && s.guesses.length,
+    share: s => [`Ground Guess ${s.done ? (s.won ? s.guesses.length : "X") : "…"}/6`, s.guesses.map(g => g === GROUND.name ? "🟩" : "🟥").join("")] },
+  { key: "o", title: "Order It", started: s => s && s.tries.length,
+    share: s => [`Order It ${s.done ? (s.won ? s.tries.length : "X") : "…"}/4`, ...s.tries.map(t => t.map(x => x ? "🟩" : "⬜").join(""))] },
+  { key: "y", title: "Grand Final Year", started: s => s && s.guesses.length,
+    share: s => [`Grand Final Year ${s.done ? (s.won ? s.guesses.length : "X") : "…"}/5`, s.guesses.map(y => y === GF.year ? "🟩" : Math.abs(y - GF.year) <= 3 ? "🟨" : "⬜").join("")] },
+];
 </script>
 <script>
 // Allowed 5-letter guesses.
