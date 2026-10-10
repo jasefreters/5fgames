@@ -34,6 +34,9 @@
     --c-yellow: #f9df6d; --c-green: #a0c35a; --c-blue: #b0c4ef; --c-purple: #ba81c5;
     --tile: #efefe6; --tile-sel: #5a594e;
     --navy: #0b2a5b; --red: #d6262f;
+    /* Club theme tokens (Classic defaults; overridden by the theme picker) */
+    --hdr-bg: var(--bg); --hdr-ink: var(--ink); --hdr-sub: var(--muted); --accent: var(--red);
+    --brand: var(--ink); --brand-ink: #fff; --stripe: none;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { background: var(--bg); color: var(--ink); }
@@ -44,11 +47,17 @@
   button { font-family: inherit; cursor: pointer; }
   .serif { font-family: Georgia, "Times New Roman", serif; }
 
-  header { width: 100%; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: calc(8px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header { width: 100%; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; color: var(--hdr-ink); transition: background .25s, color .25s; padding: calc(8px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); position: sticky; top: 0; background: var(--hdr-bg); z-index: 5; }
+  header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 5px; background: var(--stripe); pointer-events: none; }
+  .themed header { border-bottom-color: transparent; }
+  .hdr-side { display: flex; width: 88px; }
+  .hdr-side.right { justify-content: flex-end; }
+  header .title { flex: 1; text-align: center; white-space: nowrap; }
   header .title { font-family: Georgia, serif; font-weight: 700; font-size: 24px; letter-spacing: -0.5px; }
-  header .title span { color: var(--red); }
-  header .title small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0; vertical-align: middle; }
-  .icon-btn { background: none; border: none; font-size: 22px; width: 44px; height: 44px; border-radius: 8px; color: var(--ink); }
+  header .title span { color: var(--accent); }
+  header .title small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 13px; font-weight: 700; color: var(--hdr-sub); letter-spacing: 0; vertical-align: middle; }
+  .icon-btn { background: none; border: none; font-size: 22px; width: 44px; height: 44px; border-radius: 8px; color: inherit; }
+  @media (max-width: 360px) { .icon-btn { width: 40px; } .hdr-side { width: 80px; } header .title { font-size: 20px; } }
   .icon-btn.hidden { visibility: hidden; }
 
   main { width: 100%; max-width: 560px; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); flex: 1; display: flex; flex-direction: column; }
@@ -68,7 +77,7 @@
   .card .info { flex: 1; }
   .card .info b { display: block; font-family: Georgia, serif; font-size: 19px; }
   .card .info small { color: var(--muted); font-size: 13px; }
-  .card .status { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: var(--ink); color: #fff; white-space: nowrap; }
+  .card .status { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: var(--brand); color: var(--brand-ink); white-space: nowrap; }
   .card .status.done { background: var(--w-green); }
   .card .status.lost { background: var(--w-gray); }
   .card .status.prog { background: var(--w-yellow); }
@@ -83,7 +92,7 @@
   #archiveList .month { font-family: Georgia, serif; font-size: 17px; margin: 16px 0 6px; }
   .day-row { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; text-decoration: none; color: var(--ink); }
   .day-row:active { background: var(--soft); }
-  .day-row.current { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+  .day-row.current { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand) inset; }
   .day-row .num { font-weight: 700; width: 46px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .day-row .when { flex: 1; font-weight: 700; }
   .day-row .sts { display: flex; gap: 5px; }
@@ -93,7 +102,7 @@
   .st.prog { background: var(--w-yellow); border-color: var(--w-yellow); }
 
   .btn { border: 1px solid var(--ink); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 12px 22px; font-size: 15px; font-weight: 700; }
-  .btn.dark { background: var(--ink); color: #fff; }
+  .btn.dark { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
   .btn:disabled { opacity: .35; cursor: default; }
   .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
 
@@ -171,10 +180,10 @@
   #view-club.playing { flex: 0 0 auto; height: var(--avail, auto); min-height: 0; }
   #view-club.playing .clues { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .clues { display: flex; flex-direction: column; gap: 8px; position: relative; }
-  .clue.newest { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy) inset; }
+  .clue.newest { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand) inset; }
   .clue.summary { padding: 8px 14px; font-size: 13px; justify-content: center; }
   .clue { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 15px; flex-shrink: 0; display: flex; gap: 10px; align-items: flex-start; animation: pop .25s; }
-  .clue .n { background: var(--navy); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .clue .n { background: var(--brand); color: var(--brand-ink); border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
   .clue.locked { color: var(--muted); background: var(--soft); border-style: dashed; }
   .clue.locked .n { background: var(--line); color: var(--muted); }
   .clubs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; flex-shrink: 0; }
@@ -187,6 +196,27 @@
   .guess-left { text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px; flex-shrink: 0; }
 
   /* ---------- Toast ---------- */
+  /* ---------- Theme picker ---------- */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: none; align-items: flex-end; justify-content: center; }
+  .sheet-bg.open { display: flex; animation: fade .15s; }
+  .sheet { background: var(--bg); width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px 16px calc(18px + env(safe-area-inset-bottom)); animation: up .2s ease; }
+  @media (min-width: 600px) { .sheet-bg { align-items: center; } .sheet { border-radius: 18px; } }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .sheet-head h3 { font-family: Georgia, serif; font-size: 22px; }
+  .sheet p { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .themed .hero { background: var(--hdr-bg); color: var(--hdr-ink); border-radius: 16px; padding: 18px 12px 22px; position: relative; overflow: hidden; margin-top: 4px; }
+  .themed .hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--stripe); }
+  .themed .hero p { color: var(--hdr-sub); }
+  .themed .hero .date { color: var(--hdr-ink); }
+  .cheer { font-weight: 800; color: var(--accent); font-size: 17px; letter-spacing: .3px; }
+  @media (max-width: 340px) { header .title small { display: none; } }
+  .theme-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-size: 12px; font-weight: 700; line-height: 1.15; }
+  .theme-opt.sel { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+  .theme-opt .sw { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
   #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
   #toast.show { opacity: 1; }
 
@@ -216,10 +246,21 @@
 <body>
 
 <header>
-  <button class="icon-btn hidden" id="backBtn" aria-label="Back">←</button>
+  <div class="hdr-side"><button class="icon-btn hidden" id="backBtn" aria-label="Back">←</button></div>
   <div class="title">AFL <span>Daily</span> <small id="hdrNo"></small></div>
-  <button class="icon-btn" id="shareBtn" aria-label="Share">⇪</button>
+  <div class="hdr-side right">
+    <button class="icon-btn" id="themeBtn" aria-label="Choose team colours">🎨</button>
+    <button class="icon-btn" id="shareBtn" aria-label="Share">⇪</button>
+  </div>
 </header>
+
+<div class="sheet-bg" id="themeSheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+    <div class="sheet-head"><h3 id="themeTitle">Team colours</h3><button class="icon-btn" id="themeClose" aria-label="Close">✕</button></div>
+    <p>Pick your club to theme AFL Daily in its colours.</p>
+    <div class="themes" id="themeGrid"></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -672,7 +713,8 @@ window.addEventListener("popstate", e => show(e.state && e.state.view ? e.state.
 function updateHub() {
   $("hdrNo").textContent = "#" + PUZZLE_NO;
   $("hubDate").textContent = formatDay(DAY, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · #" + PUZZLE_NO;
-  $("hubTag").innerHTML = IS_ARCHIVE ? `<span class="archive-pill">📅 Archive puzzle</span>` : "Three footy puzzles. New ones every day.";
+  $("hubTag").innerHTML = IS_ARCHIVE ? `<span class="archive-pill">📅 Archive puzzle</span>`
+    : currentTheme.cheer ? `<span class="cheer">${currentTheme.cheer}</span>` : "Three footy puzzles. New ones every day.";
   $("countdownWrap").style.display = IS_ARCHIVE ? "none" : "";
   $("todayLink").style.display = IS_ARCHIVE ? "inline-block" : "none";
   $("todayLink").href = puzzleUrl(TODAY_DAY);
@@ -858,6 +900,7 @@ const boardRow = r => $("board").querySelectorAll(".row")[r];
 document.addEventListener("keydown", e => {
   if (current !== "wordle" || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.target.id === "w-native") return; // handled by the input's own events
+  if ($("themeSheet").classList.contains("open")) return;
   if (e.key === "Enter") { e.preventDefault(); wordleInput("ENTER"); }
   else if (e.key === "Backspace") wordleInput("BACK");
   else if (/^[a-zA-Z]$/.test(e.key)) wordleInput(e.key.toUpperCase());
@@ -1137,6 +1180,74 @@ $("shareAll").addEventListener("click", share);
 // =====================================================================
 //  BOOT
 // =====================================================================
+// =====================================================================
+//  TEAM COLOUR THEMES
+// =====================================================================
+// bg/ink: header; accent: "Daily" + highlights; btn/btnInk: main buttons; colors: club stripe.
+const THEMES = [
+  { id: "classic", name: "Classic", bg: "#ffffff", ink: "#121212", accent: "#d6262f", colors: ["#121212", "#d6262f", "#ffffff"] },
+  { id: "adelaide", cheer: "Go Crows!", name: "Adelaide", bg: "#002b5c", ink: "#fff", accent: "#ffd200", colors: ["#002b5c", "#e21937", "#ffd200"] },
+  { id: "brisbane", cheer: "Go Lions!", name: "Brisbane", bg: "#7a0035", ink: "#fff", accent: "#fdbe57", colors: ["#7a0035", "#0055a3", "#fdbe57"] },
+  { id: "carlton", cheer: "Go Blues!", name: "Carlton", bg: "#0e1e2d", ink: "#fff", accent: "#9fc1e6", colors: ["#0e1e2d", "#ffffff"] },
+  { id: "collingwood", cheer: "Go Pies!", name: "Collingwood", bg: "#000000", ink: "#fff", accent: "#ffffff", colors: ["#000000", "#ffffff", "#000000", "#ffffff"] },
+  { id: "essendon", cheer: "Go Bombers!", name: "Essendon", bg: "#000000", ink: "#fff", accent: "#e1251b", colors: ["#000000", "#e1251b"] },
+  { id: "fremantle", cheer: "Go Dockers!", name: "Fremantle", bg: "#2a0d54", ink: "#fff", accent: "#c7b3e6", colors: ["#2a0d54", "#ffffff"] },
+  { id: "geelong", cheer: "Go Cats!", name: "Geelong", bg: "#001f3d", ink: "#fff", accent: "#ffffff", colors: ["#001f3d", "#ffffff", "#001f3d", "#ffffff"] },
+  { id: "goldcoast", cheer: "Go Suns!", name: "Gold Coast", bg: "#d6252c", ink: "#fff", accent: "#ffd200", colors: ["#d6252c", "#ffd200"] },
+  { id: "gws", cheer: "Go Giants!", name: "GWS", bg: "#333a40", ink: "#fff", accent: "#f47920", btn: "#f47920", btnInk: "#1b1b1b", colors: ["#f47920", "#333a40", "#ffffff"] },
+  { id: "hawthorn", cheer: "Go Hawks!", name: "Hawthorn", bg: "#4d2004", ink: "#fff", accent: "#fbbf15", colors: ["#4d2004", "#fbbf15"] },
+  { id: "melbourne", cheer: "Go Dees!", name: "Melbourne", bg: "#0f1131", ink: "#fff", accent: "#e1251b", colors: ["#0f1131", "#e1251b"] },
+  { id: "north", cheer: "Go Roos!", name: "North Melb.", bg: "#013b9f", ink: "#fff", accent: "#ffffff", colors: ["#013b9f", "#ffffff", "#013b9f", "#ffffff"] },
+  { id: "port", cheer: "Go Power!", name: "Port Adelaide", bg: "#000000", ink: "#fff", accent: "#00a3b5", colors: ["#000000", "#00a3b5", "#ffffff"] },
+  { id: "richmond", cheer: "Go Tigers!", name: "Richmond", bg: "#000000", ink: "#fff", accent: "#fed102", colors: ["#000000", "#fed102"] },
+  { id: "stkilda", cheer: "Go Saints!", name: "St Kilda", bg: "#000000", ink: "#fff", accent: "#ed1b24", colors: ["#ed1b24", "#ffffff", "#000000"] },
+  { id: "sydney", cheer: "Go Swans!", name: "Sydney", bg: "#e1251b", ink: "#fff", accent: "#ffffff", colors: ["#e1251b", "#ffffff"] },
+  { id: "westcoast", cheer: "Go Eagles!", name: "West Coast", bg: "#003087", ink: "#fff", accent: "#f2a900", colors: ["#003087", "#f2a900"] },
+  { id: "bulldogs", cheer: "Go Dogs!", name: "Bulldogs", bg: "#014896", ink: "#fff", accent: "#ffffff", colors: ["#014896", "#e21937", "#ffffff"] },
+];
+const THEME_KEY = "afl-daily-theme";
+let currentTheme = THEMES[0];
+const bands = (cols, dir) => `linear-gradient(${dir}, ${cols.map((c, i) => `${c} ${i * 100 / cols.length}% ${(i + 1) * 100 / cols.length}%`).join(", ")})`;
+
+function applyTheme(id) {
+  const t = currentTheme = THEMES.find(x => x.id === id) || THEMES[0];
+  const classic = t.id === "classic";
+  const r = document.documentElement.style;
+  if (classic) ["--hdr-bg", "--hdr-ink", "--hdr-sub", "--accent", "--brand", "--brand-ink", "--stripe"].forEach(v => r.removeProperty(v));
+  else {
+    r.setProperty("--hdr-bg", t.bg);
+    r.setProperty("--hdr-ink", t.ink);
+    r.setProperty("--hdr-sub", "rgba(255,255,255,.7)");
+    r.setProperty("--accent", t.accent);
+    r.setProperty("--brand", t.btn || t.bg);
+    r.setProperty("--brand-ink", t.btnInk || t.ink);
+    r.setProperty("--stripe", bands(t.colors, "90deg"));
+  }
+  document.documentElement.classList.toggle("themed", !classic);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = t.bg;
+  try { localStorage.setItem(THEME_KEY, t.id); } catch (e) {}
+  document.querySelectorAll(".theme-opt").forEach(b => b.classList.toggle("sel", b.dataset.theme === t.id));
+  if (current === "hub") updateHub();
+}
+
+function setupThemes() {
+  $("themeGrid").innerHTML = THEMES.map(t =>
+    `<button class="theme-opt" data-theme="${t.id}"><span class="sw" style="background:${bands(t.colors, "135deg")}"></span>${t.name}</button>`).join("");
+  $("themeGrid").addEventListener("click", e => {
+    const b = e.target.closest(".theme-opt");
+    if (b) { applyTheme(b.dataset.theme); closeThemes(); }
+  });
+  $("themeBtn").addEventListener("click", () => $("themeSheet").classList.add("open"));
+  $("themeClose").addEventListener("click", closeThemes);
+  $("themeSheet").addEventListener("click", e => { if (e.target === $("themeSheet")) closeThemes(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeThemes(); });
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+  applyTheme(saved || "classic");
+}
+function closeThemes() { $("themeSheet").classList.remove("open"); }
+
 // Keep long-open tabs on the latest version, so everyone plays the same puzzles.
 // If the published page is newer than the one running, reload (progress is saved).
 function checkForUpdate() {
@@ -1157,6 +1268,7 @@ setInterval(checkForUpdate, 10 * 60 * 1000);
 
 function boot() {
   VALID = new Set(WORDS.split(" ").map(w => w.toUpperCase()).concat(ANSWERS));
+  setupThemes();
   updateAvail();
   initWordle();
   initConn();
