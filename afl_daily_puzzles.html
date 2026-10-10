@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AFL Daily">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%89%3C/text%3E%3C/svg%3E">
 <title>AFL Daily — Footy Puzzles</title>
 <style>
   :root {
@@ -14,18 +21,20 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { background: var(--bg); color: var(--ink); }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: none; }
+  /* No double-tap zoom, long-press menus or accidental text selection on game controls. */
+  button, .cell, .board, .tile, .club, .key { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   button { font-family: inherit; cursor: pointer; }
   .serif { font-family: Georgia, "Times New Roman", serif; }
 
-  header { width: 100%; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  header { width: 100%; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: calc(8px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); position: sticky; top: 0; background: var(--bg); z-index: 5; }
   header .title { font-family: Georgia, serif; font-weight: 700; font-size: 24px; letter-spacing: -0.5px; }
   header .title span { color: var(--red); }
-  .icon-btn { background: none; border: none; font-size: 22px; width: 40px; height: 40px; border-radius: 8px; color: var(--ink); }
-  .icon-btn:hover { background: var(--soft); }
+  .icon-btn { background: none; border: none; font-size: 22px; width: 44px; height: 44px; border-radius: 8px; color: var(--ink); }
   .icon-btn.hidden { visibility: hidden; }
 
-  main { width: 100%; max-width: 560px; padding: 16px; flex: 1; display: flex; flex-direction: column; }
+  main { width: 100%; max-width: 560px; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); flex: 1; display: flex; flex-direction: column; }
   .view { display: none; flex-direction: column; flex: 1; }
   .view.active { display: flex; }
 
@@ -37,7 +46,7 @@
   .hero .date { font-weight: 700; color: var(--ink); margin-top: 8px; }
   .cards { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
   .card { display: flex; align-items: center; gap: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); text-align: left; transition: transform .1s, box-shadow .15s; width: 100%; }
-  .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+  .card:active { transform: scale(.98); background: var(--soft); }
   .card .badge { width: 56px; height: 56px; border-radius: 12px; display: grid; place-items: center; font-size: 28px; flex-shrink: 0; }
   .card .info { flex: 1; }
   .card .info b { display: block; font-family: Georgia, serif; font-size: 19px; }
@@ -58,6 +67,13 @@
   .game-head { text-align: center; margin-bottom: 12px; }
   .game-head h2 { font-family: Georgia, serif; font-size: 26px; }
   .game-head p { color: var(--muted); font-size: 14px; margin-top: 4px; line-height: 1.4; }
+  @media (max-width: 600px) {
+    .game-head { margin-bottom: 8px; }
+    .game-head h2 { font-size: 22px; }
+    .game-head p { font-size: 13px; margin-top: 2px; }
+    .btn { padding: 11px 16px; font-size: 14px; }
+    .btn-row { gap: 8px; margin-top: 12px; }
+  }
 
   .result { text-align: center; margin-top: 16px; padding: 16px; border-radius: 12px; background: var(--soft); display: none; }
   .result.show { display: block; }
@@ -73,10 +89,10 @@
   #w-native { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; font-size: 16px; caret-color: transparent; color: transparent; background: transparent; pointer-events: none; }
   .w-tools { display: flex; justify-content: center; margin: -4px 0 10px; }
   .kb-toggle { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 99px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
-  .kb-toggle:hover { background: var(--soft); }
   #view-wordle .game-head { margin-bottom: 8px; }
   #view-wordle .game-head h2 { font-size: 22px; }
   #view-wordle .game-head p { font-size: 13px; margin-top: 2px; }
+  @media (max-height: 700px) { #view-wordle .game-head p { display: none; } }
   .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .row.shake { animation: shake .45s; }
   .cell { width: var(--cell, min(60px, calc((100vw - 64px) / 5))); aspect-ratio: 1; border: 2px solid var(--line); display: grid; place-items: center; font-size: calc(var(--cell, 60px) * 0.5); font-weight: 700; text-transform: uppercase; user-select: none; }
@@ -104,27 +120,32 @@
   .group-bar b { display: block; font-size: 15px; text-transform: uppercase; letter-spacing: .3px; }
   .group-bar span { font-size: 14px; }
   .lvl0 { background: var(--c-yellow); } .lvl1 { background: var(--c-green); } .lvl2 { background: var(--c-blue); } .lvl3 { background: var(--c-purple); }
-  .tile { background: var(--tile); border: none; border-radius: 8px; min-height: 72px; padding: 4px; font-weight: 800; font-size: clamp(10px, 3.1vw, 15px); text-transform: uppercase; color: var(--ink); line-height: 1.15; overflow-wrap: normal; word-break: normal; overflow: hidden; transition: background .12s, transform .1s; }
+  .tile { background: var(--tile); border: none; border-radius: 8px; min-height: clamp(52px, calc((var(--avail, 640px) - 190px) / 4), 80px); padding: 4px; font-weight: 800; font-size: clamp(10px, 3.1vw, 15px); text-transform: uppercase; color: var(--ink); line-height: 1.15; overflow-wrap: normal; word-break: normal; overflow: hidden; transition: background .12s, transform .1s; }
   .tile.sel { background: var(--tile-sel); color: #fff; }
   .tile:active { transform: scale(.96); }
   .grid.shake .tile.sel { animation: shake .45s; }
-  .mistakes { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 14px; }
+  .mistakes { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; color: var(--muted); font-size: 14px; }
   .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--tile-sel); transition: transform .3s, opacity .3s; }
   .dot.gone { transform: scale(0); opacity: 0; }
 
   /* ---------- Club Clues ---------- */
-  .clues { display: flex; flex-direction: column; gap: 8px; }
-  .clue { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15px; display: flex; gap: 10px; align-items: flex-start; animation: pop .25s; }
+  #view-club.playing { flex: 0 0 auto; height: var(--avail, auto); min-height: 0; }
+  #view-club.playing .clues { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .clues { display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .clue.newest { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy) inset; }
+  .clue.summary { padding: 8px 14px; font-size: 13px; justify-content: center; }
+  .clue { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 15px; flex-shrink: 0; display: flex; gap: 10px; align-items: flex-start; animation: pop .25s; }
   .clue .n { background: var(--navy); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
   .clue.locked { color: var(--muted); background: var(--soft); border-style: dashed; }
   .clue.locked .n { background: var(--line); color: var(--muted); }
-  .clubs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 16px; }
-  .club { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 10px 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
-  .club:hover:not(:disabled) { background: var(--soft); }
+  .clubs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; flex-shrink: 0; }
+  .club { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 4px 2px; min-height: 42px; font-size: 13px; line-height: 1.15; font-weight: 700; color: var(--ink); }
+  @media (max-width: 400px) { .club { font-size: 12px; min-height: 40px; } }
+  .club:nth-last-child(-n+2) { grid-column: span 2; }
   .club.wrong { background: #f3d4d4; color: #8a2020; text-decoration: line-through; border-color: transparent; }
   .club.right { background: var(--w-green); color: #fff; border-color: transparent; }
   .club:disabled { cursor: default; }
-  .guess-left { text-align: center; color: var(--muted); font-size: 14px; margin-top: 10px; }
+  .guess-left { text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px; flex-shrink: 0; }
 
   /* ---------- Toast ---------- */
   #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
@@ -133,8 +154,19 @@
   @media (max-width: 360px) {
     main { padding: 12px 8px; }
     .grid, .solved { gap: 5px; }
-    .tile { padding: 2px; min-height: 64px; }
+    .tile { padding: 2px; }
   }
+
+  @media (hover: hover) {
+    .icon-btn:hover { background: var(--soft); }
+    .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+    .kb-toggle:hover { background: var(--soft); }
+    .club:hover:not(:disabled) { background: var(--soft); }
+  }
+  /* Tap feedback */
+  .btn:active:not(:disabled), .kb-toggle:active { transform: scale(.96); }
+  .key:active { filter: brightness(.85); transform: scale(.95); }
+  .club:active:not(:disabled) { background: var(--soft); transform: scale(.96); }
 
   @keyframes pop { 0% { transform: scale(.9); } 100% { transform: scale(1); } }
   @keyframes flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
@@ -202,7 +234,7 @@
   <section class="view" id="view-conn">
     <div class="game-head">
       <h2>Footy Connections</h2>
-      <p>Create four groups of four! Pick four tiles and hit Submit. Watch out for red herrings.</p>
+      <p>Find four groups of four. Watch out for red herrings!</p>
     </div>
     <div class="solved" id="solved"></div>
     <div class="grid" id="grid"></div>
@@ -219,7 +251,7 @@
   <section class="view" id="view-club">
     <div class="game-head">
       <h2>Club Clues</h2>
-      <p>Which AFL club is it? The clues start tricky and get easier — each wrong guess reveals another. You get six guesses.</p>
+      <p>Name the club in six guesses. Clues start tricky — each wrong guess unlocks another.</p>
     </div>
     <div class="clues" id="clues"></div>
     <div class="guess-left" id="k-left"></div>
@@ -518,9 +550,28 @@ function toast(msg, ms = 1600) {
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 let current = "hub";
+
+// Height available to a game view (visible screen minus header and padding).
+function updateAvail() {
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const m = getComputedStyle(document.querySelector("main"));
+  const avail = vh - document.querySelector("header").offsetHeight - parseFloat(m.paddingTop) - parseFloat(m.paddingBottom);
+  document.documentElement.style.setProperty("--avail", Math.max(320, avail) + "px");
+}
+window.addEventListener("resize", updateAvail);
+window.addEventListener("orientationchange", () => setTimeout(updateAvail, 200));
+
+// Light haptic feedback where supported (Android); silently ignored elsewhere.
+function buzz(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
+
+function revealResult(el) {
+  el.classList.add("show");
+  if (el.closest(".view.active")) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+}
 function show(view) {
   current = view;
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + view));
+  updateAvail();
   if (view === "conn") fitTiles();
   if (view === "wordle") sizeWordle(); else if ($("w-native")) $("w-native").blur();
   $("backBtn").classList.toggle("hidden", view === "hub");
@@ -648,7 +699,7 @@ function wordleResult() {
     ? `<h3>${praise[n - 1]}</h3><p>You found <b>${ANSWER}</b> in ${n}/6.</p>${statsHTML("wordle")}`
     : `<h3>Out on the full</h3><p>The word was <b>${ANSWER}</b>.</p>${statsHTML("wordle")}`;
   el.innerHTML += `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
-  el.classList.add("show");
+  revealResult(el);
   $("keyboard").style.display = "none";
   $("kbToggle").style.display = "none";
   $("w-native").blur();
@@ -663,8 +714,8 @@ function wordleInput(k) {
 
 function submitWord() {
   const row = boardRow(S.w.guesses.length);
-  if (typed.length < 5) { toast("Not enough letters"); shakeEl(row); return; }
-  if (!VALID.has(typed)) { toast("Not in word list"); shakeEl(row); return; }
+  if (typed.length < 5) { toast("Not enough letters"); shakeEl(row); buzz(40); return; }
+  if (!VALID.has(typed)) { toast("Not in word list"); shakeEl(row); buzz(40); return; }
   const guess = typed; typed = ""; $("w-native").value = "";
   S.w.guesses.push(guess);
   const res = paintRow(S.w.guesses.length - 1, guess, true);
@@ -676,7 +727,7 @@ function submitWord() {
     if (won || S.w.guesses.length === 6) {
       S.w.done = true; S.w.won = won;
       recordResult("wordle", won);
-      if (won) row.classList.add("win");
+      if (won) { row.classList.add("win"); buzz([30, 60, 30]); }
       setTimeout(wordleResult, won ? 700 : 300);
     }
     save();
@@ -736,9 +787,10 @@ function sizeWordle() {
   const used = document.querySelector("header").offsetHeight
     + view.querySelector(".game-head").offsetHeight + 8
     + view.querySelector(".w-tools").offsetHeight + 6
-    + (kbShown ? keyH * 3 + 6 * 2 + 12 : 0)
-    + 32; // main padding top + bottom
-  const byHeight = (vh - used - 5 * 6) / 6;
+    + (kbShown ? keyH * 3 + 6 * 2 + 12 : 0);
+  const m = getComputedStyle(document.querySelector("main"));
+  const pad = parseFloat(m.paddingTop) + parseFloat(m.paddingBottom);
+  const byHeight = (vh - used - pad - 5 * 6) / 6;
   const byWidth = (Math.min(window.innerWidth, 560) - 32 - 4 * 6) / 5;
   const cell = Math.max(28, Math.min(62, byHeight, byWidth));
   view.style.setProperty("--cell", cell + "px");
@@ -824,11 +876,13 @@ function submitConn() {
   if (best === 4) {
     S.c.solved.push(picks[0]);
     selected.clear();
+    buzz(25);
     if (S.c.solved.length === 4) finishConn(true);
   } else {
     S.c.mistakes++;
     if (best === 3) toast("One away…");
     else toast(["Not quite", "Nope — keep going", "Have another look"][S.c.mistakes % 3]);
+    buzz(60);
     const grid = $("grid"); grid.classList.remove("shake"); void grid.offsetWidth; grid.classList.add("shake");
     if (S.c.mistakes >= 4) {
       setTimeout(() => {
@@ -857,7 +911,7 @@ function connResult() {
     ? `<h3>${S.c.mistakes === 0 ? "Perfect game! 🏆" : "Premiers! 🏉"}</h3><p>Solved with ${S.c.mistakes} mistake${S.c.mistakes === 1 ? "" : "s"}.</p>`
     : `<h3>Next time!</h3><p>Here's how the groups fit together.</p>`) + statsHTML("conn") +
     `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
-  el.classList.add("show");
+  revealResult(el);
 }
 
 $("c-shuffle").addEventListener("click", () => { order = seededShuffle(order, Date.now() & 0xffff); renderConn(); });
@@ -874,9 +928,14 @@ function initConn() {
 // =====================================================================
 function renderClub() {
   const shown = S.k.done ? 6 : Math.min(6, S.k.guesses.length + 1);
-  $("clues").innerHTML = CLUB.clues.map((c, i) => i < shown
-    ? `<div class="clue"><span class="n">${i + 1}</span><span>${c}</span></div>`
-    : `<div class="clue locked"><span class="n">${i + 1}</span><span>Locked — revealed after a wrong guess</span></div>`).join("");
+  const locked = 6 - shown;
+  $("clues").innerHTML = CLUB.clues.slice(0, shown).map((c, i) =>
+    `<div class="clue${i === shown - 1 && !S.k.done && shown > 1 ? " newest" : ""}"><span class="n">${i + 1}</span><span>${c}</span></div>`).join("") +
+    (locked ? `<div class="clue locked summary">🔒 ${locked} more clue${locked === 1 ? "" : "s"} unlock as you guess</div>` : "");
+  $("view-club").classList.toggle("playing", !S.k.done);
+  // Keep the newest clue in view inside the scrolling clue list.
+  const newest = $("clues").querySelector(".newest");
+  if (newest) requestAnimationFrame(() => { $("clues").scrollTop = newest.offsetTop - 8; });
 
   const left = 6 - S.k.guesses.length;
   $("k-left").textContent = S.k.done ? "" : `${left} guess${left === 1 ? "" : "es"} left`;
@@ -903,8 +962,9 @@ function guessClub(name) {
     recordResult("club", won);
     clubResult();
   } else {
-    toast("Not " + name + " — here's another clue");
+    buzz(60);
   }
+  if (won) buzz([30, 60, 30]);
   save();
   renderClub();
 }
@@ -916,7 +976,7 @@ function clubResult() {
     ? `<h3>${n === 1 ? "One clue! Brownlow stuff 🥇" : "Got it! 🎉"}</h3><p>It was <b>${CLUB.name}</b> — found in ${n}/6.</p>`
     : `<h3>Unlucky!</h3><p>It was <b>${CLUB.name}</b>.</p>`) + statsHTML("club") +
     `<div class="btn-row"><button class="btn dark" onclick="share()">Share</button><button class="btn" onclick="show('hub')">All puzzles</button></div>`;
-  el.classList.add("show");
+  revealResult(el);
 }
 
 function initClub() {
@@ -963,6 +1023,7 @@ $("shareAll").addEventListener("click", share);
 // =====================================================================
 function boot() {
   VALID = new Set(WORDS.split(" ").map(w => w.toUpperCase()).concat(ANSWERS));
+  updateAvail();
   initWordle();
   initConn();
   initClub();
