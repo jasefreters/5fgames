@@ -3,13 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+// Phones in Chrome's "Desktop site" mode ignore the viewport tag and lay the page out
+// ~980px wide, so everything looks tiny. Detect that and zoom the page back up to fit.
+(function () {
+  function fit() {
+    var sw = screen.width;
+    var z = navigator.maxTouchPoints > 0 && sw < 760 && innerWidth > sw * 1.2 ? innerWidth / sw : 1;
+    document.documentElement.style.zoom = z === 1 ? "" : z;
+    document.documentElement.style.setProperty("--page-zoom", z);
+    document.documentElement.classList.toggle("phone-zoom", z !== 1);
+    window.PAGE_ZOOM = z;
+  }
+  fit();
+  addEventListener("resize", fit);
+})();
+</script>
 <title>5F Games</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
     background: #12122b radial-gradient(circle at 20% 0%, #2d2a6e 0%, #12122b 55%) fixed;
-    color: #fff; min-height: 100vh; padding: 28px 16px 40px;
+    color: #fff; min-height: calc(100vh / var(--page-zoom, 1)); padding: 28px 16px 40px;
   }
   .wrap { max-width: 980px; margin: 0 auto; }
   header { text-align: center; margin-bottom: 26px; }
@@ -53,6 +69,13 @@
     .featured { flex-wrap: wrap; }
     .featured .go { width: 100%; text-align: center; }
   }
+  /* Same phone layout when the page is zoomed up from Chrome's "Desktop site" mode */
+  .phone-zoom header h1 { font-size: 40px; }
+  .phone-zoom .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .phone-zoom .game .art { height: 80px; font-size: 42px; }
+  .phone-zoom .game b { font-size: 15px; }
+  .phone-zoom .featured { flex-wrap: wrap; }
+  .phone-zoom .featured .go { width: 100%; text-align: center; }
 </style>
 </head>
 <body>
