@@ -226,6 +226,49 @@
   .y-form input { flex: 1; }
   #view-order .game-head h2 span { color: var(--accent); }
 
+  /* ---------- Streak / XP / badges ---------- */
+  .me { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 14px; }
+  .me-top { display: flex; align-items: center; justify-content: space-between; }
+  .me-streak { display: flex; align-items: baseline; gap: 6px; }
+  .me-streak .flame { font-size: 26px; }
+  .me-streak b { font-size: 32px; line-height: 1; }
+  .me-streak span:last-child { color: var(--muted); font-weight: 700; font-size: 14px; }
+  .me-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .frz-pill { background: #e3f2fd; color: #0b5394; padding: 2px 10px; border-radius: 99px; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 12px 0 6px; }
+  .wk { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .wk span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; border: 2px solid var(--line); color: #fff; }
+  .wk small { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .wk.on span { background: #f07b1a; border-color: #f07b1a; }
+  .wk.frz span { background: #e3f2fd; border-color: #90caf9; }
+  .wk.today span { border-style: dashed; border-color: #f07b1a; }
+  .me-msg { font-size: 14px; font-weight: 700; text-align: center; margin: 6px 0 10px; min-height: 18px; }
+  .me-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); margin-top: 8px; gap: 8px; }
+  .me-row b { color: var(--ink); font-size: 14px; }
+  .bar { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--w-green); border-radius: 99px; transition: width .5s; }
+  .bar.xp i { background: linear-gradient(90deg, #f7b500, #f07b1a); }
+  .me-badges { width: 100%; margin-top: 12px; padding: 10px; }
+  .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 520px) { .badge-grid { grid-template-columns: repeat(3, 1fr); } }
+  .badge-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 10px; text-align: center; background: var(--soft); color: var(--muted); }
+  .badge-card.got { background: var(--bg); color: var(--ink); border-color: #f7b500; box-shadow: 0 0 0 1px #f7b500 inset; }
+  .badge-card .bicon { font-size: 30px; filter: grayscale(1); opacity: .6; }
+  .badge-card.got .bicon { filter: none; opacity: 1; }
+  .badge-card b { display: block; font-size: 14px; margin-top: 4px; color: var(--ink); }
+  .badge-card p { font-size: 12px; margin-top: 2px; line-height: 1.3; }
+  .badge-card small { display: block; font-size: 11px; margin-top: 6px; }
+  .bprog { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .bprog i { display: block; height: 100%; background: #f07b1a; }
+  .celebrate { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .celebrate.open { display: flex; animation: fade .2s; }
+  .celeb-card { background: var(--bg); border-radius: 18px; padding: 24px 20px 20px; text-align: center; max-width: 340px; width: 100%; animation: popin .35s cubic-bezier(.2,1.4,.4,1); }
+  .celeb-icon { font-size: 64px; line-height: 1; animation: wiggle 1s ease .3s; }
+  .celeb-card h3 { font-family: Georgia, serif; font-size: 22px; margin: 10px 0 6px; }
+  .celeb-card p { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+  @keyframes popin { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-12deg) scale(1.15); } 75% { transform: rotate(12deg) scale(1.15); } }
+
   /* ---------- Theme picker ---------- */
   .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: none; align-items: flex-end; justify-content: center; }
   .sheet-bg.open { display: flex; animation: fade .15s; }
@@ -284,6 +327,15 @@
   </div>
 </header>
 
+<div class="celebrate" id="celebrate" role="dialog" aria-modal="true" aria-labelledby="celebTitle">
+  <div class="celeb-card">
+    <div class="celeb-icon" id="celebIcon"></div>
+    <h3 id="celebTitle"></h3>
+    <p id="celebText"></p>
+    <button class="btn dark" id="celebOk">Nice!</button>
+  </div>
+</div>
+
 <div class="sheet-bg" id="themeSheet">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
     <div class="sheet-head"><h3 id="themeTitle">Team colours</h3><button class="icon-btn" id="themeClose" aria-label="Close">✕</button></div>
@@ -302,6 +354,19 @@
       <h1>AFL Daily</h1>
       <p id="hubTag">Three footy puzzles. New ones every day.</p>
       <p class="date" id="hubDate"></p>
+    </div>
+    <div class="me" id="mePanel">
+      <div class="me-top">
+        <div class="me-streak"><span class="flame">🔥</span><b id="rStreak">0</b><span id="rStreakLabel">day streak</span></div>
+        <div class="me-side"><span id="rBest"></span><span class="frz-pill" id="rFreeze"></span></div>
+      </div>
+      <div class="week" id="rWeek"></div>
+      <div class="me-msg" id="rMsg"></div>
+      <div class="me-row"><span id="rToday"></span></div>
+      <div class="bar"><i id="rTodayBar"></i></div>
+      <div class="me-row"><b id="rLevel"></b><span id="rXp"></span></div>
+      <div class="bar xp"><i id="rBar"></i></div>
+      <button class="btn me-badges" data-go="badges" id="rBadgesBtn">🏅 Badges</button>
     </div>
     <div class="cards">
       <button class="card" data-go="wordle">
@@ -352,6 +417,15 @@
         <button class="btn" data-go="archive">📅 Previous days</button>
       </div>
     </div>
+  </section>
+
+  <!-- ================= BADGES ================= -->
+  <section class="view" id="view-badges">
+    <div class="game-head">
+      <h2>Badges</h2>
+      <p id="badgeCount"></p>
+    </div>
+    <div class="badge-grid" id="badgeGrid"></div>
   </section>
 
   <!-- ================= ARCHIVE ================= -->
@@ -743,6 +817,7 @@ function save() {
   try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) { /* storage unavailable */ }
 }
 function recordResult(game, won) {
+  if (typeof onGameComplete === "function") onGameComplete(game, won);
   if (IS_ARCHIVE) { save(); return; } // archive puzzles don't affect stats or streaks
   const st = DB.stats[game] = DB.stats[game] || { played: 0, wins: 0, streak: 0, max: 0, last: null };
   st.played++;
@@ -807,6 +882,7 @@ function show(view) {
   $("backBtn").classList.toggle("hidden", view === "hub");
   if (view === "hub") updateHub();
   if (view === "archive") renderArchive();
+  if (view === "badges") renderBadges();
   window.scrollTo(0, 0);
 }
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
@@ -818,6 +894,7 @@ window.addEventListener("popstate", e => show(e.state && e.state.view ? e.state.
 
 function updateHub() {
   $("hdrNo").textContent = "#" + PUZZLE_NO;
+  if (typeof renderRetention === "function") renderRetention();
   $("hubDate").textContent = formatDay(DAY, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " · #" + PUZZLE_NO;
   $("hubTag").innerHTML = IS_ARCHIVE ? `<span class="archive-pill">📅 Archive puzzle</span>`
     : currentTheme.cheer ? `<span class="cheer">${currentTheme.cheer}</span>` : "Three footy puzzles. New ones every day.";
@@ -1259,6 +1336,7 @@ function initClub() {
 // =====================================================================
 function shareText() {
   const lines = [`AFL Daily #${PUZZLE_NO} 🏉`];
+  if (!IS_ARCHIVE && liveStreak() > 1) lines.push(`🔥 ${liveStreak()}-day streak`);
   if (S.w.guesses.length) {
     lines.push("", `Goal Five ${S.w.done ? (S.w.won ? S.w.guesses.length : "X") : "…"}/6`);
     S.w.guesses.forEach(g => lines.push(evaluate(g, ANSWER).map(s => s === "correct" ? "🟩" : s === "present" ? "🟨" : "⬜").join("")));
@@ -1278,6 +1356,8 @@ function shareText() {
 }
 function share() {
   const text = shareText();
+  DB.counts.shares++; save();
+  checkBadges(null, false).forEach(b => celebrate(b.icon, `Badge unlocked: ${b.name}`, b.desc));
   if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
     navigator.share({ text }).catch(() => {});
   } else if (navigator.clipboard) {
@@ -1348,7 +1428,11 @@ function setupThemes() {
     `<button class="theme-opt" data-theme="${t.id}"><span class="sw" style="background:${bands(t.colors, "135deg")}"></span>${t.name}</button>`).join("");
   $("themeGrid").addEventListener("click", e => {
     const b = e.target.closest(".theme-opt");
-    if (b) { applyTheme(b.dataset.theme); closeThemes(); }
+    if (b) {
+      applyTheme(b.dataset.theme); closeThemes();
+      checkBadges(null, false).forEach(x => celebrate(x.icon, `Badge unlocked: ${x.name}`, x.desc));
+      if (current === "hub") renderRetention();
+    }
   });
   $("themeBtn").addEventListener("click", () => $("themeSheet").classList.add("open"));
   $("themeClose").addEventListener("click", closeThemes);
@@ -1389,6 +1473,7 @@ function boot() {
   initGround();
   initOrder();
   initGF();
+  initRetention();
   updateHub();
   tickCountdown();
   setInterval(tickCountdown, 1000);
@@ -1702,7 +1787,7 @@ function initPlayer() {
   const path = PLAYER.path, now = path[path.length - 1];
   makeClueGame({
     key: "p", state: S.p, answer: PLAYER.name, search: true,
-    options: PLAYERS.map(p => p.name).sort((a, b) => a.split(" ").pop().localeCompare(b.split(" ").pop())),
+    options: PLAYERS.map(p => p.name).sort((a, b) => a.split(" ").pop().localeCompare(b.split(" ").pop()) || a.localeCompare(b)),
     clues: [
       "Career path: " + path.slice(0, -1).join(" → ") + " → ???",
       "Position: " + PLAYER.pos,
@@ -1848,6 +1933,216 @@ const EXTRA_GAMES = [
   { key: "y", title: "Grand Final Year", started: s => s && s.guesses.length,
     share: s => [`Grand Final Year ${s.done ? (s.won ? s.guesses.length : "X") : "…"}/5`, s.guesses.map(y => y === GF.year ? "🟩" : Math.abs(y - GF.year) <= 3 ? "🟨" : "⬜").join("")] },
 ];
+</script>
+<script>
+// =====================================================================
+//  RETENTION: daily streak + freezes, XP & levels, badges, daily progress
+// =====================================================================
+const GAME_KEYS = ["w", "c", "k", "p", "g", "o", "y"];
+const GAME_NAMES = { w: "Goal Five", c: "Connections", k: "Club Clues", p: "Player Path", g: "Ground Guess", o: "Order It", y: "Grand Final Year" };
+// attempts used and the maximum allowed, per game
+const ATTEMPTS = {
+  w: s => [s.guesses.length, 6], c: s => [s.mistakes, 4], k: s => [s.guesses.length, 6], p: s => [s.guesses.length, 6],
+  g: s => [s.guesses.length, 6], o: s => [s.tries.length, 4], y: s => [s.guesses.length, 5],
+};
+const LEVELS = [[0, "Auskick"], [50, "Under-12s"], [150, "Under-16s"], [300, "Rookie List"], [500, "Debutant"],
+  [800, "Regular"], [1200, "Vice-Captain"], [1800, "Captain"], [2600, "All-Australian"], [3600, "Legend"]];
+const MAX_FREEZES = 2;
+
+const dayDone = st => !!st && GAME_KEYS.some(k => st[k] && st[k].done);
+const dayCount = (st, won) => st ? GAME_KEYS.filter(k => st[k] && st[k].done && (!won || st[k].won)).length : 0;
+
+// ---------- one-off setup / backfill for players from before this feature ----------
+DB.xp = DB.xp || 0;
+DB.badges = DB.badges || {};
+DB.counts = DB.counts || { completed: 0, wins: 0, archive: 0, shares: 0 };
+DB.active = DB.active || {};   // day number -> 1 (played on the day) or "f" (covered by a freeze)
+if (!DB.streak) {
+  // Rebuild from saved days: count back from today/yesterday over days with a finished puzzle.
+  for (let d = 0; d <= TODAY_DAY; d++) if (dayDone(DB.days[dateKeyFor(d)])) DB.active[d] = 1;
+  let last = DB.active[TODAY_DAY] ? TODAY_DAY : DB.active[TODAY_DAY - 1] ? TODAY_DAY - 1 : null, count = 0;
+  for (let d = last; d !== null && DB.active[d]; d--) count++;
+  DB.streak = { count, best: count, last, freezes: 0 };
+  let done = 0, wins = 0;
+  Object.values(DB.days).forEach(st => { done += dayCount(st); wins += dayCount(st, true); });
+  DB.counts.completed = done; DB.counts.wins = wins;
+  DB.xp = wins * 12 + (done - wins) * 2;
+  save();
+}
+
+// Current streak as shown: still alive if played yesterday/today, or if freezes cover the gap.
+function liveStreak() {
+  const s = DB.streak;
+  if (s.last === null || s.last === undefined) return 0;
+  const gap = TODAY_DAY - s.last - 1;
+  return gap <= 0 || gap <= s.freezes ? s.count : 0;
+}
+
+function levelFor(xp) {
+  let i = 0;
+  while (i + 1 < LEVELS.length && xp >= LEVELS[i + 1][0]) i++;
+  const [base, name] = LEVELS[i], next = LEVELS[i + 1];
+  return { i, name, base, next: next ? next[0] : null, nextName: next ? next[1] : null };
+}
+
+// ---------- badges ----------
+const melbHour = () => melbourneNow().hour;
+const BADGES = [
+  { id: "first", icon: "🏉", name: "First Bounce", desc: "Finish your first puzzle.", test: () => DB.counts.completed >= 1 },
+  { id: "round", icon: "🎯", name: "Full Round", desc: "Finish all 7 puzzles in one day.", test: () => dayCount(S) === 7 && !IS_ARCHIVE },
+  { id: "premier", icon: "🏆", name: "Premiership Day", desc: "Win all 7 puzzles in one day.", test: () => dayCount(S, true) === 7 && !IS_ARCHIVE },
+  { id: "s3", icon: "🔥", name: "Hat-trick", desc: "Reach a 3-day streak.", goal: 3, prog: () => DB.streak.best },
+  { id: "s7", icon: "📅", name: "Full Week", desc: "Reach a 7-day streak.", goal: 7, prog: () => DB.streak.best },
+  { id: "s30", icon: "🗓️", name: "Month of Footy", desc: "Reach a 30-day streak.", goal: 30, prog: () => DB.streak.best },
+  { id: "s100", icon: "💯", name: "Centurion", desc: "Reach a 100-day streak.", goal: 100, prog: () => DB.streak.best },
+  { id: "w10", icon: "⭐", name: "Rising Star", desc: "Win 10 puzzles.", goal: 10, prog: () => DB.counts.wins },
+  { id: "w50", icon: "🌟", name: "All-Australian", desc: "Win 50 puzzles.", goal: 50, prog: () => DB.counts.wins },
+  { id: "w100", icon: "🥇", name: "Brownlow", desc: "Win 100 puzzles.", goal: 100, prog: () => DB.counts.wins },
+  { id: "w250", icon: "🏛️", name: "Hall of Fame", desc: "Win 250 puzzles.", goal: 250, prog: () => DB.counts.wins },
+  { id: "wordle2", icon: "🥅", name: "Snap Shot", desc: "Solve Goal Five in 2 guesses or fewer.", game: "w", test: s => s.won && s.guesses.length <= 2 },
+  { id: "conn0", icon: "🧩", name: "Clean Hands", desc: "Solve Connections with no mistakes.", game: "c", test: s => s.won && s.mistakes === 0 },
+  { id: "club1", icon: "🕵️", name: "Super Sleuth", desc: "Name the club from the first clue.", game: "k", test: s => s.won && s.guesses.length === 1 },
+  { id: "player2", icon: "🧑‍🦱", name: "Talent Scout", desc: "Name the player within 2 guesses.", game: "p", test: s => s.won && s.guesses.length <= 2 },
+  { id: "ground2", icon: "🏟️", name: "Groundsman", desc: "Name the ground within 2 guesses.", game: "g", test: s => s.won && s.guesses.length <= 2 },
+  { id: "order1", icon: "🔢", name: "Statistician", desc: "Get Order It right on the first check.", game: "o", test: s => s.won && s.tries.length === 1 },
+  { id: "gf1", icon: "📜", name: "Historian", desc: "Guess the Grand Final year first go.", game: "y", test: s => s.won && s.guesses.length === 1 },
+  { id: "archive1", icon: "⏪", name: "Catch-up", desc: "Finish a puzzle from a previous day.", test: () => DB.counts.archive >= 1 },
+  { id: "archive25", icon: "📚", name: "Archivist", desc: "Finish 25 puzzles from previous days.", goal: 25, prog: () => DB.counts.archive },
+  { id: "early", icon: "🌅", name: "Early Bird", desc: "Finish a puzzle before 7am (Melbourne time).", test: (s, live) => live && melbHour() < 7 },
+  { id: "owl", icon: "🦉", name: "Night Owl", desc: "Finish a puzzle after 11pm (Melbourne time).", test: (s, live) => live && melbHour() >= 23 },
+  { id: "theme", icon: "🎨", name: "True Colours", desc: "Pick your team's colours.", test: () => { try { const t = localStorage.getItem(THEME_KEY); return !!t && t !== "classic"; } catch (e) { return false; } } },
+  { id: "share", icon: "📣", name: "Spread the Word", desc: "Share your results.", test: () => DB.counts.shares >= 1 },
+  { id: "freeze", icon: "❄️", name: "Saved by the Bell", desc: "Have a streak freeze save your streak.", test: () => Object.values(DB.active).includes("f") },
+  { id: "legend", icon: "👑", name: "Legend", desc: "Reach the top level.", goal: 3600, prog: () => DB.xp },
+];
+
+// Check every badge; `live` = called right after finishing `game` (not on page load).
+function checkBadges(game, live) {
+  const fresh = [];
+  BADGES.forEach(b => {
+    if (DB.badges[b.id]) return;
+    let ok;
+    if (b.goal) ok = b.prog() >= b.goal;
+    else if (b.game) ok = live && game === b.game && b.test(S[b.game], live);
+    else ok = b.test(null, live);
+    if (ok) { DB.badges[b.id] = TODAY_DAY + 1; fresh.push(b); }
+  });
+  if (fresh.length) save();
+  return fresh;
+}
+
+// ---------- celebrations ----------
+const celebrations = [];
+function celebrate(icon, title, text) {
+  celebrations.push({ icon, title, text });
+  if (celebrations.length === 1) showCelebration();
+}
+function showCelebration() {
+  const c = celebrations[0];
+  if (!c) return;
+  $("celebIcon").textContent = c.icon;
+  $("celebTitle").textContent = c.title;
+  $("celebText").textContent = c.text;
+  $("celebrate").classList.add("open");
+  buzz([20, 40, 20, 40, 60]);
+}
+function closeCelebration() {
+  if (!$("celebrate").classList.contains("open")) return;
+  $("celebrate").classList.remove("open");
+  celebrations.shift();
+  if (celebrations.length) setTimeout(showCelebration, 200);
+}
+$("celebOk").addEventListener("click", closeCelebration);
+$("celebrate").addEventListener("click", e => { if (e.target === $("celebrate")) closeCelebration(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeCelebration(); });
+
+// ---------- called by every game when a puzzle finishes ----------
+function onGameComplete(game, won) {
+  game = { wordle: "w", conn: "c", club: "k" }[game] || game; // the first three games use longer stat names
+  const lvlBefore = levelFor(DB.xp).i;
+  const [used, max] = ATTEMPTS[game](S[game]);
+  let xp = won ? 10 + 2 * Math.max(0, max - used) : 2;
+  DB.counts.completed++;
+  if (won) DB.counts.wins++;
+  if (IS_ARCHIVE) DB.counts.archive++;
+
+  if (!IS_ARCHIVE) {
+    // daily streak
+    const s = DB.streak;
+    if (s.last !== TODAY_DAY) {
+      const gap = s.last === null || s.last === undefined ? Infinity : TODAY_DAY - s.last - 1;
+      if (gap === 0) s.count++;
+      else if (gap <= s.freezes) { // freezes cover the missed days
+        for (let d = s.last + 1; d < TODAY_DAY; d++) DB.active[d] = "f";
+        s.freezes -= gap; s.count++;
+        celebrate("❄️", "Streak saved!", `A streak freeze covered ${gap === 1 ? "yesterday" : gap + " missed days"}. Your streak lives on.`);
+      } else s.count = 1;
+      s.last = TODAY_DAY;
+      s.best = Math.max(s.best, s.count);
+      DB.active[TODAY_DAY] = 1;
+      if (s.count % 7 === 0 && s.freezes < MAX_FREEZES) {
+        s.freezes++;
+        celebrate("❄️", "Streak freeze earned!", `${s.count} days in a row! A freeze will protect your streak if you miss a day.`);
+      }
+    }
+    // full round bonuses (once per day)
+    if (dayCount(S) === 7 && !S.bonus) { S.bonus = true; xp += 20; if (dayCount(S, true) === 7) xp += 30; }
+  }
+  DB.xp += xp;
+  save();
+  setTimeout(() => toast(`+${xp} XP${!IS_ARCHIVE && DB.streak.count > 1 ? ` · 🔥 ${DB.streak.count}-day streak` : ""}`, 2200), 900);
+
+  const lvl = levelFor(DB.xp);
+  if (lvl.i > lvlBefore) celebrate("⬆️", `Level up: ${lvl.name}!`, `You've reached level ${lvl.i + 1} of ${LEVELS.length}. Keep playing to climb the ranks.`);
+  checkBadges(game, true).forEach(b => celebrate(b.icon, `Badge unlocked: ${b.name}`, b.desc));
+}
+
+// ---------- hub panel ----------
+function renderRetention() {
+  const streak = liveStreak(), lvl = levelFor(DB.xp);
+  const done = dayCount(DB.days[dateKeyFor(TODAY_DAY)]);
+  $("rStreak").textContent = streak;
+  $("rStreakLabel").textContent = streak === 1 ? "day streak" : "day streak";
+  $("rBest").textContent = `Best ${DB.streak.best}`;
+  $("rFreeze").textContent = `❄️ ${DB.streak.freezes}`;
+  $("rFreeze").title = `${DB.streak.freezes} streak freeze${DB.streak.freezes === 1 ? "" : "s"} — earn one every 7 days in a row`;
+  $("rLevel").textContent = `Lv ${lvl.i + 1} · ${lvl.name}`;
+  $("rXp").textContent = lvl.next ? `${DB.xp - lvl.base} / ${lvl.next - lvl.base} XP to ${lvl.nextName}` : `${DB.xp} XP · top level!`;
+  $("rBar").style.width = (lvl.next ? Math.min(100, 100 * (DB.xp - lvl.base) / (lvl.next - lvl.base)) : 100) + "%";
+  // last 7 days
+  const days = [];
+  for (let d = TODAY_DAY - 6; d <= TODAY_DAY; d++) {
+    const a = DB.active[d], isToday = d === TODAY_DAY;
+    const cls = a === "f" ? "frz" : a ? "on" : isToday ? "today" : "off";
+    days.push(`<div class="wk ${cls}"><span>${a === "f" ? "❄️" : a ? "✓" : ""}</span><small>${isToday ? "Today" : formatDay(d, { weekday: "narrow" })}</small></div>`);
+  }
+  $("rWeek").innerHTML = days.join("");
+  $("rToday").textContent = `${done} of 7 done today`;
+  $("rTodayBar").style.width = (100 * done / 7) + "%";
+  const msg = $("rMsg");
+  if (IS_ARCHIVE) msg.textContent = "";
+  else if (!DB.active[TODAY_DAY] && streak > 0) msg.textContent = `🔥 Play any puzzle today to keep your ${streak}-day streak alive!`;
+  else if (!DB.active[TODAY_DAY]) msg.textContent = "Finish a puzzle today to start a streak.";
+  else if (done < 7) msg.textContent = `Finish all 7 for a Full Round bonus (+20 XP).`;
+  else msg.textContent = "Full Round complete! See you tomorrow. 👋";
+  const got = BADGES.filter(b => DB.badges[b.id]).length;
+  $("rBadgesBtn").textContent = `🏅 Badges ${got}/${BADGES.length}`;
+}
+
+function renderBadges() {
+  $("badgeGrid").innerHTML = BADGES.map(b => {
+    const got = DB.badges[b.id];
+    const prog = !got && b.goal ? `<div class="bprog"><i style="width:${Math.min(100, 100 * b.prog() / b.goal)}%"></i></div><small>${Math.min(b.prog(), b.goal)} / ${b.goal}</small>` : "";
+    return `<div class="badge-card${got ? " got" : ""}"><div class="bicon">${got ? b.icon : "🔒"}</div><b>${b.name}</b><p>${b.desc}</p>${got ? `<small>Unlocked on puzzle #${got}</small>` : prog}</div>`;
+  }).join("");
+  const got = BADGES.filter(b => DB.badges[b.id]).length;
+  $("badgeCount").textContent = `${got} of ${BADGES.length} unlocked`;
+}
+
+function initRetention() {
+  checkBadges(null, false); // quietly award anything already earned
+  renderRetention();
+}
 </script>
 <script>
 // Allowed 5-letter guesses.
