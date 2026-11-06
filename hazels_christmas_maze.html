@@ -121,7 +121,10 @@
   #decorate h2 { margin-top: calc(10px + env(safe-area-inset-top)); font-size: 22px; color: var(--gold); text-align: center; padding: 0 12px; }
   #decorate .instr { font-size: 14px; color: #cfe3f5; text-align: center; padding: 2px 16px 0; min-height: 36px; }
   .tree-wrap { position: relative; flex: 1; width: 100%; max-width: 460px; min-height: 0; }
-  #treeSvg { width: 100%; height: 100%; display: block; }
+  #treeSvg { width: 100%; height: 100%; display: block; touch-action: none; }
+  #treeSvg .placed { cursor: grab; }
+  .tray button { touch-action: none; }
+  .drag-ghost { position: fixed; z-index: 30; pointer-events: none; font-size: 34px; transform: translate(-50%, -50%) scale(1.25); filter: drop-shadow(0 6px 8px rgba(0,0,0,.5)); }
   .tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 8px 10px; min-height: 64px; background: rgba(0,0,0,.3); width: 100%; }
   .tray button { width: 52px; height: 52px; border-radius: 14px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); font-size: 28px; }
   .tray button:active { transform: scale(.92); }
@@ -1012,25 +1015,86 @@ function startDecorating() {
     const btn = document.createElement("button");
     btn.innerHTML = item.kind === "lights" ? "💡" : `<svg width="34" height="34" viewBox="0 0 34 34"><rect x="13" y="2" width="8" height="5" fill="#cfa64b"/><circle cx="17" cy="19" r="13" fill="${item.b.colour}"/><circle cx="12" cy="14" r="4" fill="#fff" opacity=".6"/></svg>`;
     btn.setAttribute("aria-label", item.kind === "lights" ? "String of lights" : "Bauble");
-    btn.addEventListener("click", () => { btn.remove(); item.kind === "lights" ? placeLights(item.i) : placeBauble(item.b); SFX.pickup(); checkReady(); });
+    btn.addEventListener("pointerdown", e => trayDrag(e, btn, item));
     tray.appendChild(btn);
   });
-  $("decInstr").textContent = "Tap a bauble or light below to put it on the tree.";
+  $("decInstr").textContent = "Drag the baubles and lights onto the tree — put them wherever you like!";
   $("switchBtn").disabled = true; $("switchBtn").className = ""; $("switchBtn").textContent = "🔌 Switch at the back";
   $("againBtn").style.display = "none"; $("winBanner").classList.remove("show"); $("tray").style.display = "";
 }
 
-function placeBauble(b) {
-  const [x, y] = deco.spots[deco.placedB.length % deco.spots.length];
-  const g = el("g", { class: "placed", style: "cursor:pointer" }, $("baubleLayer"));
-  el("rect", { x: x - 4, y: y - 17, width: 8, height: 6, fill: "#cfa64b" }, g);
-  el("circle", { cx: x, cy: y, r: 13, fill: b.colour, stroke: "rgba(0,0,0,.25)" }, g);
-  el("circle", { cx: x - 4.5, cy: y - 4.5, r: 3.5, fill: "#fff", opacity: .55 }, g);
+// ---------- drag and drop ----------
+function svgPoint(clientX, clientY) {
+  const svg = $("treeSvg"), pt = svg.createSVGPoint();
+  pt.x = clientX; pt.y = clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return [Math.max(12, Math.min(288, p.x)), Math.max(14, Math.min(316, p.y))];
+}
+function overTree(clientX, clientY) {
+  const r = $("treeSvg").getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+function trayDrag(e, btn, item) {
+  e.preventDefault();
+  const sx = e.clientX, sy = e.clientY;
+  let ghost = null;
+  const move = ev => {
+    if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) {
+      ghost = document.createElement("div"); ghost.className = "drag-ghost"; ghost.innerHTML = btn.innerHTML;
+      document.body.appendChild(ghost); btn.style.opacity = .3;
+    }
+    if (ghost) { ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px"; }
+  };
+  const up = ev => {
+    removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+    let at = null;
+    if (ghost) {
+      ghost.remove(); btn.style.opacity = "";
+      if (!overTree(ev.clientX, ev.clientY)) return; // dropped off the tree: stays in the tray
+      at = svgPoint(ev.clientX, ev.clientY);
+    }
+    btn.remove();
+    item.kind === "lights" ? placeLights(at) : placeBauble(item.b, at);
+    SFX.pickup(); checkReady();
+  };
+  addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+}
+// Placed items: drag to move them, tap to switch their light.
+function makeMovable(item, onTap) {
+  const g = item.g;
+  const setPos = () => g.setAttribute("transform", `translate(${item.x} ${item.y})`);
+  setPos();
+  g.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation();
+    const [px, py] = svgPoint(e.clientX, e.clientY), ox = item.x - px, oy = item.y - py, sx = e.clientX, sy = e.clientY;
+    let dragging = false;
+    g.parentNode.appendChild(g); // bring to front
+    const move = ev => {
+      if (!dragging && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) dragging = true;
+      if (!dragging) return;
+      const [x, y] = svgPoint(ev.clientX, ev.clientY);
+      item.x = x + ox; item.y = y + oy; setPos();
+    };
+    const up = () => {
+      removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+      if (!dragging) onTap();
+    };
+    addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+  });
+}
+
+function placeBauble(b, at) {
+  const [x, y] = at || deco.spots[deco.placedB.length % deco.spots.length];
+  const g = el("g", { class: "placed" }, $("baubleLayer"));
+  const inner = el("g", {}, g);
+  el("rect", { x: -4, y: -17, width: 8, height: 6, fill: "#cfa64b" }, inner);
+  el("circle", { cx: 0, cy: 0, r: 13, fill: b.colour, stroke: "rgba(0,0,0,.25)" }, inner);
+  el("circle", { cx: -4.5, cy: -4.5, r: 3.5, fill: "#fff", opacity: .55 }, inner);
   // the little light in the middle (a button you tap)
-  const light = el("circle", { cx: x, cy: y, r: 4.5, fill: "#fffde7", stroke: "#fff", "stroke-width": 1.5, opacity: .7 }, g);
-  const item = { g, light, lit: false };
-  g.addEventListener("click", () => toggleBauble(item));
-  g.animate([{ transform: `translate(0px, 120px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 400, easing: "cubic-bezier(.2,1.4,.4,1)" });
+  const light = el("circle", { cx: 0, cy: 0, r: 4.5, fill: "#fffde7", stroke: "#fff", "stroke-width": 1.5, opacity: .7 }, inner);
+  const item = { g, light, lit: false, x, y };
+  makeMovable(item, () => toggleBauble(item));
+  inner.animate([{ transform: "scale(.2)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 400, easing: "cubic-bezier(.2,1.4,.4,1)" });
   deco.placedB.push(item);
 }
 function toggleBauble(item, force) {
@@ -1041,10 +1105,13 @@ function toggleBauble(item, force) {
   item.light.classList.toggle("bulb-glow", item.lit);
   if (force === undefined) tone(item.lit ? 1200 : 600, 0, .08, "sine", .15);
 }
-function placeLights(i) {
-  const d = deco.garlands[deco.placedL.length % deco.garlands.length];
-  const g = el("g", { style: "cursor:pointer" }, $("lightsLayer"));
-  const path = el("path", { d, stroke: "#263238", "stroke-width": 1.5, fill: "none" }, g);
+function placeLights(at) {
+  // a draped string of lights centred on the drop point (or a ready-made spot when tapped)
+  const auto = [[150, 118, 84], [150, 182, 124], [150, 246, 164], [150, 148, 108]][deco.placedL.length % 4];
+  const [x, y] = at || auto, w = at ? 110 : auto[2];
+  const g = el("g", { class: "placed" }, $("lightsLayer"));
+  el("path", { d: `M${-w / 2} -12 Q0 22 ${w / 2} -12`, stroke: "transparent", "stroke-width": 16, fill: "none" }, g); // easier to grab
+  const path = el("path", { d: `M${-w / 2} -8 Q0 16 ${w / 2} -8`, stroke: "#263238", "stroke-width": 1.5, fill: "none" }, g);
   const len = path.getTotalLength(), bulbs = [];
   const colours = ["#fff3c4", "#ffe08a", "#fff8e1", "#ffd54a", "#fff3c4"];
   for (let k = 0; k <= 8; k++) {
@@ -1054,8 +1121,8 @@ function placeLights(i) {
   // a small button at the end of the string
   const end = path.getPointAtLength(len);
   el("rect", { x: end.x - 2, y: end.y - 6, width: 9, height: 7, rx: 2, fill: "#eceff1", stroke: "#90a4ae" }, g);
-  const item = { g, bulbs, lit: false };
-  g.addEventListener("click", () => toggleLights(item));
+  const item = { g, bulbs, lit: false, x, y };
+  makeMovable(item, () => toggleLights(item));
   g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400 });
   deco.placedL.push(item);
 }
@@ -1071,8 +1138,8 @@ function toggleLights(item, force) {
 }
 function checkReady() {
   const left = $("tray").children.length;
-  if (left) { $("decInstr").textContent = `${left} more to put on. Tap the little button on each one to light it up!`; return; }
-  $("decInstr").textContent = "All on! Tap the buttons to light them, then flick the switch at the back 🔌";
+  if (left) { $("decInstr").textContent = `${left} more to go! Drag them anywhere. Move them around, or tap one to light it up.`; return; }
+  $("decInstr").textContent = "All on! Drag to move them, tap to light them, then flick the switch at the back 🔌";
   $("switchBtn").disabled = false; $("switchBtn").classList.add("ready");
 }
 $("switchBtn").addEventListener("click", () => {
