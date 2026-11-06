@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d2e">
+<script>
+// Phones in Chrome's "Desktop site" mode lay pages out ~980px wide; zoom back up to fit.
+(function () {
+  function fit() {
+    var sw = screen.width;
+    var z = navigator.maxTouchPoints > 0 && sw < 760 && innerWidth > sw * 1.2 ? innerWidth / sw : 1;
+    document.documentElement.style.zoom = z === 1 ? "" : z;
+    window.PAGE_ZOOM = z;
+  }
+  fit();
+  addEventListener("resize", fit);
+})();
+</script>
+<title>Hazel's Christmas Tree Maze</title>
+<style>
+  :root { --night: #0b1d33; --pine: #0b3d2e; --gold: #ffd54a; --red: #e53935; --snow: #f4f8fb; --ink: #13202b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--night); color: #fff; font-family: "Trebuchet MS", "Segoe UI", Roboto, Arial, sans-serif; overflow: hidden; overscroll-behavior: none; }
+  button { font-family: inherit; cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ---------- falling snow ---------- */
+  .snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .flake { position: absolute; top: -10px; color: #fff; opacity: .8; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translateY(110vh) translateX(30px); } }
+
+  /* ---------- start screen ---------- */
+  #start { align-items: center; justify-content: center; text-align: center; padding: calc(48px + env(safe-area-inset-top)) 20px 20px; overflow-y: auto; background: radial-gradient(circle at 50% 0%, #1f4f7a, var(--night) 70%); }
+  #start > *:not(.back-link) { position: relative; z-index: 1; }
+  .title-tree { font-size: 64px; filter: drop-shadow(0 0 18px rgba(255,213,74,.6)); }
+  #start h1 { font-size: clamp(28px, 8vw, 46px); line-height: 1.05; margin: 6px 0 4px; color: var(--gold); text-shadow: 0 3px 0 #a33; }
+  #start .sub { color: #cfe3f5; font-size: 15px; max-width: 360px; margin: 0 auto 16px; line-height: 1.4; }
+  .team { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+  .member { background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.15); border-radius: 14px; padding: 8px 6px; width: 104px; }
+  .member button.face { font-size: 48px; background: none; border: none; line-height: 1.1; }
+  .member input { width: 100%; text-align: center; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.2); color: #fff; border-radius: 8px; padding: 5px 2px; font-size: 14px; font-weight: 700; }
+  .member small { display: block; font-size: 10px; color: #9fb7cc; margin-top: 3px; }
+  .modes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .mode { border: none; border-radius: 16px; padding: 14px 18px; min-width: 150px; font-size: 18px; font-weight: 800; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.35); }
+  .mode small { display: block; font-size: 12px; font-weight: 600; opacity: .9; margin-top: 2px; }
+  .mode.easy { background: #2e9d4f; }
+  .mode.hard { background: #c62828; }
+  .mode:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+  .how { margin-top: 16px; font-size: 13px; color: #9fb7cc; line-height: 1.6; max-width: 380px; }
+  .back-link { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 12px; color: #cfe3f5; text-decoration: none; font-size: 14px; z-index: 2; }
+
+  /* ---------- game screen ---------- */
+  #game { background: var(--night); }
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: rgba(0,0,0,.35); font-weight: 800; font-size: 16px; z-index: 2; }
+  .hud .pill { background: rgba(255,255,255,.12); border-radius: 99px; padding: 5px 11px; white-space: nowrap; }
+  .hud button { background: rgba(255,255,255,.12); border: none; color: #fff; border-radius: 10px; width: 38px; height: 34px; font-size: 18px; }
+  #board { flex: 1; position: relative; overflow: hidden; touch-action: none; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #toast { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 15px; opacity: 0; transition: opacity .25s; pointer-events: none; text-align: center; max-width: 90%; }
+  #toast.show { opacity: 1; }
+  .hint-swipe { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.55); padding: 8px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; pointer-events: none; transition: opacity .6s; }
+  .emotes { display: flex; gap: 6px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: rgba(0,0,0,.35); z-index: 2; }
+  .emote { flex: 1; border: none; border-radius: 12px; background: rgba(255,255,255,.12); color: #fff; padding: 6px 2px; font-size: 11px; font-weight: 700; line-height: 1.15; }
+  .emote span { display: block; font-size: 24px; }
+  .emote:active { background: rgba(255,255,255,.28); transform: scale(.95); }
+
+  /* ---------- overlays ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(5,12,24,.82); display: none; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
+  .overlay.open { display: flex; }
+  .card { background: #fff; color: var(--ink); border-radius: 22px; padding: 22px 18px; text-align: center; max-width: 360px; width: 100%; }
+  .card h2 { font-size: 26px; margin-bottom: 6px; }
+  .card p { color: #4a5a68; margin-bottom: 14px; line-height: 1.4; }
+  .big-btn { border: none; border-radius: 14px; background: #2e9d4f; color: #fff; font-size: 18px; font-weight: 800; padding: 13px 22px; box-shadow: 0 4px 0 #1d6b35; margin: 4px; }
+  .big-btn.alt { background: #607d8b; box-shadow: 0 4px 0 #3d5560; }
+  .big-btn:active { transform: translateY(3px); box-shadow: none; }
+
+  /* fight */
+  #fight { flex-direction: column; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  #fight .vs { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 76px; margin: 10px 0; }
+  #fightWolf { display: inline-block; transition: transform .1s; }
+  #fightHero { display: inline-block; }
+  #fightHero.kick { animation: kick .18s; }
+  #fightWolf.hit { animation: hit .18s; }
+  @keyframes kick { 50% { transform: translateX(30px) rotate(-25deg); } }
+  @keyframes hit { 50% { transform: translateX(16px) rotate(12deg) scale(.92); } }
+  #fight h2 { font-size: 28px; color: var(--gold); text-align: center; }
+  #fight p { color: #cfe3f5; text-align: center; margin: 4px 0 14px; font-weight: 700; }
+  .meter { width: min(320px, 85vw); height: 20px; background: rgba(255,255,255,.15); border-radius: 99px; overflow: hidden; margin: 6px auto; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffd54a, #ff7043); }
+  .meter.time i { background: #64b5f6; }
+  .tap-zone { margin-top: 16px; width: min(260px, 70vw); height: min(260px, 70vw); border-radius: 50%; border: none; background: radial-gradient(circle, #ff7043, #c62828); color: #fff; font-size: 30px; font-weight: 900; box-shadow: 0 8px 0 #7f1d1d, 0 0 40px rgba(255,112,67,.5); }
+  .tap-zone:active { transform: translateY(5px) scale(.98); box-shadow: 0 3px 0 #7f1d1d; }
+
+  /* ---------- decorate screen ---------- */
+  #decorate { background: radial-gradient(circle at 50% 30%, #23466b, #0b1d33 75%); align-items: center; }
+  #decorate h2 { margin-top: calc(10px + env(safe-area-inset-top)); font-size: 22px; color: var(--gold); text-align: center; padding: 0 12px; }
+  #decorate .instr { font-size: 14px; color: #cfe3f5; text-align: center; padding: 2px 16px 0; min-height: 36px; }
+  .tree-wrap { position: relative; flex: 1; width: 100%; max-width: 460px; min-height: 0; }
+  #treeSvg { width: 100%; height: 100%; display: block; }
+  .tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 8px 10px; min-height: 64px; background: rgba(0,0,0,.3); width: 100%; }
+  .tray button { width: 52px; height: 52px; border-radius: 14px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); font-size: 28px; }
+  .tray button:active { transform: scale(.92); }
+  .switch-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 10px calc(12px + env(safe-area-inset-bottom)); width: 100%; }
+  #switchBtn { border: none; border-radius: 16px; padding: 12px 18px; font-size: 17px; font-weight: 900; background: #455a64; color: #fff; box-shadow: 0 4px 0 #263238; }
+  #switchBtn.ready { background: #ff8f00; box-shadow: 0 4px 0 #b35f00; animation: pulse 1.2s infinite; }
+  #switchBtn.on { background: #2e9d4f; box-shadow: 0 4px 0 #1d6b35; animation: none; }
+  @keyframes pulse { 50% { transform: scale(1.06); } }
+  .bulb-glow { filter: url(#glow); }
+  .twinkle { animation: tw 1.1s ease-in-out infinite alternate; }
+  @keyframes tw { from { opacity: .45; } to { opacity: 1; } }
+  .win-banner { background: rgba(0,0,0,.4); border-radius: 16px; padding: 10px 16px; text-align: center; display: none; width: calc(100% - 20px); max-width: 440px; margin-top: 6px; }
+  .win-banner.show { display: block; animation: drop .6s cubic-bezier(.2,1.4,.4,1); }
+  .win-banner b { font-size: 20px; color: var(--gold); display: block; }
+  @keyframes drop { from { transform: translateY(30px); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="snow" id="snow"></div>
+
+<!-- ================= START ================= -->
+<section class="screen active" id="start">
+  <a class="back-link" href="index.html">← All games</a>
+  <div class="title-tree">🎄</div>
+  <h1>Hazel's Christmas<br>Tree Maze</h1>
+  <p class="sub">The maze is made of plain Christmas trees. Find all the baubles and lights, beat the wolves, and decorate <b>your</b> tree at the end!</p>
+  <div class="team" id="team"></div>
+  <div class="modes">
+    <button class="mode easy" data-mode="easy">🧒 Kids mode<small>Path glows green or red</small></button>
+    <button class="mode hard" data-mode="hard">🧑 Grown-ups mode<small>Bigger maze, no help</small></button>
+  </div>
+  <p class="how">👆 <b>Swipe</b> to walk (arrow keys on a computer)<br>🔑 Keys hide at dead ends and open the doors<br>🐺 Tap really fast to karate kick the wolves<br>❤️ You have 20 lives</p>
+</section>
+
+<!-- ================= GAME ================= -->
+<section class="screen" id="game">
+  <div class="hud">
+    <span class="pill" id="hudLives">❤️ 20</span>
+    <span class="pill" id="hudDeco">🎁 0/0</span>
+    <span class="pill" id="hudKeys">🔑 0</span>
+    <button id="muteBtn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div id="board">
+    <canvas id="cv"></canvas>
+    <div id="toast"></div>
+    <div class="hint-swipe" id="swipeHint">👆 Swipe to walk through the maze</div>
+  </div>
+  <div class="emotes">
+    <button class="emote" data-say="Wolves! I'm surprised!"><span>😲</span>Surprised</button>
+    <button class="emote" data-say="Oh no, that's scary!"><span>😱</span>Scary</button>
+    <button class="emote" data-say="Get out of here!"><span>😠</span>Get out!</button>
+    <button class="emote" data-say="I'm so scared!"><span>😨</span>So scared</button>
+  </div>
+</section>
+
+<!-- ================= DECORATE ================= -->
+<section class="screen" id="decorate">
+  <h2>🎄 Decorate your tree!</h2>
+  <p class="instr" id="decInstr">Tap a bauble or light below to put it on the tree.</p>
+  <div class="tree-wrap">
+    <svg id="treeSvg" viewBox="0 0 300 330" aria-label="Your Christmas tree"></svg>
+  </div>
+  <div class="tray" id="tray"></div>
+  <div class="win-banner" id="winBanner"></div>
+  <div class="switch-row">
+    <button id="switchBtn" disabled>🔌 Switch at the back</button>
+    <button class="big-btn alt" id="againBtn" style="display:none">Play again</button>
+  </div>
+</section>
+
+<!-- ================= OVERLAYS ================= -->
+<div class="overlay" id="fight">
+  <h2>🐺 A wolf is guarding the door!</h2>
+  <p>Tap the button really fast to karate kick it away!</p>
+  <div class="vs"><span id="fightHero">🥋</span><span id="fightWolf">🐺</span></div>
+  <div class="meter"><i id="kickBar"></i></div>
+  <div class="meter time"><i id="timeBar"></i></div>
+  <button class="tap-zone" id="tapZone">TAP!<br>🦶</button>
+</div>
+
+<div class="overlay" id="msg">
+  <div class="card">
+    <div style="font-size:54px" id="msgIcon"></div>
+    <h2 id="msgTitle"></h2>
+    <p id="msgText"></p>
+    <div id="msgBtns"></div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+//  SETUP
+// =====================================================================
+const $ = id => document.getElementById(id);
+// ---------- cartoon characters (drawn, not photos) ----------
+function drawAvatar(kind) {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const circle = (x, y, r, fill) => { g.fillStyle = fill; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); };
+  const look = {
+    hazel: { skin: "#f7d6c4", shirt: "#c7b2e8", hair: "#d8b06a" },
+    knight: { skin: "#dfb38f", shirt: "#d42a2f", hair: null },
+    mo: { skin: "#f0c3a4", shirt: "#c9775d", hair: "#86643f" },
+  }[kind];
+  // long hair behind the head
+  if (kind === "hazel") {
+    g.fillStyle = look.hair; g.beginPath();
+    g.moveTo(30, 52); g.quadraticCurveTo(30, 18, 64, 18); g.quadraticCurveTo(98, 18, 98, 52);
+    g.lineTo(104, 120); g.lineTo(24, 120); g.closePath(); g.fill();
+  }
+  // shoulders + shirt
+  g.fillStyle = look.shirt; g.beginPath(); g.moveTo(14, 128); g.quadraticCurveTo(18, 92, 64, 90); g.quadraticCurveTo(110, 92, 114, 128); g.closePath(); g.fill();
+  if (kind === "hazel") [[34, 112], [52, 104], [78, 106], [96, 116], [64, 122]].forEach(([x, y]) => { for (let a = 0; a < 5; a++) circle(x + Math.cos(a * 1.26) * 4, y + Math.sin(a * 1.26) * 4, 3, "#fff"); circle(x, y, 2.4, "#b79ad9"); });
+  if (kind === "knight") {
+    g.fillStyle = "#1f4fbf"; g.fillRect(16, 104, 18, 8); g.fillRect(94, 104, 18, 8);   // blue shoulder trim
+    g.fillStyle = "#2fa84f"; g.fillRect(40, 108, 48, 14);                            // green chest band
+    g.fillStyle = "#fff"; g.beginPath(); g.ellipse(64, 93, 16, 6, 0, 0, Math.PI); g.fill(); // white collar
+  }
+  if (kind === "mo") { g.fillStyle = "#b9654c"; g.beginPath(); g.ellipse(64, 94, 14, 5, 0, 0, Math.PI); g.fill(); }
+  // neck, ears, head
+  g.fillStyle = look.skin; g.fillRect(56, 78, 16, 16);
+  circle(34, 58, 7, look.skin); circle(94, 58, 7, look.skin);
+  circle(64, 55, 30, look.skin);
+  if (kind === "knight") { circle(54, 36, 7, "rgba(255,255,255,.35)"); // shiny bald head
+    g.fillStyle = "rgba(90,70,60,.28)"; g.beginPath(); g.arc(64, 58, 29, 0.15 * Math.PI, 0.85 * Math.PI); g.lineTo(46, 66); g.quadraticCurveTo(64, 74, 82, 66); g.closePath(); g.fill(); }
+  if (kind === "hazel") { // fringe
+    g.fillStyle = look.hair; g.beginPath(); g.moveTo(34, 50); g.quadraticCurveTo(36, 22, 64, 22); g.quadraticCurveTo(92, 22, 94, 50);
+    g.quadraticCurveTo(80, 36, 66, 38); g.quadraticCurveTo(50, 36, 34, 50); g.fill();
+  }
+  if (kind === "mo") { // side-parted hair
+    g.fillStyle = look.hair; g.beginPath(); g.moveTo(34, 50); g.quadraticCurveTo(32, 22, 62, 21); g.quadraticCurveTo(96, 20, 95, 48);
+    g.quadraticCurveTo(88, 34, 70, 34); g.quadraticCurveTo(52, 32, 42, 42); g.quadraticCurveTo(38, 46, 34, 50); g.fill();
+  }
+  // eyes, cheeks, smile
+  circle(53, 56, 3.4, "#2b2b2b"); circle(75, 56, 3.4, "#2b2b2b");
+  circle(46, 66, 5, "rgba(240,128,128,.35)"); circle(82, 66, 5, "rgba(240,128,128,.35)");
+  if (kind === "mo") { g.fillStyle = "#6b4a2b"; g.beginPath(); g.ellipse(64, 67, 11, 3.5, 0, 0, Math.PI * 2); g.fill(); }
+  g.strokeStyle = "#8a3b3b"; g.lineWidth = 3; g.lineCap = "round"; g.beginPath(); g.arc(64, 64, 10, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+  if (kind !== "mo") { g.fillStyle = "#fff"; g.beginPath(); g.arc(64, 65, 7, 0.15 * Math.PI, 0.85 * Math.PI); g.fill(); }
+  const img = new Image(); img.src = c.toDataURL(); return img;
+}
+const AVATARS = { "avatar:hazel": drawAvatar("hazel"), "avatar:knight": drawAvatar("knight"), "avatar:mo": drawAvatar("mo") };
+const FACES = ["avatar:hazel", "avatar:knight", "avatar:mo", "👧", "👦", "🧒", "👩", "👨", "🧔", "👱‍♀️", "👩‍🦰", "🧑‍🦱", "👵", "👴", "🎅", "🤶", "🧝", "🦸"];
+const faceHTML = f => AVATARS[f] ? `<img src="${AVATARS[f].src}" alt="" style="width:1em;height:1em;vertical-align:middle">` : f;
+const TEAM = [
+  { name: "Hazel", face: "avatar:hazel", pitch: 1.6 },
+  { name: "Uncle Jazz", face: "avatar:knight", pitch: 0.8 },
+  { name: "Grown-up", face: "avatar:mo", pitch: 1.05 },
+];
+try { const saved = JSON.parse(localStorage.getItem("xmas-maze-team2")); if (saved && saved.length === 3) saved.forEach((s, i) => Object.assign(TEAM[i], { name: s.name, face: FACES.includes(s.face) ? s.face : TEAM[i].face })); } catch (e) {}
+function saveTeam() { try { localStorage.setItem("xmas-maze-team2", JSON.stringify(TEAM.map(t => ({ name: t.name, face: t.face })))); } catch (e) {} }
+
+function renderTeam() {
+  $("team").innerHTML = TEAM.map((t, i) => `<div class="member">
+    <button class="face" data-i="${i}" aria-label="Change look">${faceHTML(t.face)}</button>
+    <input data-i="${i}" value="${t.name}" maxlength="12" aria-label="Name">
+    <small>${["Leads the way", "Second in line", "Third in line"][i]} · tap to change look</small></div>`).join("");
+}
+renderTeam();
+$("team").addEventListener("click", e => {
+  const b = e.target.closest(".face");
+  if (!b) return;
+  const t = TEAM[+b.dataset.i];
+  t.face = FACES[(FACES.indexOf(t.face) + 1) % FACES.length];
+  b.innerHTML = faceHTML(t.face); saveTeam();
+});
+$("team").addEventListener("input", e => {
+  if (e.target.tagName !== "INPUT") return;
+  TEAM[+e.target.dataset.i].name = e.target.value.trim() || ["Hazel", "Uncle Jazz", "Grown-up"][+e.target.dataset.i];
+  saveTeam();
+});
+
+// falling snow
+(function () {
+  const s = $("snow");
+  for (let i = 0; i < 26; i++) {
+    const f = document.createElement("span");
+    f.className = "flake"; f.textContent = "❄";
+    f.style.left = Math.random() * 100 + "%";
+    f.style.fontSize = 8 + Math.random() * 12 + "px";
+    f.style.animationDuration = 6 + Math.random() * 8 + "s";
+    f.style.animationDelay = -Math.random() * 12 + "s";
+    s.appendChild(f);
+  }
+})();
+
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id)); $("snow").style.display = id === "game" ? "none" : ""; }
+let toastT;
+function toast(text, ms = 1800) { const t = $("toast"); t.textContent = text; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
+function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// =====================================================================
+//  SOUND (all made with Web Audio, no files needed)
+// =====================================================================
+let AC = null, muted = false;
+function audio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === "suspended") AC.resume();
+  return AC;
+}
+function tone(freq, start, dur, type = "sine", vol = 0.2, endFreq) {
+  const ac = audio(); if (!ac || muted) return;
+  const t = ac.currentTime + start, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur, filterFreq, vol = 0.3, start = 0, type = "lowpass") {
+  const ac = audio(); if (!ac || muted) return null;
+  const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(), t = ac.currentTime + start;
+  src.buffer = buf; f.type = type; f.frequency.value = filterFreq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(g).connect(ac.destination); src.start(t);
+  return { src, g, t };
+}
+const SFX = {
+  pickup() { tone(880, 0, .12, "sine", .25); tone(1320, .08, .18, "sine", .22); },
+  key() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, i * .07, .2, "triangle", .2)); },
+  unlock() { tone(220, 0, .15, "square", .15); tone(330, .12, .25, "triangle", .2); tone(140, .3, .5, "sawtooth", .06, 320); },
+  locked() { tone(200, 0, .15, "square", .12); tone(160, .15, .2, "square", .12); },
+  kick() { noise(.09, 1800, .4, 0, "bandpass"); tone(320, 0, .1, "triangle", .2, 90); },
+  hurt() { tone(500, 0, .2, "square", .12, 250); tone(250, .2, .35, "square", .12, 110); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .1, .3, "triangle", .2)); },
+  growl() {
+    const ac = audio(); if (!ac || muted) return;
+    const n = noise(1.3, 380, .55); if (!n) return;
+    const lfo = ac.createOscillator(), lg = ac.createGain();
+    lfo.frequency.value = 28; lg.gain.value = .35; lfo.connect(lg).connect(n.g.gain); lfo.start(n.t); lfo.stop(n.t + 1.3);
+    tone(70, 0, 1.2, "sawtooth", .08, 55);
+  },
+  howl() {
+    const ac = audio(); if (!ac || muted) return;
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(), v = ac.createOscillator(), vg = ac.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(330, t); o.frequency.linearRampToValueAtTime(720, t + .7); o.frequency.linearRampToValueAtTime(560, t + 1.9);
+    v.frequency.value = 6; vg.gain.value = 14; v.connect(vg).connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.16, t + .25); g.gain.setValueAtTime(.16, t + 1.5); g.gain.exponentialRampToValueAtTime(.0001, t + 2.1);
+    o.connect(g).connect(ac.destination); o.start(t); v.start(t); o.stop(t + 2.2); v.stop(t + 2.2);
+  },
+  jingle() { // Jingle Bells
+    const E = 659, G = 784, C = 523, D = 587, F = 698, q = .22;
+    const notes = [[E, 1], [E, 1], [E, 2], [E, 1], [E, 1], [E, 2], [E, 1], [G, 1], [C, 1.5], [D, .5], [E, 4], [F, 1], [F, 1], [F, 1.5], [F, .5], [F, 1], [E, 1], [E, 1], [E, .5], [E, .5], [E, 1], [D, 1], [D, 1], [E, 1], [D, 2], [G, 2]];
+    let t = 0;
+    notes.forEach(([f, l]) => { tone(f, t, l * q * .95, "triangle", .18); tone(f / 2, t, l * q * .95, "sine", .07); t += l * q; });
+  },
+};
+function say(text, who) {
+  if (muted || !("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.pitch = who ? who.pitch : 1; u.rate = 1.05; u.lang = "en-AU";
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+$("muteBtn").addEventListener("click", () => { muted = !muted; $("muteBtn").textContent = muted ? "🔇" : "🔊"; if (muted && window.speechSynthesis) speechSynthesis.cancel(); });
+
+// =====================================================================
+//  MAZE
+// =====================================================================
+const MODES = {
+  easy: { w: 7, h: 9, doors: 2, baubles: 4, lights: 2, taps: 12, time: 6, hints: true },
+  hard: { w: 11, h: 13, doors: 3, baubles: 6, lights: 4, taps: 22, time: 5, hints: false },
+};
+const BAUBLE_COLOURS = ["#d4a937", "#b87333", "#e8cf8a", "#1e1e1e", "#c9a227", "#d32f2f", "#90caf9", "#a0703a"];
+const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+let G = null; // the current game
+
+function buildMaze(cw, ch) {
+  const W = cw * 2 + 1, H = ch * 2 + 1;
+  const wall = Array.from({ length: H }, () => Array(W).fill(1));
+  const seen = Array.from({ length: ch }, () => Array(cw).fill(false));
+  const stack = [[0, 0]]; seen[0][0] = true; wall[1][1] = 0;
+  while (stack.length) {
+    const [cx, cy] = stack[stack.length - 1];
+    const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => {
+      const nx = cx + dx, ny = cy + dy;
+      return nx >= 0 && ny >= 0 && nx < cw && ny < ch && !seen[ny][nx];
+    });
+    if (!opts.length) { stack.pop(); continue; }
+    const [dx, dy] = opts[Math.floor(Math.random() * opts.length)];
+    const nx = cx + dx, ny = cy + dy;
+    seen[ny][nx] = true;
+    wall[cy * 2 + 1 + dy][cx * 2 + 1 + dx] = 0;
+    wall[ny * 2 + 1][nx * 2 + 1] = 0;
+    stack.push([nx, ny]);
+  }
+  return { W, H, wall };
+}
+
+// BFS over open tiles; blocked(x,y) can close extra tiles. Returns distance grid and parents.
+function bfs(m, sx, sy, blocked) {
+  const dist = Array.from({ length: m.H }, () => Array(m.W).fill(-1)), par = {};
+  const q = [[sx, sy]]; dist[sy][sx] = 0;
+  for (let i = 0; i < q.length; i++) {
+    const [x, y] = q[i];
+    for (const [dx, dy] of Object.values(DIRS)) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= m.W || ny >= m.H || m.wall[ny][nx] || dist[ny][nx] >= 0) continue;
+      if (blocked && blocked(nx, ny)) continue;
+      dist[ny][nx] = dist[y][x] + 1; par[nx + "," + ny] = [x, y]; q.push([nx, ny]);
+    }
+  }
+  return { dist, par };
+}
+
+function newGame(mode) {
+  const cfg = MODES[mode];
+  const m = buildMaze(cfg.w, cfg.h);
+  const start = [1, 1];
+  // home = the cell furthest from the start
+  const d0 = bfs(m, 1, 1).dist;
+  let home = start, best = -1;
+  for (let y = 1; y < m.H; y += 2) for (let x = 1; x < m.W; x += 2) if (d0[y][x] > best) { best = d0[y][x]; home = [x, y]; }
+  // the main path from start to home
+  const par = bfs(m, 1, 1).par, path = [];
+  for (let p = home; p; p = par[p[0] + "," + p[1]]) path.unshift(p);
+  // doors go on passage tiles along the main path, evenly spaced
+  const doors = [];
+  for (let k = 1; k <= cfg.doors; k++) {
+    let i = Math.floor(path.length * k / (cfg.doors + 1));
+    while (i < path.length - 1 && (path[i][0] % 2 === 1 && path[i][1] % 2 === 1)) i++; // passage tiles have one even coordinate
+    doors.push({ x: path[i][0], y: path[i][1], wolf: true, locked: true, howled: 0 });
+  }
+  const doorAt = (x, y) => doors.find(dd => dd.x === x && dd.y === y);
+  // section of every cell = number of doors between it and the start
+  const section = Array.from({ length: m.H }, () => Array(m.W).fill(-1));
+  const q = [[1, 1]]; section[1][1] = 0;
+  for (let i = 0; i < q.length; i++) {
+    const [x, y] = q[i];
+    for (const [dx, dy] of Object.values(DIRS)) {
+      const nx = x + dx, ny = y + dy;
+      if (m.wall[ny][nx] || section[ny][nx] >= 0) continue;
+      section[ny][nx] = section[y][x] + (doorAt(nx, ny) ? 1 : 0); q.push([nx, ny]);
+    }
+  }
+  const onPath = new Set(path.map(p => p + ""));
+  const cells = [];
+  for (let y = 1; y < m.H; y += 2) for (let x = 1; x < m.W; x += 2) {
+    const exits = Object.values(DIRS).filter(([dx, dy]) => !m.wall[y + dy][x + dx]).length;
+    cells.push({ x, y, s: section[y][x], dead: exits === 1, path: onPath.has([x, y] + "") });
+  }
+  const used = new Set([start + "", home + ""]);
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function pickCell(s, preferDead) {
+    const pool = shuffle(cells.filter(c => c.s === s && !used.has([c.x, c.y] + "")));
+    const c = (preferDead ? pool.find(c => c.dead && !c.path) : null) || pool.find(c => !c.path) || pool[0];
+    if (c) used.add([c.x, c.y] + "");
+    return c;
+  }
+  const items = [];
+  doors.forEach((_, k) => { const c = pickCell(k, true); if (c) items.push({ x: c.x, y: c.y, type: "key" }); });
+  const decos = [];
+  for (let i = 0; i < cfg.baubles; i++) decos.push({ type: "bauble", colour: BAUBLE_COLOURS[i % BAUBLE_COLOURS.length] });
+  for (let i = 0; i < cfg.lights; i++) decos.push({ type: "lights" });
+  shuffle(decos).forEach((dc, i) => {
+    const c = pickCell(i % (cfg.doors + 1), Math.random() < .6) || pickCell(0, false);
+    if (c) items.push(Object.assign({ x: c.x, y: c.y }, dc));
+  });
+
+  G = {
+    mode, cfg, m, start, home, doors, items, lives: 20, keys: 0, got: [],
+    total: decos.length, pos: [1, 1], trail: [[1, 1], [1, 1], [1, 1]], moving: null, dir: null, queued: null,
+    glow: [], bubbles: [], over: false, startTime: Date.now(), target: null, field: null, lastHowl: 0,
+  };
+  updateHud();
+  computeTarget();
+  show("game");
+  resize();
+  $("swipeHint").style.opacity = 1;
+  setTimeout(() => { $("swipeHint").style.opacity = 0; }, 5000);
+  setTimeout(() => toast(`Find ${G.total} decorations for your tree! 🎁`, 2600), 400);
+}
+
+const isDoorClosed = (x, y) => G.doors.some(d => d.x === x && d.y === y && (d.wolf || d.locked));
+function updateHud() {
+  $("hudLives").textContent = "❤️ " + G.lives;
+  $("hudDeco").textContent = `🎁 ${G.got.length}/${G.total}`;
+  $("hudKeys").textContent = "🔑 " + G.keys;
+}
+
+// Kids mode: work out where to head next, then a distance map to it.
+function computeTarget() {
+  if (!G.cfg.hints) return;
+  const reach = bfs(G.m, G.pos[0], G.pos[1], isDoorClosed).dist;
+  let best = null, bd = Infinity;
+  G.items.forEach(it => { const d = reach[it.y][it.x]; if (d >= 0 && d < bd) { bd = d; best = [it.x, it.y]; } });
+  if (!best) {
+    G.doors.forEach(d => {
+      if (!(d.wolf || d.locked)) return;
+      const near = Object.values(DIRS).some(([dx, dy]) => reach[d.y + dy] && reach[d.y + dy][d.x + dx] >= 0);
+      if (near && !best) best = [d.x, d.y];
+    });
+  }
+  if (!best) best = G.home;
+  G.target = best;
+  G.field = bfs(G.m, best[0], best[1], (x, y) => isDoorClosed(x, y) && !(x === G.pos[0] && y === G.pos[1])).dist;
+}
+
+// =====================================================================
+//  MOVEMENT
+// =====================================================================
+const STEP_MS = 120;
+function tryMove(dirName) {
+  if (!G || G.over || $("fight").classList.contains("open")) return;
+  if (G.moving) { G.queued = dirName; return; }
+  G.dir = dirName;
+  step();
+}
+function openDir(x, y, name) { const [dx, dy] = DIRS[name]; return !G.m.wall[y + dy][x + dx]; }
+
+function step() {
+  const [x, y] = G.pos, [dx, dy] = DIRS[G.dir], nx = x + dx, ny = y + dy;
+  if (G.m.wall[ny][nx]) { G.dir = null; return; }
+  const door = G.doors.find(d => d.x === nx && d.y === ny && (d.wolf || d.locked));
+  if (door) { G.dir = null; meetDoor(door); return; }
+  G.moving = { from: [x, y], to: [nx, ny], t0: performance.now() };
+  // hint glow: closer to the target = green, further = red
+  if (G.cfg.hints && G.field) {
+    const before = G.field[y][x], after = G.field[ny][nx];
+    if (before >= 0 && after >= 0) G.glow.push({ x: nx, y: ny, good: after < before, t: performance.now() });
+  }
+}
+
+function arrive() {
+  const [x, y] = G.moving.to;
+  G.pos = [x, y];
+  G.trail.unshift([x, y]); G.trail.length = 3;
+  G.moving = null;
+  // pick things up
+  const i = G.items.findIndex(it => it.x === x && it.y === y);
+  let stop = false;
+  if (i >= 0) {
+    const it = G.items.splice(i, 1)[0];
+    if (it.type === "key") { G.keys++; SFX.key(); toast("You found a key! 🔑 Now find its door."); }
+    else { G.got.push(it); SFX.pickup(); toast(it.type === "lights" ? `A string of lights! 💡 (${G.got.length}/${G.total})` : `A shiny bauble! (${G.got.length}/${G.total})`); }
+    buzz(30); updateHud(); computeTarget(); stop = true;
+  }
+  if (x === G.home[0] && y === G.home[1]) { reachHome(); return; }
+  wolfHowls();
+  // turn if the player swiped while walking
+  if (G.queued && openDir(x, y, G.queued) && !(G.m.wall[y + DIRS[G.queued][1]][x + DIRS[G.queued][0]])) { G.dir = G.queued; G.queued = null; step(); return; }
+  G.queued = null;
+  if (stop || !G.dir) return;
+  // keep walking until a junction or a dead end
+  const exits = Object.keys(DIRS).filter(n => openDir(x, y, n));
+  const isCell = x % 2 === 1 && y % 2 === 1;
+  if (isCell && exits.length !== 2) { G.dir = null; return; }
+  if (!openDir(x, y, G.dir)) {
+    const back = { up: "down", down: "up", left: "right", right: "left" }[G.dir];
+    const turn = exits.find(n => n !== back);
+    if (!turn || exits.length !== 2) { G.dir = null; return; }
+    G.dir = turn; // follow the corner
+  }
+  step();
+}
+
+function wolfHowls() {
+  const now = Date.now();
+  G.doors.forEach(d => {
+    if (!d.wolf) return;
+    const dist = Math.abs(d.x - G.pos[0]) + Math.abs(d.y - G.pos[1]);
+    if (dist <= 5 && now - d.howled > 9000 && now - G.lastHowl > 3000) {
+      d.howled = now; G.lastHowl = now; SFX.howl(); toast("🐺 Awoooo! A wolf is near…", 2000);
+    }
+  });
+}
+
+function meetDoor(door) {
+  if (door.wolf) { startFight(door); return; }
+  if (G.keys > 0) {
+    G.keys--; door.locked = false; SFX.unlock(); buzz([40, 40, 40]);
+    toast("The door is open! 🚪 A new part of the maze!", 2200);
+    updateHud(); drawMazeLayer(); computeTarget();
+  } else {
+    SFX.locked(); toast("It's locked! Find the key 🔑 — try the dead ends.", 2200);
+  }
+}
+
+function reachHome() {
+  G.dir = null;
+  if (G.got.length < G.total) {
+    toast(`Your tree! But you still need ${G.total - G.got.length} more decoration${G.total - G.got.length === 1 ? "" : "s"}.`, 2600);
+    return;
+  }
+  G.over = true;
+  SFX.win();
+  setTimeout(startDecorating, 700);
+}
+
+// =====================================================================
+//  WOLF FIGHT
+// =====================================================================
+let fight = null;
+function startFight(door) {
+  G.dir = null; G.queued = null;
+  fight = { door, taps: 0, need: G.cfg.taps, end: performance.now() + G.cfg.time * 1000, done: false };
+  $("kickBar").style.width = "0%"; $("timeBar").style.width = "100%";
+  $("fightHero").innerHTML = faceHTML(TEAM[0].face) + "<small style='font-size:.5em'>🥋</small>";
+  $("fightWolf").style.transform = "";
+  $("fight").classList.add("open");
+  SFX.growl(); buzz(80);
+  requestAnimationFrame(fightTick);
+}
+function fightTick() {
+  if (!fight || fight.done) return;
+  const left = fight.end - performance.now();
+  $("timeBar").style.width = Math.max(0, 100 * left / (G.cfg.time * 1000)) + "%";
+  if (left <= 0) return endFight(false);
+  requestAnimationFrame(fightTick);
+}
+$("tapZone").addEventListener("pointerdown", e => {
+  e.preventDefault();
+  if (!fight || fight.done) return;
+  fight.taps++;
+  SFX.kick(); buzz(15);
+  const h = $("fightHero"), w = $("fightWolf");
+  h.classList.remove("kick"); w.classList.remove("hit"); void h.offsetWidth; h.classList.add("kick"); w.classList.add("hit");
+  $("kickBar").style.width = Math.min(100, 100 * fight.taps / fight.need) + "%";
+  if (fight.taps % 6 === 0) SFX.growl();
+  if (fight.taps >= fight.need) endFight(true);
+});
+function endFight(won) {
+  fight.done = true;
+  const door = fight.door;
+  if (won) {
+    $("fightWolf").style.transform = "translateX(120vw) rotate(540deg)";
+    $("fightWolf").style.transition = "transform .8s ease-in";
+    say("Get out of here!", TEAM[0]);
+    tone(900, 0, .5, "sine", .15, 300);
+    setTimeout(() => {
+      $("fight").classList.remove("open"); $("fightWolf").style.transition = "";
+      door.wolf = false; drawMazeLayer(); computeTarget();
+      toast(door.locked ? "Hi-yah! The wolf ran away! Now unlock the door 🔑" : "Hi-yah! The wolf ran away!", 2400);
+    }, 900);
+  } else {
+    G.lives--; updateHud(); SFX.hurt(); buzz([100, 60, 100]);
+    $("fight").classList.remove("open");
+    // pushed back one step
+    const prev = G.trail[1];
+    if (prev && (prev[0] !== G.pos[0] || prev[1] !== G.pos[1])) { G.pos = prev.slice(); G.trail = [prev.slice(), prev.slice(), prev.slice()]; }
+    if (G.lives <= 0) { gameOver(); return; }
+    toast(`The wolf pushed you back! ❤️ ${G.lives} ${G.lives === 1 ? "life" : "lives"} left. Tap faster!`, 2400);
+  }
+  fight = null;
+}
+
+function gameOver() {
+  G.over = true;
+  showMsg("💔", "Out of lives!", "The wolves were too tough this time. Have another go!", [["Try again", () => newGame(G.mode)], ["Menu", () => show("start"), true]]);
+}
+function showMsg(icon, title, text, buttons) {
+  $("msgIcon").textContent = icon; $("msgTitle").textContent = title; $("msgText").textContent = text;
+  $("msgBtns").innerHTML = "";
+  buttons.forEach(([label, fn, alt]) => {
+    const b = document.createElement("button");
+    b.className = "big-btn" + (alt ? " alt" : ""); b.textContent = label;
+    b.addEventListener("click", () => { $("msg").classList.remove("open"); fn(); });
+    $("msgBtns").appendChild(b);
+  });
+  $("msg").classList.add("open");
+}
+
+// =====================================================================
+//  EMOTES
+// =====================================================================
+let speaker = 0;
+document.querySelectorAll(".emote").forEach(b => b.addEventListener("click", () => {
+  if (!G) return;
+  const who = TEAM[speaker];
+  G.bubbles = [{ who: speaker, text: b.dataset.say, t: performance.now() }];
+  say(b.dataset.say, who);
+  speaker = (speaker + 1) % 3;
+}));
+
+// =====================================================================
+//  INPUT: swipes + keyboard
+// =====================================================================
+let touch = null;
+const board = $("board");
+board.addEventListener("pointerdown", e => { touch = { x: e.clientX, y: e.clientY, used: false }; audio(); });
+board.addEventListener("pointermove", e => {
+  if (!touch || touch.used) return;
+  const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+  touch.used = true;
+  tryMove(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+});
+board.addEventListener("pointerup", () => { touch = null; });
+board.addEventListener("pointercancel", () => { touch = null; });
+document.addEventListener("keydown", e => {
+  const k = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right" }[e.key];
+  if (!k || !$("game").classList.contains("active")) return;
+  e.preventDefault(); tryMove(k);
+});
+
+// =====================================================================
+//  DRAWING
+// =====================================================================
+const cv = $("cv"), ctx = cv.getContext("2d");
+let T = 36, DPR = 1, layer = null, cam = { x: 0, y: 0 };
+function resize() {
+  if (!G) return;
+  const r = board.getBoundingClientRect(), z = window.PAGE_ZOOM || 1;
+  DPR = Math.min(2.5, (window.devicePixelRatio || 1));
+  cv.width = Math.round(r.width / z * DPR); cv.height = Math.round(r.height / z * DPR);
+  T = Math.max(28, Math.min(48, Math.floor(Math.min(r.width / z / 11, r.height / z / 13))));
+  drawMazeLayer();
+}
+addEventListener("resize", resize);
+
+function treeShape(c, x, y, s, shade, snow) {
+  // a plain, undecorated tree: trunk + three stacked triangles
+  c.fillStyle = "#6d4c41"; c.fillRect(x + s * .43, y + s * .78, s * .14, s * .2);
+  const layers = [[.18, .62, .82], [.26, .4, .74], [.34, .18, .66]];
+  layers.forEach(([inset, top, bottom], i) => {
+    c.fillStyle = shade[i % shade.length];
+    c.beginPath(); c.moveTo(x + s / 2, y + s * (top - .14)); c.lineTo(x + s * (1 - inset + .08), y + s * bottom); c.lineTo(x + s * (inset - .08), y + s * bottom); c.closePath(); c.fill();
+  });
+  if (snow) { c.fillStyle = "rgba(255,255,255,.85)"; c.beginPath(); c.arc(x + s / 2, y + s * .06, s * .07, 0, Math.PI * 2); c.fill(); }
+}
+
+function drawMazeLayer() {
+  const m = G.m;
+  layer = document.createElement("canvas");
+  layer.width = m.W * T * DPR; layer.height = m.H * T * DPR;
+  const c = layer.getContext("2d");
+  c.scale(DPR, DPR);
+  // snowy ground
+  c.fillStyle = "#e8f1f7"; c.fillRect(0, 0, m.W * T, m.H * T);
+  for (let i = 0; i < m.W * m.H / 3; i++) { c.fillStyle = "rgba(180,205,225,.5)"; c.beginPath(); c.arc(Math.random() * m.W * T, Math.random() * m.H * T, 1 + Math.random() * 1.5, 0, 7); c.fill(); }
+  const shades = [["#1b5e20", "#2e7d32", "#388e3c"], ["#145a32", "#1e8449", "#239b56"], ["#0e4d2b", "#1a6b3c", "#2a8a50"]];
+  for (let y = 0; y < m.H; y++) for (let x = 0; x < m.W; x++) {
+    if (!m.wall[y][x]) continue;
+    treeShape(c, x * T, y * T, T, shades[(x * 7 + y * 13) % 3], (x + y) % 3 === 0);
+  }
+  // doors
+  G.doors.forEach(d => {
+    if (!(d.wolf || d.locked)) return;
+    const x = d.x * T, y = d.y * T;
+    c.fillStyle = "#8d6e63"; c.fillRect(x + 2, y + 2, T - 4, T - 4);
+    c.strokeStyle = "#5d4037"; c.lineWidth = 3;
+    for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x + 2, y + i * T / 4); c.lineTo(x + T - 2, y + i * T / 4); c.stroke(); }
+    if (d.locked) { c.font = `${T * .5}px serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("🔒", x + T / 2, y + T / 2); }
+  });
+  // home: our tree waiting at the end
+  const [hx, hy] = G.home;
+  c.fillStyle = "rgba(255,213,74,.35)"; c.beginPath(); c.arc(hx * T + T / 2, hy * T + T / 2, T * .62, 0, 7); c.fill();
+  treeShape(c, hx * T - T * .05, hy * T - T * .12, T * 1.1, ["#2e7d32", "#43a047", "#66bb6a"], true);
+  c.font = `${T * .32}px sans-serif`; c.textAlign = "center"; c.fillStyle = "#0b3d2e"; c.fillText("⭐", hx * T + T / 2, hy * T + T * .02);
+}
+
+function emoji(ch, x, y, size) { ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(ch, x, y); }
+function bauble(x, y, r, colour) {
+  ctx.fillStyle = "#cfa64b"; ctx.fillRect(x - r * .3, y - r * 1.25, r * .6, r * .4);
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+  g.addColorStop(0, "#fff"); g.addColorStop(.25, colour); g.addColorStop(1, colour);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+}
+
+function render(now) {
+  requestAnimationFrame(render);
+  if (!G || !layer || !$("game").classList.contains("active")) return;
+  // advance movement
+  let px = G.pos[0], py = G.pos[1], prog = 0;
+  if (G.moving) {
+    prog = Math.min(1, (now - G.moving.t0) / STEP_MS);
+    px = G.moving.from[0] + (G.moving.to[0] - G.moving.from[0]) * prog;
+    py = G.moving.from[1] + (G.moving.to[1] - G.moving.from[1]) * prog;
+    if (prog >= 1) { arrive(); px = G.pos[0]; py = G.pos[1]; prog = 0; }
+  }
+  const W = cv.width / DPR, H = cv.height / DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // camera follows the leader
+  const tx = px * T + T / 2 - W / 2, ty = py * T + T / 2 - H / 2;
+  cam.x = Math.max(Math.min(tx, G.m.W * T - W), 0); cam.y = Math.max(Math.min(ty, G.m.H * T - H), 0);
+  if (G.m.W * T < W) cam.x = -(W - G.m.W * T) / 2;
+  if (G.m.H * T < H) cam.y = -(H - G.m.H * T) / 2;
+  ctx.fillStyle = "#0b3d2e"; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(layer, -cam.x, -cam.y, G.m.W * T, G.m.H * T);
+  ctx.save(); ctx.translate(-cam.x, -cam.y);
+  // kids-mode glow
+  G.glow = G.glow.filter(g => now - g.t < 1400);
+  G.glow.forEach(g => {
+    const a = 1 - (now - g.t) / 1400;
+    ctx.fillStyle = g.good ? `rgba(46,204,64,${.55 * a})` : `rgba(239,57,57,${.55 * a})`;
+    ctx.fillRect(g.x * T + 2, g.y * T + 2, T - 4, T - 4);
+  });
+  // items
+  const bob = Math.sin(now / 300) * T * .06;
+  G.items.forEach(it => {
+    const cx = it.x * T + T / 2, cy = it.y * T + T / 2 + bob;
+    if (it.type === "key") emoji("🔑", cx, cy, T * .6);
+    else if (it.type === "lights") emoji("💡", cx, cy, T * .58);
+    else bauble(cx, cy + T * .05, T * .22, it.colour);
+  });
+  // wolves on the doors
+  G.doors.forEach(d => { if (d.wolf) emoji("🐺", d.x * T + T / 2, d.y * T + T / 2 + Math.sin(now / 200) * 1.5, T * .78); });
+  // the three explorers in a line (followers trail behind)
+  const spots = [[px, py]];
+  for (let k = 1; k < 3; k++) {
+    const a = G.trail[k - 1], b = G.trail[k] || a;
+    spots.push(G.moving ? [b[0] + (a[0] - b[0]) * prog, b[1] + (a[1] - b[1]) * prog] : (k === 1 ? G.trail[1] : G.trail[2]));
+  }
+  if (G.cfg.hints) { ctx.strokeStyle = "rgba(255,213,74,.9)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px * T + T / 2, py * T + T / 2, T * .46, 0, 7); ctx.stroke(); }
+  for (let k = 2; k >= 0; k--) {
+    const [sx, sy] = spots[k], off = k === 0 ? 0 : (k === 1 ? -T * .1 : T * .1);
+    const size = T * (k === 0 ? .86 : .72), fx = sx * T + T / 2 + off, fy = sy * T + T / 2 + off * .4, av = AVATARS[TEAM[k].face];
+    if (av) { ctx.save(); ctx.beginPath(); ctx.arc(fx, fy, size / 2, 0, 7); ctx.fillStyle = "#fff"; ctx.fill(); ctx.clip(); ctx.drawImage(av, fx - size / 2, fy - size / 2, size, size); ctx.restore();
+      ctx.strokeStyle = k === 0 ? "#ffd54a" : "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(fx, fy, size / 2, 0, 7); ctx.stroke(); }
+    else emoji(TEAM[k].face, fx, fy, size);
+  }
+  // speech bubbles
+  G.bubbles = G.bubbles.filter(b => now - b.t < 2600);
+  G.bubbles.forEach(b => {
+    const [sx, sy] = spots[b.who], bx = sx * T + T / 2, by = sy * T - T * .2;
+    ctx.font = "bold 13px sans-serif";
+    const text = `${TEAM[b.who].name}: ${b.text}`, w = Math.min(ctx.measureText(text).width + 18, W - 20);
+    const left = Math.max(cam.x + 10, Math.min(bx - w / 2, cam.x + W - w - 10));
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(left, by - 34, w, 28, 10) : ctx.rect(left, by - 34, w, 28); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(bx - 6, by - 7); ctx.lineTo(bx + 6, by - 7); ctx.lineTo(bx, by + 2); ctx.fill();
+    ctx.fillStyle = "#13202b"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, left + w / 2, by - 20, w - 12);
+  });
+  ctx.restore();
+}
+requestAnimationFrame(render);
+
+// =====================================================================
+//  DECORATING THE TREE
+// =====================================================================
+const NS = "http://www.w3.org/2000/svg";
+let deco = null;
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+function startDecorating() {
+  show("decorate");
+  const svg = $("treeSvg"); svg.innerHTML = "";
+  const defs = el("defs", {}, svg);
+  const f = el("filter", { id: "glow", x: "-100%", y: "-100%", width: "300%", height: "300%" }, defs);
+  el("feGaussianBlur", { stdDeviation: "3.5", result: "b" }, f);
+  const mg = el("feMerge", {}, f); el("feMergeNode", { in: "b" }, mg); el("feMergeNode", { in: "SourceGraphic" }, mg);
+  // the tree
+  // gold tree collar at the base
+  const goldGrad = el("linearGradient", { id: "gold", x1: 0, x2: 1 }, defs);
+  el("stop", { offset: "0", "stop-color": "#b8902e" }, goldGrad); el("stop", { offset: ".5", "stop-color": "#f3dc8c" }, goldGrad); el("stop", { offset: "1", "stop-color": "#b8902e" }, goldGrad);
+  [[150, 20, 70, 120, "#2e7d32"], [150, 70, 45, 190, "#2e7d32"], [150, 130, 25, 280, "#1b5e20"]].forEach(([cx, top, half, bottom, fill], i) => {
+    const w = (bottom - top) * (0.55 + i * .08);
+    el("polygon", { points: `${cx},${top} ${cx + w},${bottom} ${cx - w},${bottom}`, fill, stroke: "#1b5e20", "stroke-width": 2 }, svg);
+  });
+  el("path", { d: "M100 276 L200 276 L216 322 L84 322 Z", fill: "url(#gold)", stroke: "#9c7a22" }, svg);
+  for (let i = 0; i < 18; i++) el("circle", { cx: 95 + (i * 37) % 112, cy: 284 + (i * 11) % 34, r: 1.4, fill: "#fff8e1", opacity: .8 }, svg);
+  // the switch and plug at the back
+  const sw = el("g", { id: "plug" }, svg);
+  el("path", { d: "M205 300 C 225 318, 240 300, 262 305", stroke: "#37474f", "stroke-width": 3, fill: "none" }, sw);
+  el("rect", { x: 258, y: 292, width: 30, height: 26, rx: 5, fill: "#eceff1", stroke: "#90a4ae" }, sw);
+  el("rect", { id: "toggle", x: 267, y: 296, width: 12, height: 9, rx: 2, fill: "#b0bec5" }, sw);
+  el("text", { x: 273, y: 328, "text-anchor": "middle", "font-size": 9, fill: "#cfe3f5" }, sw).textContent = "switch";
+  const star = el("polygon", { id: "star", fill: "#f3d36b", stroke: "#b8902e", "stroke-width": 1.5, opacity: .35,
+    points: [...Array(10)].map((_, i) => { const r = i % 2 ? 7 : 17, a = -Math.PI / 2 + i * Math.PI / 5; return `${150 + r * Math.cos(a)},${22 + r * Math.sin(a)}`; }).join(" ") }, svg);
+  const lightsLayer = el("g", { id: "lightsLayer" }, svg);
+  const baubleLayer = el("g", { id: "baubleLayer" }, svg);
+
+  const baubles = G.got.filter(d => d.type === "bauble"), lights = G.got.filter(d => d.type === "lights");
+  // places on the tree for baubles, spread through the branches
+  const spots = [[150, 92], [122, 145], [178, 140], [98, 205], [150, 190], [202, 205], [125, 255], [178, 252], [75, 265], [225, 265]];
+  // garlands draped across the tree
+  const garlands = [
+    "M110 112 Q150 132 190 108", "M88 175 Q150 200 212 170", "M68 235 Q150 262 232 232", "M95 140 Q150 160 205 138",
+  ];
+  deco = { baubles, lights, spots, garlands, placedB: [], placedL: [], on: false };
+  const tray = $("tray"); tray.innerHTML = "";
+  [...baubles.map((b, i) => ({ kind: "bauble", i, b })), ...lights.map((l, i) => ({ kind: "lights", i }))].forEach(item => {
+    const btn = document.createElement("button");
+    btn.innerHTML = item.kind === "lights" ? "💡" : `<svg width="34" height="34" viewBox="0 0 34 34"><rect x="13" y="2" width="8" height="5" fill="#cfa64b"/><circle cx="17" cy="19" r="13" fill="${item.b.colour}"/><circle cx="12" cy="14" r="4" fill="#fff" opacity=".6"/></svg>`;
+    btn.setAttribute("aria-label", item.kind === "lights" ? "String of lights" : "Bauble");
+    btn.addEventListener("click", () => { btn.remove(); item.kind === "lights" ? placeLights(item.i) : placeBauble(item.b); SFX.pickup(); checkReady(); });
+    tray.appendChild(btn);
+  });
+  $("decInstr").textContent = "Tap a bauble or light below to put it on the tree.";
+  $("switchBtn").disabled = true; $("switchBtn").className = ""; $("switchBtn").textContent = "🔌 Switch at the back";
+  $("againBtn").style.display = "none"; $("winBanner").classList.remove("show"); $("tray").style.display = "";
+}
+
+function placeBauble(b) {
+  const [x, y] = deco.spots[deco.placedB.length % deco.spots.length];
+  const g = el("g", { class: "placed", style: "cursor:pointer" }, $("baubleLayer"));
+  el("rect", { x: x - 4, y: y - 17, width: 8, height: 6, fill: "#cfa64b" }, g);
+  el("circle", { cx: x, cy: y, r: 13, fill: b.colour, stroke: "rgba(0,0,0,.25)" }, g);
+  el("circle", { cx: x - 4.5, cy: y - 4.5, r: 3.5, fill: "#fff", opacity: .55 }, g);
+  // the little light in the middle (a button you tap)
+  const light = el("circle", { cx: x, cy: y, r: 4.5, fill: "#fffde7", stroke: "#fff", "stroke-width": 1.5, opacity: .7 }, g);
+  const item = { g, light, lit: false };
+  g.addEventListener("click", () => toggleBauble(item));
+  g.animate([{ transform: `translate(0px, 120px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 400, easing: "cubic-bezier(.2,1.4,.4,1)" });
+  deco.placedB.push(item);
+}
+function toggleBauble(item, force) {
+  item.lit = force === undefined ? !item.lit : force;
+  item.light.setAttribute("fill", item.lit ? "#fff59d" : "#fffde7");
+  item.light.setAttribute("r", item.lit ? 6 : 4.5);
+  item.light.setAttribute("opacity", item.lit ? 1 : .7);
+  item.light.classList.toggle("bulb-glow", item.lit);
+  if (force === undefined) tone(item.lit ? 1200 : 600, 0, .08, "sine", .15);
+}
+function placeLights(i) {
+  const d = deco.garlands[deco.placedL.length % deco.garlands.length];
+  const g = el("g", { style: "cursor:pointer" }, $("lightsLayer"));
+  const path = el("path", { d, stroke: "#263238", "stroke-width": 1.5, fill: "none" }, g);
+  const len = path.getTotalLength(), bulbs = [];
+  const colours = ["#fff3c4", "#ffe08a", "#fff8e1", "#ffd54a", "#fff3c4"];
+  for (let k = 0; k <= 8; k++) {
+    const p = path.getPointAtLength(len * k / 8);
+    bulbs.push(el("circle", { cx: p.x, cy: p.y + 3, r: 3.6, fill: "#78909c", "data-c": colours[k % colours.length] }, g));
+  }
+  // a small button at the end of the string
+  const end = path.getPointAtLength(len);
+  el("rect", { x: end.x - 2, y: end.y - 6, width: 9, height: 7, rx: 2, fill: "#eceff1", stroke: "#90a4ae" }, g);
+  const item = { g, bulbs, lit: false };
+  g.addEventListener("click", () => toggleLights(item));
+  g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400 });
+  deco.placedL.push(item);
+}
+function toggleLights(item, force) {
+  item.lit = force === undefined ? !item.lit : force;
+  item.bulbs.forEach((b, k) => {
+    b.setAttribute("fill", item.lit ? b.dataset.c || b.getAttribute("data-c") : "#78909c");
+    b.classList.toggle("bulb-glow", item.lit);
+    b.classList.toggle("twinkle", item.lit);
+    b.style.animationDelay = (k * .13) + "s";
+  });
+  if (force === undefined) tone(item.lit ? 1000 : 500, 0, .08, "triangle", .15);
+}
+function checkReady() {
+  const left = $("tray").children.length;
+  if (left) { $("decInstr").textContent = `${left} more to put on. Tap the little button on each one to light it up!`; return; }
+  $("decInstr").textContent = "All on! Tap the buttons to light them, then flick the switch at the back 🔌";
+  $("switchBtn").disabled = false; $("switchBtn").classList.add("ready");
+}
+$("switchBtn").addEventListener("click", () => {
+  if (!deco || deco.on) return;
+  deco.on = true;
+  $("toggle").setAttribute("y", 307); $("toggle").setAttribute("fill", "#66bb6a");
+  deco.placedB.forEach(b => toggleBauble(b, true));
+  deco.placedL.forEach(l => toggleLights(l, true));
+  const star = $("star"); star.setAttribute("opacity", 1); star.classList.add("bulb-glow"); star.classList.add("twinkle");
+  $("switchBtn").classList.remove("ready"); $("switchBtn").classList.add("on"); $("switchBtn").textContent = "✨ Lights on!";
+  SFX.jingle(); buzz([60, 60, 60, 60, 200]);
+  const names = TEAM.map(t => t.name);
+  const secs = Math.round((Date.now() - G.startTime) / 1000);
+  $("winBanner").innerHTML = `<b>Merry Christmas! 🎄</b>${names[0]}, ${names[1]} &amp; ${names[2]} decorated the tree!<br><small>${Math.floor(secs / 60)}m ${secs % 60}s · ❤️ ${G.lives} lives left</small>`;
+  $("tray").style.display = "none";
+  $("winBanner").classList.add("show");
+  $("snow").style.display = "";
+  $("againBtn").style.display = "";
+  setTimeout(() => say("Merry Christmas!", TEAM[0]), 600);
+});
+$("againBtn").addEventListener("click", () => show("start"));
+
+// =====================================================================
+//  START
+// =====================================================================
+document.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => { audio(); newGame(b.dataset.mode); }));
+</script>
+</body>
+</html>
