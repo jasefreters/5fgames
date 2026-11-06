@@ -245,11 +245,11 @@ const FACES = ["avatar:hazel", "avatar:knight", "avatar:mo", "👧", "👦", "�
 const faceHTML = f => AVATARS[f] ? `<img src="${AVATARS[f].src}" alt="" style="width:1em;height:1em;vertical-align:middle">` : f;
 const TEAM = [
   { name: "Hazel", face: "avatar:hazel", pitch: 1.6 },
-  { name: "Uncle Jazz", face: "avatar:knight", pitch: 0.8 },
-  { name: "Grown-up", face: "avatar:mo", pitch: 1.05 },
+  { name: "Uncle Juz", face: "avatar:knight", pitch: 0.8 },
+  { name: "Dad", face: "avatar:mo", pitch: 1.05 },
 ];
-try { const saved = JSON.parse(localStorage.getItem("xmas-maze-team2")); if (saved && saved.length === 3) saved.forEach((s, i) => Object.assign(TEAM[i], { name: s.name, face: FACES.includes(s.face) ? s.face : TEAM[i].face })); } catch (e) {}
-function saveTeam() { try { localStorage.setItem("xmas-maze-team2", JSON.stringify(TEAM.map(t => ({ name: t.name, face: t.face })))); } catch (e) {} }
+try { const saved = JSON.parse(localStorage.getItem("xmas-maze-team3")); if (saved && saved.length === 3) saved.forEach((s, i) => Object.assign(TEAM[i], { name: s.name, face: FACES.includes(s.face) ? s.face : TEAM[i].face })); } catch (e) {}
+function saveTeam() { try { localStorage.setItem("xmas-maze-team3", JSON.stringify(TEAM.map(t => ({ name: t.name, face: t.face })))); } catch (e) {} }
 
 function renderTeam() {
   $("team").innerHTML = TEAM.map((t, i) => `<div class="member">
@@ -267,7 +267,7 @@ $("team").addEventListener("click", e => {
 });
 $("team").addEventListener("input", e => {
   if (e.target.tagName !== "INPUT") return;
-  TEAM[+e.target.dataset.i].name = e.target.value.trim() || ["Hazel", "Uncle Jazz", "Grown-up"][+e.target.dataset.i];
+  TEAM[+e.target.dataset.i].name = e.target.value.trim() || ["Hazel", "Uncle Juz", "Dad"][+e.target.dataset.i];
   saveTeam();
 });
 
