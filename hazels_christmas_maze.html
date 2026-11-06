@@ -51,6 +51,29 @@
   .how { margin-top: 16px; font-size: 13px; color: #9fb7cc; line-height: 1.6; max-width: 380px; }
   .back-link { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 12px; color: #cfe3f5; text-decoration: none; font-size: 14px; z-index: 2; }
 
+  .rec-open { margin-top: 14px; border: 2px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; border-radius: 99px; padding: 10px 18px; font-size: 16px; font-weight: 800; }
+  .rec-open:active { transform: scale(.96); }
+
+  /* ---------- record voices ---------- */
+  #voices { background: radial-gradient(circle at 50% 0%, #1f4f7a, var(--night) 70%); padding: calc(10px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto; }
+  .v-head { display: flex; align-items: center; gap: 10px; }
+  .v-head h2 { font-size: 22px; color: var(--gold); }
+  .v-back { background: rgba(255,255,255,.12); color: #fff; border: none; border-radius: 10px; padding: 8px 12px; font-size: 15px; font-weight: 700; }
+  .v-note { color: #cfe3f5; font-size: 14px; margin: 8px 0 12px; line-height: 1.4; }
+  .v-who { display: flex; gap: 8px; margin-bottom: 12px; }
+  .v-who button { flex: 1; border: 3px solid transparent; background: rgba(255,255,255,.1); color: #fff; border-radius: 14px; padding: 8px 4px; font-size: 14px; font-weight: 800; }
+  .v-who button .f { font-size: 40px; display: block; line-height: 1.1; }
+  .v-who button.sel { border-color: var(--gold); background: rgba(255,213,74,.15); }
+  .v-who small { display: block; font-size: 11px; font-weight: 600; color: #9fb7cc; }
+  .v-lines { display: flex; flex-direction: column; gap: 8px; }
+  .v-line { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border-radius: 14px; padding: 10px; }
+  .v-line .txt { flex: 1; font-weight: 800; font-size: 16px; }
+  .v-line .txt small { display: block; font-size: 12px; font-weight: 600; color: #9fb7cc; margin-top: 2px; }
+  .v-line button { width: 46px; height: 46px; border-radius: 50%; border: none; font-size: 20px; background: rgba(255,255,255,.15); color: #fff; flex-shrink: 0; }
+  .v-line button.rec { background: #e53935; }
+  .v-line button.rec.on { background: #fff; color: #e53935; animation: pulse 1s infinite; }
+  .v-line button:disabled { opacity: .3; }
+
   /* ---------- game screen ---------- */
   #game { background: var(--night); }
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: rgba(0,0,0,.35); font-weight: 800; font-size: 16px; z-index: 2; }
@@ -130,7 +153,19 @@
     <button class="mode easy" data-mode="easy">🧒 Kids mode<small>Path glows green or red</small></button>
     <button class="mode hard" data-mode="hard">🧑 Grown-ups mode<small>Bigger maze, no help</small></button>
   </div>
+  <button class="rec-open" id="recOpen">🎙️ Record our voices</button>
   <p class="how">👆 <b>Swipe</b> to walk (arrow keys on a computer)<br>🔑 Keys hide at dead ends and open the doors<br>🐺 Tap really fast to karate kick the wolves<br>❤️ You have 20 lives</p>
+</section>
+
+<!-- ================= RECORD VOICES ================= -->
+<section class="screen" id="voices">
+  <div class="v-head">
+    <button class="v-back" id="vBack">← Back</button>
+    <h2>🎙️ Record our voices</h2>
+  </div>
+  <p class="v-note">Pick who's talking, then tap 🔴 and say the line. Recordings stay on this phone only.</p>
+  <div class="v-who" id="vWho"></div>
+  <div class="v-lines" id="vLines"></div>
 </section>
 
 <!-- ================= GAME ================= -->
@@ -347,8 +382,59 @@ const SFX = {
     notes.forEach(([f, l]) => { tone(f, t, l * q * .95, "triangle", .18); tone(f / 2, t, l * q * .95, "sine", .07); t += l * q; });
   },
 };
+// =====================================================================
+//  OUR OWN VOICES: recorded on this device, kept in IndexedDB (never uploaded)
+// =====================================================================
+const LINES = [
+  { id: "surprised", text: "Wolves! I'm surprised!", when: "Emote button" },
+  { id: "scary", text: "Oh no, that's scary!", when: "Emote button" },
+  { id: "getout", text: "Get out of here!", when: "Emote button, and when a wolf runs away" },
+  { id: "scared", text: "I'm so scared!", when: "Emote button" },
+  { id: "hiyah", text: "Hi-yah!", when: "When a wolf fight starts" },
+  { id: "xmas", text: "Merry Christmas!", when: "When the tree lights up" },
+];
+const VOICE = {};  // "slot:lineId" -> object URL
+let voiceDB = null;
+function openVoiceDB() {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open("xmas-maze-voices", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("clips");
+      r.onsuccess = () => { voiceDB = r.result; res(voiceDB); };
+      r.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+function voiceStore(mode, fn) { if (!voiceDB) return null; const tx = voiceDB.transaction("clips", mode); fn(tx.objectStore("clips")); return tx; }
+openVoiceDB().then(db => {
+  if (!db) return;
+  voiceStore("readonly", st => {
+    const req = st.openCursor();
+    req.onsuccess = () => { const c = req.result; if (!c) return; VOICE[c.key] = URL.createObjectURL(c.value); c.continue(); };
+  });
+});
+function saveClip(key, blob) {
+  if (VOICE[key]) URL.revokeObjectURL(VOICE[key]);
+  VOICE[key] = URL.createObjectURL(blob);
+  voiceStore("readwrite", st => st.put(blob, key));
+}
+function deleteClip(key) {
+  if (VOICE[key]) URL.revokeObjectURL(VOICE[key]);
+  delete VOICE[key];
+  voiceStore("readwrite", st => st.delete(key));
+}
+let playing = null;
+function playClip(key) {
+  if (!VOICE[key]) return false;
+  try { if (playing) playing.pause(); playing = new Audio(VOICE[key]); playing.play().catch(() => {}); } catch (e) { return false; }
+  return true;
+}
+
 function say(text, who) {
-  if (muted || !("speechSynthesis" in window)) return;
+  if (muted) return;
+  const line = LINES.find(l => l.text === text), slot = TEAM.indexOf(who);
+  if (line && slot >= 0 && playClip(slot + ":" + line.id)) return;
+  if (!("speechSynthesis" in window)) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -356,6 +442,54 @@ function say(text, who) {
     speechSynthesis.speak(u);
   } catch (e) {}
 }
+let vSlot = 0, recorder = null;
+function renderVoices() {
+  $("vWho").innerHTML = TEAM.map((t, i) => {
+    const n = LINES.filter(l => VOICE[i + ":" + l.id]).length;
+    return `<button data-i="${i}" class="${i === vSlot ? "sel" : ""}"><span class="f">${faceHTML(t.face)}</span>${t.name}<small>${n}/${LINES.length} recorded</small></button>`;
+  }).join("");
+  $("vLines").innerHTML = LINES.map(l => {
+    const key = vSlot + ":" + l.id, has = !!VOICE[key], live = recorder && recorder.key === key;
+    return `<div class="v-line"><div class="txt">“${l.text}”<small>${l.when}</small></div>
+      <button class="rec${live ? " on" : ""}" data-k="${key}" aria-label="Record">${live ? "⏹" : "🔴"}</button>
+      <button class="play" data-k="${key}" aria-label="Play" ${has ? "" : "disabled"}>▶️</button>
+      <button class="del" data-k="${key}" aria-label="Delete" ${has ? "" : "disabled"}>🗑️</button></div>`;
+  }).join("");
+}
+$("recOpen").addEventListener("click", () => { audio(); renderVoices(); show("voices"); });
+$("vBack").addEventListener("click", () => { stopRecording(); show("start"); });
+$("vWho").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; stopRecording(); vSlot = +b.dataset.i; renderVoices(); });
+$("vLines").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const key = b.dataset.k;
+  if (b.classList.contains("play")) { playClip(key); return; }
+  if (b.classList.contains("del")) { deleteClip(key); renderVoices(); return; }
+  if (recorder) { const same = recorder.key === key; stopRecording(); if (same) return; }
+  startRecording(key);
+});
+async function startRecording(key) {
+  if (!navigator.mediaDevices || !window.MediaRecorder) { alert("Sorry, this browser can't record sound. Try Chrome or Safari."); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { alert("We need the microphone to record. Please allow it in your browser, then try again."); return; }
+  const chunks = [], mr = new MediaRecorder(stream);
+  recorder = { key, mr, stream, timer: setTimeout(stopRecording, 4000) };
+  mr.ondataavailable = ev => { if (ev.data.size) chunks.push(ev.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    if (chunks.length) { saveClip(key, new Blob(chunks, { type: mr.mimeType || "audio/webm" })); setTimeout(() => playClip(key), 150); }
+    renderVoices();
+  };
+  mr.start();
+  renderVoices();
+}
+function stopRecording() {
+  if (!recorder) return;
+  const r = recorder; recorder = null;
+  clearTimeout(r.timer);
+  try { if (r.mr.state !== "inactive") r.mr.stop(); else r.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+}
+
 $("muteBtn").addEventListener("click", () => { muted = !muted; $("muteBtn").textContent = muted ? "🔇" : "🔊"; if (muted && window.speechSynthesis) speechSynthesis.cancel(); });
 
 // =====================================================================
@@ -604,6 +738,7 @@ function startFight(door) {
   $("fightWolf").style.transform = "";
   $("fight").classList.add("open");
   SFX.growl(); buzz(80);
+  setTimeout(() => say("Hi-yah!", TEAM[0]), 500);
   requestAnimationFrame(fightTick);
 }
 function fightTick() {
@@ -956,7 +1091,8 @@ $("switchBtn").addEventListener("click", () => {
   $("winBanner").classList.add("show");
   $("snow").style.display = "";
   $("againBtn").style.display = "";
-  setTimeout(() => say("Merry Christmas!", TEAM[0]), 600);
+  // everyone says Merry Christmas, one after another
+  [0, 1, 2].forEach(i => setTimeout(() => say("Merry Christmas!", TEAM[i]), 600 + i * 1700));
 });
 $("againBtn").addEventListener("click", () => show("start"));
 
