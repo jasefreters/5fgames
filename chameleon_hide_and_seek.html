@@ -130,15 +130,15 @@
   <div class="section"><h3>🎮 Mode</h3><div class="chips" id="modeChips"></div><small class="note" id="modeNote"></small></div>
   <div class="section"><h3>⏱️ Time to find</h3><div class="chips" id="timeChips"></div><small class="note">Every wrong tap takes 2 seconds off!</small></div>
   <button class="go" id="startBtn">Let's play! 🦎</button>
-  <button class="link-btn" id="voicesBtn">🎙️ Record your own "BOOM!"</button>
+  <button class="link-btn" id="voicesBtn">🎙️ Record your own "BOO!"</button>
   <div class="section"><h3>🏆 Trophies</h3><div class="score" id="trophies"></div></div>
 </section>
 
-<!-- ================= RECORD BOOMs ================= -->
+<!-- ================= RECORD BOOs ================= -->
 <section class="screen scroll" id="voices">
   <button class="back-link" data-to="home">← Back</button>
-  <h2>🎙️ Record your "BOOM!"</h2>
-  <p class="lead">When nobody finds you, you jump out and your own voice shouts it! Tap 🔴, say "BOOM!", and it stops by itself. Recordings stay on this phone only.</p>
+  <h2>🎙️ Record your "BOO!"</h2>
+  <p class="lead">When nobody finds you, you jump out and your own voice shouts it! Tap 🔴, say "BOO!", and it stops by itself. Recordings stay on this phone only.</p>
   <div class="section" id="voiceList"></div>
 </section>
 
@@ -153,7 +153,7 @@
 <section class="screen scroll" id="pickLook">
   <button class="back-link" data-to="pickScene">← Back</button>
   <h2>Who do you look like?</h2>
-  <p class="lead">You start as a blank outline — then you paint yourself!</p>
+  <p class="lead">You start as a blank outline — then you paint yourself! Be yourself, or someone (or something) else.</p>
   <div class="grid" id="lookGrid"></div>
 </section>
 
@@ -256,7 +256,7 @@ function noise(d, f, v = .4) { const ac = audio(); if (!ac) return; const b = ac
 function say(text, pitch = 1.1) { try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.pitch = pitch; u.lang = "en-AU"; speechSynthesis.speak(u); } catch (e) {} }
 
 // =====================================================================
-//  OWN "BOOM!" RECORDINGS (kept on this device in IndexedDB)
+//  OWN "BOO!" RECORDINGS (kept on this device in IndexedDB)
 // =====================================================================
 const VOICE = {}; let voiceDB = null, recorder = null;
 try {
@@ -492,6 +492,76 @@ const LOOKS = {
     arms(c, 64, 116, 40, 250, 18);
     lower(c, pose, 84, 262, 24, 394);
   } },
+  Abby: { h: 150, face: [100, 82, 40], draw(c, pose) {
+    for (let i = 0; i < 14; i++) { const a = Math.PI * (.8 + i / 13 * 1.4); blob(c, 100 + Math.cos(a) * 46, 84 + Math.sin(a) * 46, 16); } // curly hair
+    for (let i = 0; i < 5; i++) { blob(c, 52 + (i % 2) * 5, 110 + i * 18, 15); blob(c, 148 - (i % 2) * 5, 110 + i * 18, 15); }
+    head(c, 100, 82, 40);
+    c.beginPath(); c.moveTo(62, 126); c.lineTo(138, 126); c.lineTo(132, 192); c.lineTo(68, 192); c.fill();
+    c.beginPath(); c.moveTo(66, 188); c.lineTo(134, 188); c.lineTo(156, 280); c.lineTo(44, 280); c.fill();
+    arms(c, 70, 134, 44, 248, 20);
+    lower(c, pose, 86, 274, 22, 392);
+  } },
+  "Uncle Juz": { h: 206, face: [100, 62, 35], draw(c, pose) {
+    head(c, 100, 62, 35); blob(c, 64, 64, 9); blob(c, 136, 64, 9);         // bald head and ears
+    rr(c, 48, 98, 104, 146, 26);                                             // footy jersey
+    rr(c, 36, 102, 30, 46, 12); rr(c, 134, 102, 30, 46, 12);
+    rr(c, 58, 232, 84, 56, 12);                                              // shorts
+    arms(c, 50, 118, 30, 244, 26);
+    lower(c, pose, 80, 282, 30, 394);
+  } },
+  Santa: { h: 200, face: [100, 92, 32], draw(c, pose) {
+    c.beginPath(); c.moveTo(66, 74); c.quadraticCurveTo(100, 10, 150, 34); c.lineTo(136, 74); c.fill(); blob(c, 152, 34, 12); // hat + pompom
+    head(c, 100, 92, 32);
+    c.beginPath(); c.moveTo(66, 100); c.quadraticCurveTo(100, 190, 134, 100); c.fill();          // beard
+    c.beginPath(); c.ellipse(100, 210, 70, 84, 0, 0, 7); c.fill();                               // big round belly
+    arms(c, 46, 160, 24, 250, 26);
+    lower(c, pose, 78, 280, 30, 392);
+  } },
+  Elf: { h: 125, face: [100, 150, 38], draw(c, pose) {
+    c.beginPath(); c.moveTo(62, 128); c.lineTo(100, 20); c.lineTo(140, 128); c.fill(); blob(c, 100, 22, 10); // pointy hat
+    c.beginPath(); c.moveTo(66, 150); c.lineTo(36, 126); c.lineTo(70, 168); c.fill(); c.beginPath(); c.moveTo(134, 150); c.lineTo(164, 126); c.lineTo(130, 168); c.fill(); // pointy ears
+    head(c, 100, 150, 38);
+    c.beginPath(); c.moveTo(66, 196); c.lineTo(134, 196); c.lineTo(150, 300); for (let x = 150; x > 50; x -= 20) { c.lineTo(x - 10, 286); c.lineTo(x - 20, 300); } c.lineTo(50, 300); c.fill(); // tunic
+    arms(c, 70, 204, 46, 290, 18);
+    if (pose === "sit") lower(c, pose, 86, 296, 18, 392);
+    else { limb(c, 86, 296, 84, 380, 18); limb(c, 114, 296, 116, 380, 18); c.beginPath(); c.ellipse(74, 384, 18, 8, 0, 0, 7); c.ellipse(126, 384, 18, 8, 0, 0, 7); c.fill(); blob(c, 56, 378, 6); blob(c, 144, 378, 6); }
+  } },
+  Snowman: { h: 170, face: [100, 128, 38], draw(c) {
+    rr(c, 70, 52, 60, 56, 6); rr(c, 52, 100, 96, 12, 6);                    // top hat
+    blob(c, 100, 128, 38); blob(c, 100, 222, 56); blob(c, 100, 330, 68);    // three snowballs
+    limb(c, 52, 210, 10, 170, 7); limb(c, 148, 210, 190, 170, 7);           // stick arms
+  } },
+  Mermaid: { h: 180, face: [100, 66, 32], draw(c) {
+    rr(c, 56, 40, 88, 160, 30); for (let i = 0; i < 7; i++) { blob(c, 56 + (i % 2) * 6, 76 + i * 18, 12); blob(c, 144 - (i % 2) * 6, 76 + i * 18, 12); }
+    head(c, 100, 66, 32);
+    rr(c, 66, 100, 68, 110, 24);                                             // body
+    arms(c, 70, 112, 46, 220, 18);
+    c.beginPath(); c.moveTo(64, 200); c.quadraticCurveTo(100, 220, 136, 200); c.quadraticCurveTo(128, 300, 106, 352); c.lineTo(94, 352); c.quadraticCurveTo(72, 300, 64, 200); c.fill(); // tail
+    c.beginPath(); c.moveTo(100, 344); c.quadraticCurveTo(50, 350, 40, 392); c.quadraticCurveTo(80, 380, 100, 366); c.quadraticCurveTo(120, 380, 160, 392); c.quadraticCurveTo(150, 350, 100, 344); c.fill(); // fin
+  } },
+  Dog: { h: 110, face: [100, 150, 42], draw(c) {
+    c.beginPath(); c.ellipse(56, 160, 18, 44, .3, 0, 7); c.ellipse(144, 160, 18, 44, -.3, 0, 7); c.fill(); // floppy ears
+    blob(c, 100, 150, 42); c.beginPath(); c.ellipse(100, 182, 22, 16, 0, 0, 7); c.fill();                    // head + snout
+    c.beginPath(); c.ellipse(100, 290, 64, 92, 0, 0, 7); c.fill();                                           // sitting body
+    limb(c, 78, 260, 74, 380, 22); limb(c, 122, 260, 126, 380, 22);                                          // front legs
+    c.beginPath(); c.ellipse(70, 384, 18, 9, 0, 0, 7); c.ellipse(130, 384, 18, 9, 0, 0, 7); c.fill();
+    limb(c, 156, 330, 186, 286, 14);                                                                          // tail
+  } },
+  Cat: { h: 90, face: [100, 196, 38], draw(c) {
+    c.beginPath(); c.moveTo(66, 180); c.lineTo(70, 128); c.lineTo(100, 164); c.lineTo(130, 128); c.lineTo(134, 180); c.fill(); // ears
+    blob(c, 100, 196, 38);
+    c.beginPath(); c.ellipse(100, 314, 54, 80, 0, 0, 7); c.fill();
+    c.lineWidth = 14; c.lineCap = "round"; c.beginPath(); c.moveTo(146, 360); c.quadraticCurveTo(196, 330, 172, 260); c.stroke(); // tail
+    c.beginPath(); c.ellipse(82, 388, 16, 8, 0, 0, 7); c.ellipse(118, 388, 16, 8, 0, 0, 7); c.fill();
+  } },
+  Kangaroo: { h: 180, face: [118, 84, 26], draw(c) {
+    c.beginPath(); c.ellipse(104, 36, 9, 30, -.2, 0, 7); c.ellipse(128, 38, 9, 30, .3, 0, 7); c.fill(); // tall ears
+    blob(c, 118, 84, 26); c.beginPath(); c.ellipse(140, 96, 18, 12, .3, 0, 7); c.fill();                 // head + snout
+    c.beginPath(); c.ellipse(100, 220, 52, 100, .12, 0, 7); c.fill();                                    // body
+    limb(c, 126, 160, 150, 200, 12); limb(c, 120, 172, 146, 214, 12);                                    // little arms
+    c.beginPath(); c.ellipse(118, 380, 46, 12, 0, 0, 7); c.fill(); limb(c, 96, 300, 110, 372, 30);      // big foot
+    limb(c, 66, 290, 20, 380, 20);                                                                        // tail
+  } },
   Dad: { h: 210, face: [100, 62, 34], draw(c, pose) {
     c.beginPath(); c.ellipse(96, 36, 38, 18, -.15, 0, 7); c.fill();         // short side-parted hair
     c.beginPath(); c.moveTo(62, 46); c.quadraticCurveTo(90, 18, 136, 36); c.lineTo(134, 50); c.fill();
@@ -599,7 +669,7 @@ function pickScene() {
 }
 function showLooks() {
   $("lookGrid").innerHTML = "";
-  FAMILY.forEach(n => {
+  ["Hazel", "Kate", "Mum", "Dad", "Abby", "Uncle Juz", "Santa", "Elf", "Snowman", "Mermaid", "Dog", "Cat", "Kangaroo"].filter(n => LOOKS[n]).forEach(n => {
     const b = document.createElement("button"); b.className = "pick" + (n === round.hider ? " mine" : "");
     b.appendChild(lookThumb(n)); b.append(n);
     b.onclick = () => { round.look = makeLook(n, "stand"); round.h = LOOKS[n].h; round.x = 200; round.y = H - round.h / 2 - 40; round.ang = 0; round.flip = 1; undoStack = []; openHide(); };
@@ -807,7 +877,7 @@ function drawFind() {
   const v = fitView(), now = performance.now();
   drawScene(fctx, v, ctx => {
     const a = hunt.anim;
-    if (a) { // found, or hop out with a BOOM: bounce and show where they were
+    if (a) { // found, or hop out with a BOO: bounce and show where they were
       const t = Math.min(1, (now - a.t0) / 900), boom = a.type === "boom";
       drawCharacter(ctx, true, Math.sin(t * Math.PI) * (boom ? 60 : 20), 1 + (boom ? .25 : .1) * Math.sin(t * Math.PI));
       ctx.strokeStyle = boom ? "#ff7043" : "#43a047"; ctx.lineWidth = 5; ctx.setLineDash([10, 8]);
@@ -815,7 +885,7 @@ function drawFind() {
       if (boom) {
         ctx.font = `900 ${60 + Math.sin(t * Math.PI) * 30}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
         const ty = Math.max(70, round.y - round.h * .8);
-        ctx.lineWidth = 8; ctx.strokeStyle = "#fff"; ctx.strokeText("BOOM!", W / 2, ty); ctx.fillStyle = "#e53935"; ctx.fillText("BOOM!", W / 2, ty);
+        ctx.lineWidth = 8; ctx.strokeStyle = "#fff"; ctx.strokeText("BOO!", W / 2, ty); ctx.fillStyle = "#e53935"; ctx.fillText("BOO!", W / 2, ty);
       }
       const s = (now - a.t0) / 1000;
       a.parts.forEach(p => { ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(round.x + p.vx * s, round.y + p.vy * s + 150 * s * s, p.r, 0, 7); ctx.fill(); });
@@ -864,11 +934,11 @@ function endHunt(found) {
   const who = found ? hunt.finder : round.hider, pts = found ? 10 + Math.round(left) : 25;
   addPoints(who, pts);
   if (found) { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .1, .3, "triangle", .2)); buzz([40, 40, 40]); }
-  else { noise(.6, 500, .6); tone(110, 0, .7, "sawtooth", .2, 40); buzz([200, 60, 200]); if (!playVoice(round.hider)) say("Boom!", 1.3); }
+  else { tone(300, 0, .5, "triangle", .25, 700); tone(700, .45, .5, "triangle", .2, 350); buzz([200, 60, 200]); if (!playVoice(round.hider)) say("Boo!", 1.3); }
   requestAnimationFrame(findLoop);
   setTimeout(() => {
     $("resIcon").textContent = found ? "🔍🎉" : "💥🦎";
-    $("resTitle").textContent = found ? `${hunt.finder} found ${round.hider}!` : `BOOM! ${round.hider} wasn't found!`;
+    $("resTitle").textContent = found ? `${hunt.finder} found ${round.hider}!` : `BOO! ${round.hider} wasn't found!`;
     $("resPts").textContent = `${who} +${pts} points`;
     $("resText").textContent = found ? `Found in ${used.toFixed(1)} seconds${hunt.misses.length ? ` (${hunt.misses.length} wrong tap${hunt.misses.length > 1 ? "s" : ""})` : ""}.` : `${round.hider} was hiding right there the whole time!`;
     round.finderIdx++;
