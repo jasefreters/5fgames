@@ -177,7 +177,7 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const FAMILY = ["Hazel", "Kate", "Dad", "Mum", "Leo"];
+const FAMILY = ["Hazel", "Kate", "Dad", "Mum"];
 const W = 400, H = 700;        // scene world size
 const CW = 200, CH = 400;      // character paint resolution
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -310,7 +310,6 @@ const LOOKS = {
   Kate: { h: 120, draw(c) { for (let i = 0; i < 9; i++) blob(c, 100 + Math.cos(Math.PI * (1 + i / 8)) * 46, 92 + Math.sin(Math.PI * (1 + i / 8)) * 46, 18); roundBlob(c, 50, 80, 100, 90, 40); head(c, 100, 100, 48); torso(c, 58, 150, 84, 120); arms(c, 64, 160, 38, 270, 22); legs(c, 84, 262, 30, 392); }, face: [100, 104, 48] },
   Dad: { h: 210, draw(c) { roundBlob(c, 68, 26, 64, 34, 16); head(c, 100, 62, 36); torso(c, 50, 100, 100, 150); arms(c, 58, 112, 32, 244, 26); legs(c, 80, 244, 34, 394); }, face: [100, 64, 36] },
   Mum: { h: 196, draw(c) { roundBlob(c, 58, 34, 84, 140, 34); for (let i = 0; i < 6; i++) { blob(c, 60 + (i % 2) * 4, 70 + i * 20, 12); blob(c, 140 - (i % 2) * 4, 70 + i * 20, 12); } head(c, 100, 64, 33); torso(c, 62, 100, 76, 120); skirt(c, 60, 210, 140, 150, 36, 300); arms(c, 66, 110, 42, 250, 20); legs(c, 86, 296, 24, 394); }, face: [100, 66, 33] },
-  Leo: { h: 160, draw(c) { roundBlob(c, 62, 36, 76, 40, 18); head(c, 100, 80, 40); torso(c, 60, 122, 80, 100); roundBlob(c, 60, 214, 80, 54, 10); arms(c, 66, 130, 40, 250, 20); legs(c, 86, 262, 26, 392); }, face: [100, 82, 40] },
 };
 function blob(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
 function head(c, x, y, r) { blob(c, x, y, r); c.fillRect(x - r * .35, y + r * .7, r * .7, r * .6); }
@@ -351,6 +350,8 @@ function lookThumb(name) {
 //  HOME: players, timer, scores
 // =====================================================================
 let hider = store.get("cham-hider", "Hazel"), finder = store.get("cham-finder", "Kate"), findTime = store.get("cham-time", 20);
+if (!FAMILY.includes(hider)) hider = "Hazel";
+if (!FAMILY.includes(finder) || finder === hider) finder = FAMILY.find(n => n !== hider);
 function renderHome() {
   const chip = (list, sel, other, attr) => list.map(n => `<button class="chip${n === sel ? " sel" : ""}" data-${attr}="${n}" ${n === other ? "disabled" : ""}>${n}</button>`).join("");
   $("hiderChips").innerHTML = chip(FAMILY, hider, null, "h");
@@ -393,7 +394,6 @@ function showLooks() {
   Object.keys(LOOKS).forEach(n => {
     const b = document.createElement("button"); b.className = "pick";
     b.appendChild(lookThumb(n)); b.append(n);
-    if (n === "Leo") { const s = document.createElement("small"); s.textContent = "tell us what Leo looks like!"; b.appendChild(s); }
     b.onclick = () => { round.look = makeLook(n); round.h = LOOKS[n].h; round.x = 200; round.y = H - round.h / 2 - 40; undoStack = []; openHide(); };
     $("lookGrid").appendChild(b);
   });
