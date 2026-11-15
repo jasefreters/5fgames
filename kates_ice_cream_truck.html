@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f48fb1">
+<script>
+// Phones in Chrome's "Desktop site" mode lay pages out ~980px wide; zoom back up to fit.
+(function () {
+  function fit() {
+    var sw = screen.width;
+    var z = navigator.maxTouchPoints > 0 && sw < 760 && innerWidth > sw * 1.2 ? innerWidth / sw : 1;
+    document.documentElement.style.zoom = z === 1 ? "" : z;
+    window.PAGE_ZOOM = z;
+  }
+  fit();
+  addEventListener("resize", fit);
+})();
+</script>
+<title>Kate's Ice-Cream Truck</title>
+<style>
+  :root { --pink: #ec407a; --pink2: #f8bbd0; --ink: #3a2230; --cream: #fff8ee; --mint: #a5e4d4; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: #bfe9ff; color: var(--ink); font-family: "Trebuchet MS", "Segoe UI", Roboto, Arial, sans-serif; overflow: hidden; overscroll-behavior: none; }
+  button { font-family: inherit; cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; color: var(--ink); }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ---------- home ---------- */
+  #home { align-items: center; overflow-y: auto; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  #homeCv { width: 100%; height: 44vh; min-height: 250px; display: block; flex-shrink: 0; }
+  .back-link { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 12px; color: #1b5e20; text-decoration: none; font-weight: 800; font-size: 14px; background: rgba(255,255,255,.7); padding: 4px 10px; border-radius: 99px; z-index: 2; }
+  .music-btn { position: absolute; top: calc(8px + env(safe-area-inset-top)); right: 12px; border: none; background: rgba(255,255,255,.8); border-radius: 99px; width: 44px; height: 44px; font-size: 22px; z-index: 2; }
+  h1 { font-size: clamp(30px, 9vw, 46px); line-height: 1; color: #fff; text-shadow: 0 3px 0 var(--pink), 0 6px 0 #ad1457; text-align: center; margin: 10px 12px 4px; }
+  .lead { text-align: center; font-weight: 700; margin: 2px 14px 10px; font-size: 16px; }
+  .people { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 460px; padding: 0 12px; }
+  .person { border: 4px solid #fff; background: #fff; border-radius: 20px; padding: 6px 2px 8px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 rgba(0,0,0,.12); }
+  .person img { width: 100%; max-width: 80px; display: block; margin: 0 auto; }
+  .person:active { transform: scale(.95); }
+  .freezer { width: 100%; max-width: 460px; margin-top: 14px; padding: 0 12px; }
+  .freezer h3 { font-size: 16px; margin-bottom: 6px; }
+  .shelf { display: flex; gap: 8px; overflow-x: auto; background: #e1f5fe; border: 3px solid #fff; border-radius: 16px; padding: 8px; min-height: 120px; }
+  .shelf .empty { color: #78909c; font-weight: 700; font-size: 14px; align-self: center; margin: auto; }
+  .shelf figure { flex-shrink: 0; width: 76px; text-align: center; font-size: 10px; font-weight: 700; }
+  .shelf canvas { width: 76px; height: 100px; display: block; }
+
+  /* ---------- make ---------- */
+  #make { background: #bfe9ff; }
+  .top { display: flex; align-items: center; gap: 8px; padding: calc(6px + env(safe-area-inset-top)) 10px 6px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.08); z-index: 2; }
+  .top .home { border: none; background: #fce4ec; border-radius: 12px; height: 38px; padding: 0 10px; font-weight: 800; }
+  .steps { flex: 1; display: flex; justify-content: center; gap: 6px; }
+  .steps span { width: 34px; height: 34px; border-radius: 50%; background: #eceff1; display: grid; place-items: center; font-size: 17px; }
+  .steps span.on { background: var(--pink2); box-shadow: 0 0 0 3px var(--pink); }
+  .steps span.done { background: #c8e6c9; }
+  .top .music-btn { position: static; width: 38px; height: 38px; background: #fce4ec; font-size: 18px; }
+  .stage { flex: 1; position: relative; min-height: 0; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .say { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); background: #fff; border-radius: 16px; padding: 8px 14px; font-weight: 900; font-size: 17px; box-shadow: 0 3px 0 rgba(0,0,0,.12); text-align: center; max-width: 92%; pointer-events: none; transition: opacity .3s; }
+  .panel { background: #fff; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 8px rgba(0,0,0,.1); z-index: 2; }
+  .panel h3 { text-align: center; font-size: 17px; margin-bottom: 8px; }
+  .choices { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .big { border: none; border-radius: 18px; padding: 10px 12px; font-size: 16px; font-weight: 900; background: #fce4ec; box-shadow: 0 4px 0 #f48fb1; min-width: 96px; }
+  .big .e { display: block; font-size: 30px; }
+  .big:active, .big.held { transform: translateY(3px); box-shadow: 0 1px 0 #f48fb1; }
+  .big.sel { background: var(--pink); color: #fff; }
+  .lever.choc { background: #8d5a3b; color: #fff; box-shadow: 0 4px 0 #4e2c18; }
+  .lever.straw { background: #f48fb1; color: #fff; box-shadow: 0 4px 0 #c2185b; }
+  .lever.van { background: #fff3d6; box-shadow: 0 4px 0 #e0c48a; }
+  .lever { flex: 1; max-width: 130px; padding: 14px 6px; }
+  .row2 { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .go { border: none; border-radius: 16px; padding: 12px 22px; font-size: 18px; font-weight: 900; background: #43a047; color: #fff; box-shadow: 0 4px 0 #1b5e20; }
+  .go:disabled { opacity: .4; }
+  .go.alt { background: #90a4ae; box-shadow: 0 4px 0 #546e7a; }
+  .go:active { transform: translateY(3px); box-shadow: none; }
+  .tops { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; max-height: 32vh; overflow-y: auto; padding: 2px; }
+  .tops button { border: none; border-radius: 14px; background: #fff3e0; padding: 6px 2px; font-size: 11px; font-weight: 800; line-height: 1.1; box-shadow: 0 3px 0 #ffcc80; }
+  .tops button .e { display: block; font-size: 26px; margin-bottom: 2px; }
+  .tops button:active { transform: translateY(2px); box-shadow: none; }
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<section class="screen active" id="home">
+  <a class="back-link" href="index.html">← All games</a>
+  <button class="music-btn" id="musicHome" aria-label="Music on or off">🎵</button>
+  <canvas id="homeCv"></canvas>
+  <h1>Kate's Ice-Cream Truck</h1>
+  <p class="lead">Who's making the ice-cream? 🍦</p>
+  <div class="people" id="makers"></div>
+  <div class="freezer"><h3>🧊 My freezer</h3><div class="shelf" id="shelf"></div></div>
+</section>
+
+<!-- ================= MAKE ================= -->
+<section class="screen" id="make">
+  <div class="top">
+    <button class="home" id="homeBtn">🏠</button>
+    <div class="steps" id="steps"><span>🍦</span><span>🥛</span><span>🌈</span><span>😋</span></div>
+    <button class="music-btn" id="musicMake" aria-label="Music on or off">🎵</button>
+  </div>
+  <div class="stage"><canvas id="cv"></canvas><div class="say" id="say"></div></div>
+  <div class="panel" id="panel"></div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id)); if (id === "make") resize(); }
+function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+const store = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v === null || v === undefined ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+// =====================================================================
+//  SOUND: the ice-cream truck song (Greensleeves) and little effects
+// =====================================================================
+let AC = null, musicOn = store.get("icecream-music", true);
+function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } } if (AC.state === "suspended") AC.resume(); return AC; }
+function tone(f, s, d, type = "sine", v = .2, f2) { const ac = audio(); if (!ac) return; const t = ac.currentTime + s, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .05); }
+function noise(d, f, v = .2, type = "lowpass", s = 0) { const ac = audio(); if (!ac) return; const b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), x = b.getChannelData(0); for (let i = 0; i < x.length; i++) x[i] = Math.random() * 2 - 1; const src = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain(), t = ac.currentTime + s; src.buffer = b; fl.type = type; fl.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); src.connect(fl).connect(g).connect(ac.destination); src.start(t); }
+let songUntil = 0, nextSongAt = 0;
+function playSong() {
+  if (!musicOn || !audio()) return;
+  const A = 440, B = 494, C = 523, D = 587, E = 659, F = 698, G = 392, Gs = 415, Fs = 370, E4 = 330, q = .3;
+  const tune = [[A, 1], [C, 2], [D, 1], [E, 1.5], [F, .5], [E, 1], [D, 2], [B, 1], [G, 1.5], [A, .5], [B, 1], [C, 2], [A, 1], [A, 1.5], [Gs, .5], [A, 1], [B, 2], [Gs, 1], [E4, 2], [A, 1],
+    [C, 2], [D, 1], [E, 1.5], [F, .5], [E, 1], [D, 2], [B, 1], [G, 1.5], [A, .5], [B, 1], [C, 1.5], [B, .5], [A, 1], [Gs, 1.5], [Fs, .5], [Gs, 1], [A, 3]];
+  let t = 0;
+  tune.forEach(([f, l]) => { tone(f * 2, t, l * q * .9, "square", .035); tone(f, t, l * q * .9, "triangle", .07); t += l * q; });
+  songUntil = performance.now() + t * 1000;
+}
+// "sometimes" the truck plays its song
+setInterval(() => { if (musicOn && performance.now() > nextSongAt && AC) { playSong(); nextSongAt = performance.now() + 45000 + Math.random() * 40000; } }, 3000);
+function setMusic(on) { musicOn = on; store.set("icecream-music", on); $("musicHome").textContent = $("musicMake").textContent = on ? "🎵" : "🔇"; if (on) { playSong(); nextSongAt = performance.now() + 45000 + Math.random() * 30000; } }
+$("musicHome").onclick = $("musicMake").onclick = () => setMusic(!musicOn);
+$("musicHome").textContent = $("musicMake").textContent = musicOn ? "🎵" : "🔇";
+function sayAloud(text) { try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.pitch = 1.4; u.lang = "en-AU"; speechSynthesis.speak(u); } catch (e) {} }
+
+// =====================================================================
+//  THE FAMILY (cartoon portraits)
+// =====================================================================
+function portrait(kind) {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const circle = (x, y, r, f) => { g.fillStyle = f; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
+  const L = {
+    hazel: { skin: "#f7d6c4", hair: "#d8b06a", shirt: "#c7b2e8", style: "long" },
+    abby: { skin: "#f7d6c4", hair: "#d4a95e", shirt: "#f48fb1", style: "curly" },
+    kate: { skin: "#f9d9c8", hair: "#6b4a30", shirt: "#12a5b5", style: "messy" },
+    mum: { skin: "#f6cfb6", hair: "#9a4a2a", shirt: "stripes", style: "wavy" },
+    dad: { skin: "#f0c3a4", hair: "#86643f", shirt: "#c9775d", style: "side" },
+  }[kind];
+  // hair behind the head
+  if (L.style === "long" || L.style === "wavy") {
+    g.fillStyle = L.hair; g.beginPath(); g.moveTo(30, 52); g.quadraticCurveTo(30, 16, 64, 16); g.quadraticCurveTo(98, 16, 98, 52);
+    g.lineTo(L.style === "wavy" ? 108 : 104, 122); g.lineTo(L.style === "wavy" ? 20 : 24, 122); g.closePath(); g.fill();
+  }
+  if (L.style === "curly") for (let i = 0; i < 16; i++) { const a = Math.PI * (0.85 + i / 15 * 1.3); circle(64 + Math.cos(a) * 36, 58 + Math.sin(a) * 38, 11, L.hair); }
+  if (L.style === "curly") for (let i = 0; i < 6; i++) { circle(30 + (i % 2) * 6, 70 + i * 9, 10, L.hair); circle(98 - (i % 2) * 6, 70 + i * 9, 10, L.hair); }
+  if (L.style === "messy") { g.fillStyle = L.hair; g.beginPath(); g.moveTo(30, 50); g.quadraticCurveTo(28, 18, 64, 18); g.quadraticCurveTo(102, 18, 100, 54); g.lineTo(104, 98); g.lineTo(24, 98); g.closePath(); g.fill(); }
+  // clothes
+  if (L.shirt === "stripes") {
+    g.save(); g.beginPath(); g.moveTo(12, 128); g.quadraticCurveTo(16, 92, 64, 90); g.quadraticCurveTo(112, 92, 116, 128); g.closePath(); g.clip();
+    for (let y = 88; y < 128; y += 8) { g.fillStyle = (y / 8) % 2 ? "#6b4a2e" : "#f3ecdc"; g.fillRect(0, y, 128, 8); }
+    g.restore(); g.strokeStyle = "#d4af37"; g.lineWidth = 1.5; g.beginPath(); g.arc(64, 92, 12, 0.1 * Math.PI, 0.9 * Math.PI); g.stroke();
+  } else if (kind === "kate") {
+    g.fillStyle = L.skin; g.beginPath(); g.moveTo(14, 128); g.quadraticCurveTo(18, 92, 64, 90); g.quadraticCurveTo(110, 92, 114, 128); g.closePath(); g.fill();
+    g.fillStyle = L.shirt; g.beginPath(); g.moveTo(36, 128); g.lineTo(42, 102); g.quadraticCurveTo(64, 110, 86, 102); g.lineTo(92, 128); g.closePath(); g.fill();
+    g.strokeStyle = L.shirt; g.lineWidth = 3; g.beginPath(); g.moveTo(44, 103); g.lineTo(48, 90); g.moveTo(84, 103); g.lineTo(80, 90); g.stroke();
+  } else {
+    g.fillStyle = L.shirt; g.beginPath(); g.moveTo(14, 128); g.quadraticCurveTo(18, 92, 64, 90); g.quadraticCurveTo(110, 92, 114, 128); g.closePath(); g.fill();
+    if (kind === "hazel") [[36, 112], [56, 104], [80, 108], [98, 118]].forEach(([x, y]) => { for (let a = 0; a < 5; a++) circle(x + Math.cos(a * 1.26) * 4, y + Math.sin(a * 1.26) * 4, 3, "#fff"); circle(x, y, 2.3, "#b79ad9"); });
+  }
+  // head
+  g.fillStyle = L.skin; g.fillRect(56, 78, 16, 16);
+  circle(34, 58, 7, L.skin); circle(94, 58, 7, L.skin); circle(64, 55, 30, L.skin);
+  // fringe / top hair
+  g.fillStyle = L.hair;
+  if (L.style === "long") { g.beginPath(); g.moveTo(34, 50); g.quadraticCurveTo(36, 22, 64, 22); g.quadraticCurveTo(92, 22, 94, 50); g.quadraticCurveTo(80, 36, 66, 38); g.quadraticCurveTo(50, 36, 34, 50); g.fill(); }
+  if (L.style === "curly") { for (let i = 0; i < 7; i++) circle(38 + i * 8.6, 30 + Math.sin(i) * 3, 9, L.hair); }
+  if (L.style === "messy") { g.beginPath(); g.moveTo(33, 52); g.quadraticCurveTo(34, 22, 64, 22); g.quadraticCurveTo(96, 22, 96, 54); g.quadraticCurveTo(86, 34, 70, 40); g.quadraticCurveTo(56, 30, 44, 42); g.quadraticCurveTo(38, 46, 33, 52); g.fill();
+    circle(48, 22, 7, L.hair); circle(80, 24, 6, L.hair); }
+  if (L.style === "wavy") { g.beginPath(); g.moveTo(34, 54); g.quadraticCurveTo(34, 20, 64, 21); g.quadraticCurveTo(95, 20, 94, 54); g.quadraticCurveTo(88, 34, 66, 30); g.quadraticCurveTo(44, 34, 34, 54); g.fill(); }
+  if (L.style === "side") { g.beginPath(); g.moveTo(34, 50); g.quadraticCurveTo(32, 22, 62, 21); g.quadraticCurveTo(96, 20, 95, 48); g.quadraticCurveTo(88, 34, 70, 34); g.quadraticCurveTo(52, 32, 42, 42); g.quadraticCurveTo(38, 46, 34, 50); g.fill(); }
+  // face
+  circle(53, 56, 3.4, "#2b2b2b"); circle(75, 56, 3.4, "#2b2b2b");
+  circle(46, 66, 5.5, kind === "kate" ? "rgba(240,110,110,.5)" : "rgba(240,128,128,.35)"); circle(82, 66, 5.5, kind === "kate" ? "rgba(240,110,110,.5)" : "rgba(240,128,128,.35)");
+  if (kind === "mum") for (let i = 0; i < 10; i++) circle(50 + (i * 13) % 28, 62 + (i * 7) % 8, .9, "#c98a62");
+  if (kind === "dad") { g.fillStyle = "#6b4a2b"; g.beginPath(); g.ellipse(64, 67, 11, 3.5, 0, 0, 7); g.fill(); }
+  g.strokeStyle = "#8a3b3b"; g.lineWidth = 3; g.lineCap = "round"; g.beginPath(); g.arc(64, 64, 10, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+  if (kind !== "dad") { g.fillStyle = "#fff"; g.beginPath(); g.arc(64, 65, 7, 0.15 * Math.PI, 0.85 * Math.PI); g.fill(); }
+  return c.toDataURL();
+}
+const PEOPLE = [["Mum", "mum"], ["Dad", "dad"], ["Hazel", "hazel"], ["Kate", "kate"]];
+const PICS = {}; PEOPLE.forEach(([, k]) => PICS[k] = portrait(k));
+const PIC_IMG = {}; PEOPLE.forEach(([n, k]) => { const i = new Image(); i.src = PICS[k]; PIC_IMG[n] = i; });
+
+// =====================================================================
+//  ICE-CREAM DATA
+// =====================================================================
+const FLAVOURS = { choc: ["Chocolate", "#7a4426", "#5c311b"], straw: ["Strawberry", "#f7a1b5", "#e57f9a"], van: ["Vanilla", "#fff1cf", "#e8d3a4"] };
+const CONES = { waffle: ["Waffle cone", "🧇"], sugar: ["Sugar cone", "🍦"], dipped: ["Choc-dipped", "🍫"] };
+const RH = 11, MAXR = 20;   // soft-serve ring height and the most you can pour
+const RAINBOW = ["#e53935", "#fb8c00", "#fdd835", "#43a047", "#1e88e5", "#8e24aa", "#ec407a", "#ffffff"];
+const TOPPINGS = [
+  { id: "sprinkles", name: "Sprinkles", e: "🌈", kind: "bits", n: 40 },
+  { id: "popping", name: "Popping candy", e: "💥", kind: "bits", n: 30 },
+  { id: "freckles", name: "Freckles", e: "🟤", kind: "bits", n: 7 },
+  { id: "chocsauce", name: "Chocolate topping", e: "🍫", kind: "sauce", c: "#4a2511" },
+  { id: "strawsauce", name: "Strawberry topping", e: "🍓", kind: "sauce", c: "#d81b60" },
+  { id: "caramel", name: "Caramel", e: "🍯", kind: "sauce", c: "#d9902f" },
+  { id: "nutella", name: "Nutella", e: "🌰", kind: "sauce", c: "#5a2d14" },
+  { id: "pb", name: "Peanut butter", e: "🥜", kind: "sauce", c: "#c8893f" },
+  { id: "milo", name: "Milo", e: "🟫", kind: "bits", n: 60 },
+  { id: "sherbet", name: "Sherbet", e: "🍬", kind: "bits", n: 60 },
+  { id: "oreo", name: "Oreo crumbs", e: "🍪", kind: "bits", n: 30 },
+  { id: "mms", name: "M&Ms", e: "🔴", kind: "bits", n: 10 },
+  { id: "gummy", name: "Gummy bears", e: "🧸", kind: "bits", n: 5 },
+  { id: "marsh", name: "Marshmallows", e: "☁️", kind: "bits", n: 6 },
+  { id: "strawb", name: "Strawberries", e: "🍓", kind: "bits", n: 4 },
+  { id: "flake", name: "Flake", e: "🍫", kind: "stick" },
+  { id: "wafer", name: "Wafer", e: "🧇", kind: "stick" },
+  { id: "cherry", name: "Cherry on top", e: "🍒", kind: "top" },
+];
+const T = Object.fromEntries(TOPPINGS.map(t => [t.id, t]));
+
+// =====================================================================
+//  DRAWING AN ICE-CREAM (used for the big one and freezer thumbnails)
+//  recipe: { cone, rings:[flavour...], adds:[{id, ...}] }  — positions are
+//  stored relative to the top of the cone so they always line up.
+// =====================================================================
+function ringW(i, n) { return 62 * (1 - Math.pow(i / (n + 1.5), 1.7)) + 7; }
+function ringX(i) { return Math.sin(i * 1.15) * 3; }
+function drawCone(c, r, eatCone) {
+  const h = 150 * (1 - eatCone);           // how much cone is left (eaten from the top)
+  if (h <= 0) return;
+  c.save();
+  c.beginPath(); c.moveTo(-60, 0); c.lineTo(60, 0); c.lineTo(0, 150); c.closePath(); c.clip();
+  c.beginPath(); c.rect(-70, 150 - h, 140, h + 2); c.clip();
+  c.fillStyle = r.cone === "sugar" ? "#e9b86a" : "#dca55a"; c.fillRect(-70, 0, 140, 152);
+  c.strokeStyle = "rgba(130,80,20,.45)"; c.lineWidth = 2.5;
+  if (r.cone === "sugar") { for (let y = 14; y < 150; y += 14) { c.beginPath(); c.moveTo(-60, y); c.lineTo(60, y); c.stroke(); } }
+  else { for (let k = -150; k < 150; k += 16) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k + 150, 150); c.stroke(); c.beginPath(); c.moveTo(k, 0); c.lineTo(k - 150, 150); c.stroke(); } }
+  if (r.cone === "dipped") { c.fillStyle = "#5c311b"; c.beginPath(); c.moveTo(-62, 0); c.lineTo(62, 0); c.lineTo(62, 26); for (let x = 60; x > -62; x -= 12) c.quadraticCurveTo(x - 3, 40, x - 6, 30); c.closePath(); c.fill(); }
+  c.restore();
+  if (eatCone === 0) { c.fillStyle = r.cone === "dipped" ? "#4a2511" : "#c98f45"; c.beginPath(); c.ellipse(0, 0, 62, 7, 0, 0, 7); c.fill(); }
+  else { c.fillStyle = "#c98f45"; const y = 150 - h, half = 60 * h / 150; for (let x = -half; x < half; x += 10) { c.beginPath(); c.arc(x + 5, y, 5, 0, Math.PI, true); c.fill(); } }
+}
+function drawIceCream(c, r, now = 0, eaten = 0, eatCone = 0) {
+  const n = r.rings.length, keep = Math.max(0, n - eaten);
+  drawCone(c, r, eatCone);
+  if (eatCone > 0) return;
+  // the soft-serve swirl, ring by ring from the bottom up
+  for (let i = 0; i < keep; i++) {
+    const [, col, dark] = FLAVOURS[r.rings[i]], w = ringW(i, n), x = ringX(i), y = -i * RH - 4;
+    c.fillStyle = col; c.beginPath(); c.ellipse(x, y, w, RH * .95, 0, 0, 7); c.fill();
+    c.strokeStyle = dark; c.lineWidth = 2; c.beginPath(); c.ellipse(x, y, w, RH * .95, 0, .15, Math.PI - .15); c.stroke();
+    c.fillStyle = "rgba(255,255,255,.35)"; c.beginPath(); c.ellipse(x - w * .45, y - 3, w * .18, 2.5, -.2, 0, 7); c.fill();
+  }
+  if (keep === n && n > 0) { // a curly tip
+    const [, col, dark] = FLAVOURS[r.rings[n - 1]], y = -(n - 1) * RH - 10;
+    c.fillStyle = col; c.strokeStyle = dark; c.lineWidth = 2; c.beginPath(); c.moveTo(ringX(n - 1) - 6, y); c.quadraticCurveTo(ringX(n - 1) + 2, y - 18, ringX(n - 1) + 10, y - 10); c.quadraticCurveTo(ringX(n - 1) + 4, y - 4, ringX(n - 1) + 6, y); c.fill(); c.stroke();
+  }
+  const visible = a => a.ring === undefined || a.ring < keep;
+  // sauces drizzle over the top rings and drip down
+  r.adds.forEach(a => {
+    if (T[a.id].kind !== "sauce") return;
+    const grow = Math.min(1, (now - (a.t || 0)) / 700), col = T[a.id].c, top = n - 1;
+    c.fillStyle = col;
+    for (let i = Math.max(0, top - a.depth); i < keep; i++) { c.beginPath(); c.ellipse(ringX(i), -i * RH - 6, ringW(i, n) * 1.02, RH * .8, 0, Math.PI, 0); c.fill(); }
+    if (keep > top - a.depth) a.drips.forEach(([fx, len]) => {
+      const i = Math.max(0, top - a.depth), x = ringX(i) + fx * ringW(i, n) * .9, y0 = -i * RH - 6, L = len * RH * grow;
+      c.beginPath(); c.roundRect ? c.roundRect(x - 4, y0, 8, L, 4) : c.rect(x - 4, y0, 8, L); c.fill();
+      c.beginPath(); c.arc(x, y0 + L, 5, 0, 7); c.fill();
+    });
+  });
+  // bits sprinkled onto the swirl (they fall in when added)
+  r.adds.forEach(a => {
+    const k = T[a.id].kind; if (k !== "bits" && k !== "stick" && k !== "top") return;
+    if (!visible(a)) return;
+    const fall = Math.min(1, (now - (a.t || 0)) / 450), ease = 1 - Math.pow(1 - fall, 3);
+    const i = a.ring, x = ringX(i) + a.fx * ringW(i, n), y = -i * RH - 8 + a.dy - (1 - ease) * 140;
+    c.save(); c.translate(x, y); c.rotate(a.rot);
+    drawBit(c, a, now);
+    c.restore();
+  });
+}
+function drawBit(c, a, now) {
+  const dot = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+  switch (a.id) {
+    case "sprinkles": c.fillStyle = a.col; c.beginPath(); c.roundRect ? c.roundRect(-4, -1.3, 8, 2.6, 1.3) : c.rect(-4, -1.3, 8, 2.6); c.fill(); break;
+    case "popping": { const tw = .6 + .4 * Math.abs(Math.sin(now / 90 + a.rot * 10)); c.fillStyle = a.col; c.globalAlpha = tw; c.fillRect(-1.6, -1.6, 3.2, 3.2); c.globalAlpha = 1; break; }
+    case "freckles": dot(0, 0, 7, "#5c311b"); for (let k = 0; k < 6; k++) dot(Math.cos(k) * 4, Math.sin(k * 1.7) * 4, 1.2, RAINBOW[k]); break;
+    case "milo": dot(0, 0, 1.6, a.rot > 3 ? "#7b4a2a" : "#a1693f"); break;
+    case "sherbet": dot(0, 0, 1.5, a.col); break;
+    case "oreo": c.fillStyle = "#212121"; c.fillRect(-2.5, -2, 5, 4); break;
+    case "mms": dot(0, 0, 5.5, a.col); dot(-1.6, -1.8, 1.6, "rgba(255,255,255,.6)"); break;
+    case "gummy": c.fillStyle = a.col; c.globalAlpha = .9; dot(0, 3, 6, a.col); dot(0, -4, 4.5, a.col); dot(-3.5, -7, 2, a.col); dot(3.5, -7, 2, a.col); c.globalAlpha = 1; break;
+    case "marsh": c.fillStyle = a.col; c.beginPath(); c.roundRect ? c.roundRect(-6, -5, 12, 10, 4) : c.rect(-6, -5, 12, 10); c.fill(); break;
+    case "strawb": c.fillStyle = "#e53935"; c.beginPath(); c.moveTo(0, 9); c.quadraticCurveTo(-10, -2, -6, -7); c.quadraticCurveTo(0, -10, 6, -7); c.quadraticCurveTo(10, -2, 0, 9); c.fill(); c.fillStyle = "#43a047"; c.fillRect(-4, -9, 8, 3); dot(-2, -1, .9, "#ffeb3b"); dot(2, 2, .9, "#ffeb3b"); break;
+    case "flake": c.fillStyle = "#6d3b1f"; c.fillRect(-5, -46, 10, 50); c.strokeStyle = "#4e2611"; c.lineWidth = 1; for (let y = -42; y < 2; y += 6) { c.beginPath(); c.moveTo(-5, y); c.lineTo(5, y + 3); c.stroke(); } break;
+    case "wafer": c.fillStyle = "#f3cf8c"; c.fillRect(-5, -42, 10, 46); c.strokeStyle = "#d4a24c"; c.lineWidth = 1; for (let y = -38; y < 4; y += 5) { c.beginPath(); c.moveTo(-5, y); c.lineTo(5, y); c.stroke(); } break;
+    case "cherry": c.strokeStyle = "#2e7d32"; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -8); c.quadraticCurveTo(4, -22, 10, -24); c.stroke(); dot(0, 0, 9, "#c62828"); dot(-3, -3, 2.5, "rgba(255,255,255,.6)"); break;
+  }
+}
+
+// =====================================================================
+//  GAME STATE + STEPS
+// =====================================================================
+let maker = null, recipe = null, step = 0, pouring = null, eaten = 0, eatCone = 0, customer = null, served = false;
+function startMaking(name) {
+  maker = name; recipe = { cone: "waffle", rings: [], adds: [] }; eaten = 0; eatCone = 0; customer = null; served = false;
+  show("make"); setStep(0);
+  if (musicOn && performance.now() > songUntil) playSong();
+}
+function setStep(s) {
+  step = s;
+  [...$("steps").children].forEach((el, i) => { el.className = i === s ? "on" : i < s ? "done" : ""; });
+  const P = $("panel");
+  if (s === 0) {
+    P.innerHTML = `<h3>${maker}, pick a cone!</h3><div class="choices">${Object.entries(CONES).map(([k, [n, e]]) => `<button class="big${recipe.cone === k ? " sel" : ""}" data-cone="${k}"><span class="e">${e}</span>${n}</button>`).join("")}</div>
+      <div class="row2"><button class="go" id="next">Next ➜</button></div>`;
+    P.querySelectorAll("[data-cone]").forEach(b => b.onclick = () => { recipe.cone = b.dataset.cone; tone(700, 0, .08); setStep(0); });
+    $("next").onclick = () => setStep(1);
+    say("Pick a cone 🍦");
+  }
+  if (s === 1) {
+    P.innerHTML = `<h3>Press and hold to pour! 🥛</h3><div class="choices">${Object.entries(FLAVOURS).map(([k, [n]]) => `<button class="big lever ${k}" data-f="${k}"><span class="e">${k === "choc" ? "🍫" : k === "straw" ? "🍓" : "🍦"}</span>${n}</button>`).join("")}</div>
+      <div class="row2"><button class="go alt" id="again">↺ Start again</button><button class="go" id="next" ${recipe.rings.length < 3 ? "disabled" : ""}>Toppings ➜</button></div>`;
+    P.querySelectorAll("[data-f]").forEach(b => {
+      const start = e => { e.preventDefault(); audio(); if (recipe.rings.length >= MAXR) { say("It's full! Time for toppings 🌈"); return; } pouring = { f: b.dataset.f, acc: 0, btn: b }; b.classList.add("held"); };
+      const stop = () => { if (pouring && pouring.btn === b) { pouring = null; b.classList.remove("held"); $("next").disabled = recipe.rings.length < 3; } };
+      b.addEventListener("pointerdown", start); b.addEventListener("pointerup", stop); b.addEventListener("pointerleave", stop); b.addEventListener("pointercancel", stop);
+    });
+    $("again").onclick = () => { recipe.rings = []; recipe.adds = []; setStep(1); };
+    $("next").onclick = () => setStep(2);
+    say("Hold a flavour to pour. Mix them for a swirl!");
+  }
+  if (s === 2) {
+    P.innerHTML = `<h3>Add your toppings! 🌈</h3><div class="tops">${TOPPINGS.map(t => `<button data-t="${t.id}"><span class="e">${t.e}</span>${t.name}</button>`).join("")}</div>
+      <div class="row2"><button class="go alt" id="undo">↩️ Undo</button><button class="go" id="next">Serve it! 😋</button></div>`;
+    P.querySelectorAll("[data-t]").forEach(b => b.onclick = () => addTopping(b.dataset.t));
+    $("undo").onclick = () => { if (!recipe.adds.length) return; const last = recipe.adds[recipe.adds.length - 1].batch; recipe.adds = recipe.adds.filter(a => a.batch !== last); };
+    $("next").onclick = () => setStep(3);
+    say("Tap toppings as many times as you like!");
+  }
+  if (s === 3) {
+    P.innerHTML = `<h3>Who's it for?</h3><div class="people">${PEOPLE.map(([n, k]) => `<button class="person" data-p="${n}"><img src="${PICS[k]}" alt="">${n}</button>`).join("")}</div>`;
+    P.querySelectorAll("[data-p]").forEach(b => b.onclick = () => serve(b.dataset.p));
+    say(`${nameIt()}!`);
+  }
+}
+let sayT;
+function say(text, ms = 3000) { const el = $("say"); el.textContent = text; el.style.opacity = 1; clearTimeout(sayT); sayT = setTimeout(() => el.style.opacity = 0, ms); }
+
+let batch = 0;
+function addTopping(id) {
+  const t = T[id], n = recipe.rings.length, now = performance.now(); batch++;
+  const ring = () => Math.floor(Math.pow(Math.random(), .6) * n * .95 + n * .05); // more on top
+  const surf = i => i;
+  if (t.kind === "sauce") {
+    const drips = Array.from({ length: 5 }, () => [Math.random() * 2 - 1, 1 + Math.random() * 3.5]);
+    recipe.adds.push({ id, kind: "sauce", depth: 3 + Math.floor(Math.random() * 3), drips, t: now, batch });
+    noise(.6, 600, .15); tone(180, 0, .4, "sine", .1, 120);
+  } else if (t.kind === "stick") {
+    recipe.adds.push({ id, ring: Math.max(0, n - 2), fx: (Math.random() - .5) * .6, dy: 0, rot: (Math.random() - .5) * .7, t: now, batch });
+    tone(500, 0, .12, "triangle", .15);
+  } else if (t.kind === "top") {
+    recipe.adds.push({ id, ring: n - 1, fx: 0, dy: -10, rot: 0, t: now, batch });
+    tone(900, 0, .1); tone(1300, .08, .12);
+  } else {
+    for (let k = 0; k < t.n; k++) {
+      const i = Math.min(n - 1, surf(ring()));
+      const col = id === "sprinkles" || id === "popping" || id === "mms" ? RAINBOW[k % 7] : id === "sherbet" ? ["#f8bbd0", "#b3e5fc", "#fff59d", "#c8e6c9", "#e1bee7"][k % 5] : id === "gummy" ? ["#e53935", "#fdd835", "#43a047", "#fb8c00"][k % 4] : id === "marsh" ? (k % 2 ? "#fff" : "#f8bbd0") : null;
+      recipe.adds.push({ id, ring: i, fx: (Math.random() * 2 - 1) * .92, dy: (Math.random() - .5) * 6, rot: Math.random() * 6.28, col, t: now + k * 8, batch });
+    }
+    for (let k = 0; k < 5; k++) tone(900 + Math.random() * 900, k * .04, .05, "sine", .06);
+    if (id === "popping") for (let k = 0; k < 24; k++) noise(.02, 4000, .2, "highpass", .3 + Math.random() * 1.2);
+  }
+  buzz(15);
+  const fun = { popping: "Pop pop crackle! 💥", sprinkles: "Sprinkle sprinkle! 🌈", cherry: "A cherry on top! 🍒", flake: "Yum, a Flake! 🍫", nutella: "Mmm, Nutella!", milo: "Crunchy Milo!", sherbet: "Fizzy sherbet! 🍬" }[id];
+  say(fun || `${t.name}! 😋`, 1500);
+}
+
+function nameIt() {
+  const counts = {}; recipe.rings.forEach(f => counts[f] = (counts[f] || 0) + 1);
+  const fl = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const flav = fl.length > 1 ? fl.map(f => FLAVOURS[f][0]).join("-") + " Swirl" : FLAVOURS[fl[0]][0];
+  const topIds = [...new Set(recipe.adds.map(a => a.id))];
+  const top = topIds.length ? T[topIds[topIds.length - 1]].name : "";
+  const big = recipe.rings.length > 16 ? "Mega Tower" : recipe.rings.length > 9 ? "Tower" : "Delight";
+  return `${maker}'s ${flav} ${top ? top + " " : ""}${big}`;
+}
+
+function serve(name) {
+  customer = name; served = true; eaten = 0; eatCone = 0;
+  const saved = store.get("icecream-freezer", []);
+  saved.unshift({ name: nameIt(), for: name, cone: recipe.cone, rings: recipe.rings, adds: recipe.adds.map(a => ({ ...a, t: 0 })) });
+  store.set("icecream-freezer", saved.slice(0, 12));
+  const lines = ["Yum! Thank you! 😋", "Best ice-cream ever! 🤩", "Ooh, brain freeze! 🥶", "Can I have another one? 🙏", "Wow, look at all those toppings!"];
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  $("panel").innerHTML = `<h3>${name}: "${line}"</h3><div style="text-align:center;font-size:26px">⭐⭐⭐⭐⭐</div>
+    <p style="text-align:center;font-weight:800;margin:6px 0">👆 Tap the ice-cream to lick it!</p>
+    <div class="row2"><button class="go" id="another">Make another 🍦</button><button class="go alt" id="toHome">🏠 Home</button></div>`;
+  $("another").onclick = () => startMaking(maker);
+  $("toHome").onclick = goHome;
+  [...$("steps").children].forEach(el => el.className = "done");
+  say(nameIt(), 3500);
+  [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .1, .3, "triangle", .2));
+  sayAloud(line.replace(/[^\w\s!?,'.-]/g, ""));
+}
+function lick() {
+  if (!served) return;
+  const n = recipe.rings.length;
+  if (eaten < n) { eaten = Math.min(n, eaten + 2); noise(.25, 1200, .18, "bandpass"); tone(300, 0, .15, "sine", .08, 500); }
+  else if (eatCone < 1) { eatCone = Math.min(1, eatCone + .34); noise(.1, 2500, .3, "bandpass"); tone(160, 0, .08, "square", .08); if (eatCone >= 1) { say("All gone! Yummy! 🎉", 3000); [784, 988, 1175].forEach((f, i) => tone(f, i * .08, .2, "triangle", .15)); } }
+  buzz(15);
+}
+
+// =====================================================================
+//  CANVAS: the truck window, the machine, the cone
+// =====================================================================
+const cv = $("cv"), ctx = cv.getContext("2d");
+let vw = 0, vh = 0, DPR = 1, S = 1;
+function resize() {
+  const r = cv.parentElement.getBoundingClientRect(), z = window.PAGE_ZOOM || 1;
+  DPR = Math.min(2.5, window.devicePixelRatio || 1); vw = r.width / z; vh = r.height / z;
+  cv.width = Math.round(vw * DPR); cv.height = Math.round(vh * DPR);
+  S = Math.min(vw / 400, vh / 560);
+}
+addEventListener("resize", () => { if ($("make").classList.contains("active")) resize(); });
+cv.addEventListener("pointerdown", () => { audio(); if (served) lick(); });
+
+function drawPark(c, w, h, t) {
+  const sky = c.createLinearGradient(0, 0, 0, h * .6); sky.addColorStop(0, "#7fd0ff"); sky.addColorStop(1, "#d7f2ff");
+  c.fillStyle = sky; c.fillRect(0, 0, w, h);
+  c.fillStyle = "#ffe066"; c.beginPath(); c.arc(w * .85, h * .14, Math.min(w, h) * .07, 0, 7); c.fill();
+  c.fillStyle = "#fff"; [[.15, .12], [.5, .08]].forEach(([x, y]) => { const X = ((x * w + t * 8) % (w + 120)) - 60; c.beginPath(); c.arc(X, y * h, 16, 0, 7); c.arc(X + 20, y * h - 8, 20, 0, 7); c.arc(X + 40, y * h, 15, 0, 7); c.fill(); });
+  c.fillStyle = "#8bd36b"; c.fillRect(0, h * .55, w, h * .45);
+  c.fillStyle = "#7cc25c"; c.beginPath(); c.ellipse(w * .2, h * .56, w * .5, h * .06, 0, 0, 7); c.fill();
+  [[.08, "#3f8f3a"], [.3, "#4caf50"], [.92, "#3f8f3a"]].forEach(([x, col]) => { c.fillStyle = "#6d4c41"; c.fillRect(x * w - 5, h * .38, 10, h * .2); c.fillStyle = col; c.beginPath(); c.arc(x * w, h * .36, h * .1, 0, 7); c.fill(); });
+  // a slide in the playground
+  c.strokeStyle = "#e53935"; c.lineWidth = 5; c.beginPath(); c.moveTo(w * .76, h * .58); c.lineTo(w * .76, h * .44); c.lineTo(w * .8, h * .44); c.lineTo(w * .88, h * .6); c.stroke();
+  c.strokeStyle = "#fdd835"; c.beginPath(); c.moveTo(w * .74, h * .58); c.lineTo(w * .74, h * .44); c.stroke();
+}
+function render(now) {
+  requestAnimationFrame(render);
+  if ($("home").classList.contains("active")) return drawHome(now);
+  if (!$("make").classList.contains("active") || !recipe) return;
+  const c = ctx, t = now / 1000;
+  // pouring: a new ring every so often while a lever is held
+  if (pouring) {
+    pouring.acc += 1 / 60;
+    if (pouring.acc > .12) { pouring.acc = 0; if (recipe.rings.length < MAXR) { recipe.rings.push(pouring.f); noise(.12, 500, .06); } else { say("It's full! Time for toppings 🌈"); $("next").disabled = false; pouring.btn.classList.remove("held"); pouring = null; } }
+  }
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  drawPark(c, vw, vh, t);
+  // the truck's serving window
+  c.save(); c.translate(vw / 2, 0); c.scale(S, S);
+  const top = 0, ww = 400;
+  c.fillStyle = "#fce4ec"; c.fillRect(-ww / 2, top, ww, 40);
+  for (let i = 0; i < 10; i++) { c.fillStyle = i % 2 ? "#fff" : "#ec407a"; c.beginPath(); c.moveTo(-ww / 2 + i * 40, 40); c.lineTo(-ww / 2 + i * 40 + 40, 40); c.lineTo(-ww / 2 + i * 40 + 40, 56); c.arc(-ww / 2 + i * 40 + 20, 56, 20, 0, Math.PI); c.fill(); }
+  // the soft-serve machine
+  c.fillStyle = "#cfd8dc"; c.beginPath(); c.roundRect ? c.roundRect(-90, 70, 180, 70, 14) : c.rect(-90, 70, 180, 70); c.fill();
+  c.fillStyle = "#eceff1"; c.fillRect(-80, 80, 160, 20);
+  c.fillStyle = "#ec407a"; c.font = "bold 13px sans-serif"; c.textAlign = "center"; c.fillText("SOFT SERVE", 0, 95);
+  [["choc", -46], ["straw", 0], ["van", 46]].forEach(([f, x]) => {
+    const down = pouring && pouring.f === f;
+    c.fillStyle = FLAVOURS[f][1]; c.beginPath(); c.arc(x, 118, 10, 0, 7); c.fill(); c.strokeStyle = "#90a4ae"; c.lineWidth = 2; c.stroke();
+    c.strokeStyle = "#455a64"; c.lineWidth = 5; c.lineCap = "round"; c.beginPath(); c.moveTo(x, 108); c.lineTo(x + 14, down ? 84 : 70); c.stroke();
+  });
+  c.fillStyle = "#90a4ae"; c.beginPath(); c.moveTo(-12, 140); c.lineTo(12, 140); c.lineTo(5, 158); c.lineTo(-5, 158); c.fill();
+  // the cone (rim at y=360) and its ice-cream
+  const rimY = 392;
+  c.save(); c.translate(0, rimY);
+  // the stream from the nozzle
+  if (pouring) {
+    const topY = -recipe.rings.length * RH - 6;
+    c.fillStyle = FLAVOURS[pouring.f][1]; c.fillRect(-7, 158 - rimY, 14, topY - (158 - rimY) + 6);
+  }
+  drawIceCream(c, recipe, now, eaten, eatCone);
+  c.restore();
+  // counter and cone holder
+  c.fillStyle = "#f8bbd0"; c.fillRect(-ww / 2, 510, ww, 60); c.fillStyle = "#ec407a"; c.fillRect(-ww / 2, 506, ww, 8);
+  c.fillStyle = "#b0bec5"; c.fillRect(-26, 490, 52, 20);
+  // the customer peeks in at the end
+  if (served && customer) {
+    const img = PIC_IMG[customer]; if (img.complete) c.drawImage(img, 110, 330 + Math.sin(t * 3) * 4, 96, 96);
+  }
+  c.restore();
+}
+
+// =====================================================================
+//  HOME: the truck drives into the park
+// =====================================================================
+const hcv = $("homeCv"), hctx = hcv.getContext("2d"); let truckX = -1, homeT0 = 0;
+function drawHome(now) {
+  const r = hcv.getBoundingClientRect(), z = window.PAGE_ZOOM || 1, d = Math.min(2.5, window.devicePixelRatio || 1), w = r.width / z, h = r.height / z;
+  if (hcv.width !== Math.round(w * d)) { hcv.width = Math.round(w * d); hcv.height = Math.round(h * d); }
+  const c = hctx; c.setTransform(d, 0, 0, d, 0, 0);
+  if (!homeT0) homeT0 = now;
+  const t = (now - homeT0) / 1000;
+  drawPark(c, w, h, t);
+  const target = w * .5, x = Math.max(target, w + 160 - t * 160), y = h * .72, bob = x > target ? Math.sin(t * 18) * 1.5 : 0;
+  c.save(); c.translate(x, y + bob); const s = Math.min(1.2, w / 360);
+  c.scale(s, s);
+  // ice-cream truck
+  c.fillStyle = "#fff"; c.beginPath(); c.roundRect ? c.roundRect(-110, -90, 200, 90, 12) : c.rect(-110, -90, 200, 90); c.fill();
+  c.fillStyle = "#f8bbd0"; c.fillRect(-110, -26, 200, 26);
+  c.fillStyle = "#fff"; c.beginPath(); c.moveTo(90, -60); c.lineTo(130, -40); c.lineTo(130, 0); c.lineTo(90, 0); c.fill();
+  c.fillStyle = "#b3e5fc"; c.beginPath(); c.moveTo(94, -56); c.lineTo(124, -40); c.lineTo(94, -40); c.fill();
+  c.fillStyle = "#ec407a"; c.fillRect(-96, -78, 120, 46); c.fillStyle = "#fff"; c.font = "bold 14px sans-serif"; c.textAlign = "center"; c.fillText("ICE-CREAM", -36, -50);
+  for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? "#fff" : "#ec407a"; c.fillRect(-110 + i * 34, -98, 34, 10); }
+  // the giant cone on the roof
+  c.fillStyle = "#dca55a"; c.beginPath(); c.moveTo(-20, -98); c.lineTo(0, -60 + -38); c.lineTo(20, -98); c.lineTo(0, -132 + 60); c.fill();
+  c.beginPath(); c.moveTo(-16, -110); c.lineTo(16, -110); c.lineTo(0, -92); c.fill();
+  c.fillStyle = "#f7a1b5"; c.beginPath(); c.arc(0, -118, 14, 0, 7); c.fill(); c.fillStyle = "#fff1cf"; c.beginPath(); c.arc(0, -130, 10, 0, 7); c.fill();
+  [[-70, 0], [60, 0]].forEach(([wx, wy]) => { c.fillStyle = "#37474f"; c.beginPath(); c.arc(wx, wy, 16, 0, 7); c.fill(); c.fillStyle = "#cfd8dc"; c.beginPath(); c.arc(wx, wy, 6, 0, 7); c.fill(); });
+  if (x <= target && Math.floor(t * 2) % 2) { c.font = "22px sans-serif"; c.fillText("🎵", 40, -110); }
+  c.restore();
+}
+
+// =====================================================================
+//  HOME: makers + the freezer of past ice-creams
+// =====================================================================
+function renderHome() {
+  $("makers").innerHTML = PEOPLE.map(([n, k]) => `<button class="person" data-m="${n}"><img src="${PICS[k]}" alt="">${n}</button>`).join("");
+  $("makers").querySelectorAll("[data-m]").forEach(b => b.onclick = () => { audio(); startMaking(b.dataset.m); });
+  const saved = store.get("icecream-freezer", []), shelf = $("shelf");
+  shelf.innerHTML = saved.length ? "" : `<span class="empty">Your ice-creams will be saved here 🍦</span>`;
+  saved.forEach(r => {
+    const f = document.createElement("figure"), cnv = document.createElement("canvas"); cnv.width = 152; cnv.height = 200;
+    const g = cnv.getContext("2d"); g.scale(.46, .46); g.translate(165, 270); drawIceCream(g, r, 1e12, 0, 0);
+    f.appendChild(cnv); f.append(`${r.name}`); shelf.appendChild(f);
+  });
+}
+function goHome() { renderHome(); homeT0 = 0; show("home"); }
+$("homeBtn").onclick = goHome;
+renderHome();
+requestAnimationFrame(render);
+// the first tap anywhere starts the truck song
+addEventListener("pointerdown", function first() { removeEventListener("pointerdown", first); audio(); if (musicOn) { playSong(); nextSongAt = performance.now() + 50000; } }, { once: true });
+</script>
+</body>
+</html>
